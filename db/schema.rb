@@ -10,7 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_21_063228) do
+ActiveRecord::Schema.define(version: 2020_11_03_070531) do
+
+  create_table "profiles", force: :cascade do |t|
+    t.string "name", limit: 50, default: "", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "room_messages", force: :cascade do |t|
     t.integer "room_id"

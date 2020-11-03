@@ -1,0 +1,13 @@
+<div class="profiles edit">
+  <h2>Update Profile</h2>
+
+  <%= form_for(@profile) do |f| %>
+
+  <%= render(:partial => 'form', :locals => {:f => f}) %>
+
+    <div class="form-buttons">
+      <%= f.submit("Update Profile") %>
+    </div>
+
+  <% end %>
+</div>

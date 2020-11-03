@@ -1,0 +1,13 @@
+<div class="profiles new">
+  <h2>Create Profile</h2>
+
+  <%= form_for(@profile, :url => profiles_path, :method => 'post') do |f| %>
+
+  <%= render(:partial => 'form', :locals => {:f => f}) %>
+
+    <div class="form-buttons">
+      <%= f.submit("Create Profile") %>
+    </div>
+
+  <% end %>
+</div>
