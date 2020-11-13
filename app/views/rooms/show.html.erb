@@ -2,6 +2,12 @@
   <%= @room.name %>
 </h1>
 
+<%- unless current_user.favorite_rooms.exists?(id: @room.id) -%>
+<%= link_to 'Add to favorites', favorite_rooms_path(room_id: @room), class: 'btn btn-primary', method: :post %>
+<%- else -%>
+<%= link_to 'Remove from favorites', favorite_room_path(@room), class: 'btn btn-primary', method: :delete %>
+<%- end -%>
+<br></br>
 <div class="row">
   <div class="col-12 col-md-3">
     <%= render partial: 'rooms' %>

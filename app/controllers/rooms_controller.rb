@@ -5,7 +5,7 @@ class RoomsController < ApplicationController
   before_action :load_entities
 
   def index
-    @rooms = Room.all
+    @rooms = current_user.favorite_rooms
   end
 
   def new
@@ -43,7 +43,7 @@ class RoomsController < ApplicationController
   protected
 
   def load_entities
-    @rooms = Room.all
+    @rooms = current_user.favorite_rooms
     @room = Room.find(params[:id]) if params[:id]
   end
 

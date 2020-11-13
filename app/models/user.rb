@@ -11,4 +11,7 @@ class User < ApplicationRecord
 		"https://gravatar.com/avatar/#{gravatar_id}.png"
 	end
 	
+  has_many :favorites
+  has_many :favorite_rooms, through: :favorites, source: :favorited, source_type: 'Room'
+
 end

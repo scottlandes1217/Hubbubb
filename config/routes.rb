@@ -12,5 +12,7 @@ Rails.application.routes.draw do
 	    get :delete
 	  end
 	end
+
+	resources :favorite_rooms, only: [:create, :destroy]
 	
 end

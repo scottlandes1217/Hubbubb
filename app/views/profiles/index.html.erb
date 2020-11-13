@@ -9,20 +9,20 @@
 </div>
 
 <br></br>
-
+  
   <div class="profiles-container">
     <% @profiles.each do |profile| %>
-    <%= link_to profile_path(profile), :action => 'show' do %>
+    <%= link_to(profile) do %>
     <div class="profile-container">
       <div class="profile-tile" summary="profile list" >
-        <div class="profile-name-contrainer"><p class="profile-name"><%= profile.name %></p></div>
+        <div class="profile-name-container"><p class="profile-name"><%= profile.name %></p></div>
           <div class="profile-actions-container">
             <%= link_to("Edit", edit_profile_path(profile), :class => 'action edit') %>
             <%= link_to("Delete", delete_profile_path(profile), :class => 'action delete') %>
           </div>
       </div>
     </div>
-      <% end %>
-    <% end %>
   </div>
+  <% end %>
+  <% end %>
 </div>
