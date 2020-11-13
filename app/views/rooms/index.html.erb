@@ -5,19 +5,21 @@
 
   <div class="col">
     <div class="alert alert-primary">
-      <h4 class="alert-heading">
-        Welcome to the Hubbubb!
-      </h4>
-
-      <p>
-        We need to talk.
-      </p>
-
-      <hr />
-
-      <p>
-        You can create or join a room from the sidebar.
-      </p>
+      <h4 class="alert-heading">Welcome to Hubbubb!</h4>
     </div>
+
+<% if @rooms.present? %>
+  <nav class="nav room-main-container">
+    <% @rooms.each do |room| %>
+    <%= link_to room.name, room_path(room), class: 'nav-link room-main-link' %>
+    <% end %>
+  </nav>
+<% else %>
+  <div class="text-muted">
+    You have no favorited rooms
+  </div>
+<% end %>
+
+
   </div>
 </div>
