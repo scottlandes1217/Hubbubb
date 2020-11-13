@@ -50,8 +50,8 @@ class ProfilesController < ApplicationController
 
   def destroy
     @profile = Profile.find(params[:id])
-    @Profile.destroy
-    flash[:notice] = "Profile '#{@Profile.name}' destroyed successfully"
+    @profile.destroy
+    flash[:notice] = "Profile '#{@profile.name}' destroyed successfully"
     redirect_to(profiles_path)
   end
 

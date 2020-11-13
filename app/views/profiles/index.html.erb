@@ -1,11 +1,11 @@
 
 <div class="profiles index">
   <div class="profile-header-container">
-    <h1 class="profile-header">profiles</h1>
+    <h1 class="profile-header">My Profiles</h1>
   </div>
 
 <div class="profile-btn-containter">
-  <%= link_to new_profile_path do %><button class="profile-new-btn">Create New Profile</button><% end %>
+  <%= link_to new_profile_path, class: 'btn btn-primary' do %>Create New Profile<% end %>
 </div>
 
 <br></br>
@@ -13,6 +13,7 @@
   <div class="profiles-container">
     <% @profiles.each do |profile| %>
     <%= link_to profile_path(profile), :action => 'show' do %>
+    <div class="profile-container">
       <div class="profile-tile" summary="profile list" >
         <div class="profile-name-contrainer"><p class="profile-name"><%= profile.name %></p></div>
           <div class="profile-actions-container">
@@ -20,6 +21,7 @@
             <%= link_to("Delete", delete_profile_path(profile), :class => 'action delete') %>
           </div>
       </div>
+    </div>
       <% end %>
     <% end %>
   </div>
