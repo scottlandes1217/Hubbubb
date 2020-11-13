@@ -6,7 +6,7 @@
 
 <% if @rooms.present? %>
   <nav class="nav flex-column">
-    <% @rooms.each do |room| %>
+    <% @favorite_rooms.each do |room| %>
       <%= link_to room.name, room_path(room), class: 'nav-link room-nav-link' %>
     <% end %>
   </nav>
