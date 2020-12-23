@@ -3,12 +3,12 @@
 </h1>
 <div class="action-items">
 <%- unless current_user.favorite_rooms.exists?(id: @room.id) -%>
-<%= link_to 'Add to Favorites', favorite_rooms_path(room_id: @room), class: 'btn btn-secondary favorit-btn', method: :post %>
+<%= link_to 'Add to Favorites', favorite_rooms_path(room_id: @room), class: 'btn btn-secondary room-btn', method: :post %>
 <%- else -%>
-<%= link_to 'Remove from favorites', favorite_room_path(@room), class: 'btn btn-secondary favorit-btn', method: :delete %>
+<%= link_to 'Remove from favorites', favorite_room_path(@room), class: 'btn btn-secondary room-btn', method: :delete %>
 <%- end -%>
-<%= link_to edit_room_path, class: 'btn btn-secondary favorit-btn' do %>Edit Room<% end %>
-<%= link_to delete_room_path, class: 'btn btn-secondary favorit-btn' do %>Delete Room<% end %>
+<%= link_to edit_room_path, class: 'btn btn-secondary room-btn' do %>Edit Room<% end %>
+<%= link_to delete_room_path, class: 'btn btn-secondary room-btn' do %>Delete Room<% end %>
 </div>
 
 <div class="row chat-row">
