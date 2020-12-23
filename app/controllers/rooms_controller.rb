@@ -30,6 +30,7 @@ class RoomsController < ApplicationController
   end
   
   def edit
+    @room = Room.find(params[:id])
   end
 
   def update
@@ -39,6 +40,17 @@ class RoomsController < ApplicationController
     else
       render :new
     end
+  end
+
+  def delete
+    @room = Room.find(params[:id])
+  end
+
+  def destroy
+    @room = Room.find(params[:id])
+    @room.destroy
+    flash[:notice] = "Room '#{@room.name}' destroyed successfully"
+    redirect_to(rooms_path)
   end
 
   protected

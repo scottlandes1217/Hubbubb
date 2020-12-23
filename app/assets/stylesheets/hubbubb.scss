@@ -44,6 +44,14 @@ $light-gray: #CED4DA;
   color: #ffffff;
 }
 
+.chat-row {
+  margin-top: 40px;
+}
+
+.action-items {
+  float: right;
+}
+
 .chat {
   border: 1px solid #495057;
   background: lighten($secondary, 50%);
@@ -78,6 +86,5 @@ $light-gray: #CED4DA;
 }
 
 .favorit-btn {
-  float:right;
   margin-top: -55px;
 }

@@ -1,0 +1,13 @@
+<div class="rooms delete">
+  <h2>Delete Profile</h2>
+
+  <%= form_for(@room, :method => 'delete') do |f| %>
+
+    <p>Are you sure you want to permanently delete the "<%= f.object.name %>" Room?</p>
+
+    <div class="form-buttons">
+      <%= f.submit("Delete Room") %>
+    </div>
+
+  <% end %>
+</div>
