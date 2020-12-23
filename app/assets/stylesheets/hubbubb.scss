@@ -53,7 +53,7 @@ $light-gray: #CED4DA;
 }
 
 .chat {
-  border: 1px solid #495057;
+  border: 1px solid $light-gray;
   background: lighten($secondary, 50%);
   height: 50vh;
   border-radius: 5px 5px 0 0;
