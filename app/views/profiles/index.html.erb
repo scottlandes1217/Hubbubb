@@ -1,28 +1,31 @@
 
 <div class="profiles index">
   <div class="profile-header-container">
-    <h1 class="profile-header">My Profiles</h1>
+    <h1 class="profile-header">Profiles</h1>
   </div>
 
-<div class="profile-btn-containter">
-  <%= link_to new_profile_path, class: 'btn btn-primary' do %>Create New Profile<% end %>
-</div>
+<div class="row">
+  <div class="col-12 col-md-3">
+    <%= link_to new_profile_path, class: 'btn btn-primary' do %>Create New Profile<% end %>
+  </div>
 
-<br></br>
-  
-  <div class="profiles-container">
+<% if @profiles.present? %>
+  <nav class="nav profile-main-container">
     <% @profiles.each do |profile| %>
-    <%= link_to(profile) do %>
-    <div class="profile-container">
-      <div class="profile-tile" summary="profile list" >
-        <div class="profile-name-container"><p class="profile-name"><%= profile.name %></p></div>
-          <div class="profile-actions-container">
-            <%= link_to("Edit", edit_profile_path(profile), :class => 'action edit') %>
-            <%= link_to("Delete", delete_profile_path(profile), :class => 'action delete') %>
-          </div>
-      </div>
+    <%= link_to profile.name, profile_path(profile), class: 'profile-main-link' %>
+    <div class="profile-action-container">
+      <%= link_to("Edit", edit_profile_path(profile), :class => 'profile-action-btn btn action edit') %>
+      <%= link_to("Delete", delete_profile_path(profile), :class => 'profile-action-btn btn action delete') %>
     </div>
+    <% end %>
+  </nav>
+  
+<% else %>
+  <div class="text-muted">
+    There are no new rooms in your area. Create your own room to get things started!
   </div>
-  <% end %>
-  <% end %>
+<% end %>
+
+
+  </div>
 </div>

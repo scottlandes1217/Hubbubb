@@ -3,17 +3,13 @@
     <%= render partial: 'rooms' %>
   </div>
 
-  <div class="col">
-    <div class="alert alert-primary">
-      <h4 class="alert-heading">Welcome to Hubbubb!</h4>
-    </div>
-
 <% if @rooms.present? %>
   <nav class="nav room-main-container">
     <% @rooms.each do |room| %>
     <%= link_to room.name, room_path(room), class: 'nav-link room-main-link' %>
     <% end %>
   </nav>
+  
 <% else %>
   <div class="text-muted">
     There are no new rooms in your area. Create your own room to get things started!

@@ -1,10 +1,49 @@
-.profile-container {
-	border: 1px solid black;
-	border-radius: 50%;
-    width: 150px;
-    height: 150px;
-	text-align: center;
+
+.profile-main-link {
+	font-size: 20px;
+	border: 1px solid #000000;
 	background-image: url(https://gravatar.com/avatar/e968a77d9736b0b14415b02aa76f71f7.png);
 	background-size: cover;
-    border-radius: 50%;
+	color: #ffffff;
+	text-align: center;
+	width: 200px;
+	height: 200px;
+	margin: 7px;
+	overflow: hidden;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	-webkit-hyphens: auto;
+	-moz-hyphens: auto;
+	hyphens: auto;
+}
+
+.profile-main-link:hover {
+	color: #ffffff;
+	text-decoration: none;
+}
+
+.profile-main-container a {
+	background-color: #666666;
+}
+
+.profile-main-container {
+	width: 200px;
+	height: 200px;
+}
+
+.profile-action-container {
+	margin-top: -50px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.profile-action-btn {
+	background-color: #ffffff;
+	border: solid black 1px;
+	padding: 5px 10px;
+}
+
+.profile-action-btn:hover {
+	background-color: #666666;
+	color: #ffffff;
 }

@@ -34,7 +34,7 @@ class ProfilesController < ApplicationController
     #Find a new object using form parameters
     @profile = Profile.find(params[:id])
     #Update the object
-    if @Profile.update_attributes(profile_params)
+    if @profile.update_attributes(profile_params)
     #If save suceeds, redirect to show action
     flash[:notice] = "Profile updated successfully"
     redirect_to(profiles_path(@profile))
