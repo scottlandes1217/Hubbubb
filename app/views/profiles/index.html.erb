@@ -12,11 +12,13 @@
 <% if @profiles.present? %>
   <nav class="nav profile-main-container">
     <% @profiles.each do |profile| %>
-    <%= link_to profile.name, profile_path(profile), class: 'profile-main-link' %>
-    <div class="profile-action-container">
-      <%= link_to("Edit", edit_profile_path(profile), :class => 'profile-action-btn btn action edit') %>
-      <%= link_to("Delete", delete_profile_path(profile), :class => 'profile-action-btn btn action delete') %>
-    </div>
+      <div class="profile-main-link">
+        <p class="profile-name"><%= profile.name %></p>
+      <div class="profile-action-container">
+        <%= link_to("Edit", edit_profile_path(profile), :class => 'profile-action-btn btn action edit') %>
+        <%= link_to("Delete", delete_profile_path(profile), :class => 'profile-action-btn btn action delete') %>
+      </div>
+      </div>
     <% end %>
   </nav>
   

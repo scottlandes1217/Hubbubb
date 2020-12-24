@@ -2,13 +2,13 @@
 .profile-main-link {
 	font-size: 20px;
 	border: 1px solid #000000;
+	margin: 7px;
 	background-image: url(https://gravatar.com/avatar/e968a77d9736b0b14415b02aa76f71f7.png);
 	background-size: cover;
 	color: #ffffff;
 	text-align: center;
 	width: 200px;
 	height: 200px;
-	margin: 7px;
 	overflow: hidden;
 	word-wrap: break-word;
 	overflow-wrap: break-word;
@@ -17,24 +17,19 @@
 	hyphens: auto;
 }
 
-.profile-main-link:hover {
-	color: #ffffff;
+.profile-main-container a:hover {
 	text-decoration: none;
 }
 
-.profile-main-container a {
-	background-color: #666666;
-}
-
 .profile-main-container {
-	width: 200px;
-	height: 200px;
+
 }
 
 .profile-action-container {
-	margin-top: -50px;
-	margin-left: auto;
+	margin-left: 40px;
 	margin-right: auto;
+	bottom: 30px;
+	position: absolute;
 }
 
 .profile-action-btn {
@@ -45,5 +40,10 @@
 
 .profile-action-btn:hover {
 	background-color: #666666;
+	color: #ffffff;
+}
+
+.profile-name {
+	background-color: rgba(46, 49, 49, .5);
 	color: #ffffff;
 }
