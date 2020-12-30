@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_23_042438) do
+ActiveRecord::Schema.define(version: 2020_12_30_061529) do
 
   create_table "favorites", force: :cascade do |t|
     t.integer "user_id"
@@ -26,6 +26,8 @@ ActiveRecord::Schema.define(version: 2020_12_23_042438) do
     t.string "name", limit: 50, default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "active"
+    t.text "avatar_url"
   end
 
   create_table "room_messages", force: :cascade do |t|
