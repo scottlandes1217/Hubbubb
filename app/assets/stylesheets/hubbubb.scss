@@ -21,6 +21,10 @@ $light-gray: #CED4DA;
   }
 }
 
+.room-main-container {
+  max-width: 75%;
+}
+
 .room-main-link {
   border: 1px solid #000000;
   background-color: $light-gray;
