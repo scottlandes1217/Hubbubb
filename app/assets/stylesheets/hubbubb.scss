@@ -2,6 +2,11 @@
 $secondary: #C0C0C0;
 $light-gray: #CED4DA;
 
+input {
+    display: block;
+    margin: 0px 0 15px 0;
+}
+
 .avatar {
   max-height:30px;
   border-radius: 15px;
@@ -92,3 +97,4 @@ $light-gray: #CED4DA;
 .room-btn {
   margin-top: -55px;
 }
+

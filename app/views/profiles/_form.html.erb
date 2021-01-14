@@ -1,11 +1,9 @@
-<table summary="Profile form fields">
-  <tr>
-    <th>Name</th>
-    <td><%= f.text_field(:name) %></td>
-    <th>Active?</th>
-    <td><%= f.check_box(:active) %></td>
-    <th>Avatar URL</th>
-    <td><%= f.text_field(:avatar_url) %></td>
-  </tr>
-  <tr>
-</table>
+<%= simple_form_for @profile do |form| %>
+  <%= f.label :active %>
+  <%= f.check_box :active %>
+  <%= f.label :name, "*Name" %>
+  <%= f.text_field :name, required: true, autofocus: true %></span>
+  <%= f.label :avatar_url, "Avatar URL" %>
+  <%= f.text_field :avatar_url %>
+  <%= form.submit "Save", class: 'btn btn-success' %>
+<% end %>
