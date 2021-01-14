@@ -6,14 +6,9 @@ class Profile < ApplicationRecord
 
   before_save :ensure_one_active
 
-    def activate!
-      self.active = true
-      save
-    end
-
     def ensure_one_active
       if self.active
-        profile.update_attribute(:active, false)
+        Profile.where.not(id: id).update_all(active: false)
       end
     end
 
