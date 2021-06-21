@@ -1,5 +1,7 @@
 {
   "name": "hubbubb",
   "private": true,
-  "dependencies": {}
+  "dependencies": {
+    "actioncable-js": "^5.0.0-rc2"
+  }
 }
