@@ -12,5 +12,60 @@
     </tr>
     <tr>
   </table>
-
 </div>
+
+<script type="text/javascript">
+
+  getHtmlCss = function(){
+    var html = editor.runCommand('gjs-get-inlined-html');
+    $log.log("-----> HTML & INLINED CSS: ", html);
+    return html;
+}
+  generateFile = function(code){
+
+      $(function() 
+        {
+          console.log( "ready!" );
+          // Check for the various File API support.
+          if (window.File && window.FileReader && window.FileList && window.Blob) 
+          {
+            saveText(code, 'text/html;charset=utf-8', 'mailing.html');
+          } 
+          else 
+          {
+            alert('The File APIs are not fully supported in this browser.');
+          }
+        }
+       );
+
+      function saveText(text, mime, file)
+      {
+        var blob = new Blob([text], {type: mime});
+        saveAs(blob, file);
+
+        return false;
+      }
+
+      function handleFileSelect(code, mimeType) 
+      {
+
+        var reader = new FileReader();
+        // Closure to capture the file information.
+        reader.onload = (
+          function(theFile) 
+          {
+            return function(e) 
+            {
+              target.html( e.target.result );
+            };
+          }
+        )(file);
+
+        // Read in the image file as a data URL.
+        reader.readAsText(file);
+      }
+
+
+
+}
+</script>
