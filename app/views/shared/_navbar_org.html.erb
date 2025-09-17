@@ -3,12 +3,12 @@
   <!-- LEFT COLUMN: Org name/logo -->
   <div class="org-header-left d-flex align-items-center justify-content-start px-3" style="flex:0 0 auto;">
     <% if @organization.present? %>
-      <%= link_to organization_path(@organization), class: "navbar-brand fw-bold text-truncate my-0 py-0", style: "color:#fff;" do %>
-        <i class="fas fa-building me-2"></i><span style="max-width:120px; display:inline-block; vertical-align:middle; color:#fff;" class="text-truncate"><%= @organization.name %></span>
+      <%= link_to organization_path(@organization), class: "navbar-brand my-0 py-0" do %>
+        <%= image_tag "hubbub-logo-large.png", alt: @organization.name, style: "height: 85px; width: auto;" %>
       <% end %>
     <% else %>
-      <%= link_to root_path, class: "navbar-brand fw-bold my-0 py-0", style: "color:#fff;" do %>
-        <i class="fas fa-paw me-2"></i>hubbubb
+      <%= link_to root_path, class: "navbar-brand my-0 py-0" do %>
+        <%= image_tag "hubbub-logo-large.png", alt: "Hubbubb", style: "height: 85px; width: auto;" %>
       <% end %>
     <% end %>
   </div>
