@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  form: one
+  data: 
+  submitted_at: 2025-07-06 13:08:35
+
+two:
+  form: two
+  data: 
+  submitted_at: 2025-07-06 13:08:35

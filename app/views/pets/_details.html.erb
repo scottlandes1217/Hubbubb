@@ -1,0 +1,427 @@
+<div class="row">
+  <!-- Left Column -->
+  <div class="col-md-6">
+    
+    <!-- Date of Birth (Grouped: dob) -->
+    <div class="field-container">
+      <strong>Date of Birth:</strong>
+      <span class="value" data-field="dob" data-edit-field-target="value">
+        <% if @pet.date_of_birth.present? %>
+          <%= @pet.date_of_birth.strftime("%B %d, %Y") %> 
+          (<%= @pet.age %> years)
+        <% else %>
+          Not Set
+        <% end %>
+      </span>
+
+      <button class="edit-button"
+              data-field="dob"
+              data-group="dob"
+              data-edit-field-target="editButton"
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+
+      <div class="edit-input-group" data-group="dob" style="display: none;">
+        <input type="date"
+               class="edit-input"
+               data-field="date_of_birth"
+               data-group="dob"
+               data-edit-field-target="input"
+               value="<%= @pet.date_of_birth %>" />
+        <label>
+          <input type="hidden" name="dob_estimated" value="false" />
+          <input type="checkbox"
+                 name="dob_estimated"
+                 value="true"
+                 data-field="dob_estimated"
+                 data-group="dob"
+                 data-edit-field-target="input"
+                 <%= @pet.dob_estimated ? "checked" : "" %> />
+          Estimated
+        </label>
+      </div>
+    </div>
+
+    <!-- Weight (Grouped: weight) -->
+    <div class="field-container">
+      <strong>Weight:</strong>
+      <span class="value" data-field="weight" data-edit-field-target="value">
+        <%= "#{@pet.weight_lbs || 0} Lbs #{@pet.weight_oz || 0} Oz" %>
+      </span>
+      <button class="edit-button" 
+              data-field="weight" 
+              data-group="weight" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <div class="edit-input-group" data-group="weight" style="display: none;">
+        <input type="number" 
+               class="edit-input" 
+               data-field="weight_lbs" 
+               data-group="weight" 
+               data-edit-field-target="input" 
+               value="<%= @pet.weight_lbs || 0 %>" 
+               placeholder="Lbs" />
+        <input type="number" 
+               class="edit-input" 
+               data-field="weight_oz" 
+               data-group="weight" 
+               data-edit-field-target="input" 
+               value="<%= @pet.weight_oz || 0 %>" 
+               placeholder="Oz" />
+      </div>
+    </div>
+
+    <!-- Sex (Single field) -->
+    <div class="field-container">
+      <strong>Sex:</strong>
+      <span class="value" data-field="sex" data-edit-field-target="value">
+        <%= @pet.sex.present? ? @pet.sex.humanize : "Not Set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="sex" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <select class="edit-input" 
+              data-field="sex" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <% Pet.sexes.keys.each do |sex| %>
+          <option value="<%= sex %>" <%= "selected" if @pet.sex == sex %>>
+            <%= sex.humanize %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Species (Single field) -->
+    <div class="field-container">
+      <strong><%= get_custom_field_display_name(@organization, 'pets', 'species') %>:</strong>
+      <span class="value" data-field="species" data-edit-field-target="value">
+        <% if @pet.species.present? %>
+          <%= @pet.species.titleize %>
+        <% else %>
+          Not Set
+        <% end %>
+      </span>
+      <button class="edit-button" 
+              data-field="species" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <select class="edit-input" 
+              data-field="species" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <option value="">Not Set</option>
+        <% get_custom_field_values(@organization, 'pets', 'species').each do |species_value| %>
+          <option value="<%= species_value %>" 
+                  <%= "selected" if @pet.species == species_value %>>
+            <%= species_value.titleize %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Breed (Multi-select) -->
+    <div class="field-container">
+      <strong><%= get_custom_field_display_name(@organization, 'pets', 'breed') %>:</strong>
+      <span class="value" data-field="breed" data-edit-field-target="value">
+        <!-- DEBUG: <%= @pet.breed_names.inspect %> -->
+        <!-- DEBUG: <%= @pet.breed_names.any?.inspect %> -->
+        <% if @pet.breed_names.any? %>
+          <%= @pet.breed_names.join(", ") %>
+        <% else %>
+          Not Set
+        <% end %>
+      </span>
+      <button class="edit-button" 
+              data-field="breed" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <select multiple 
+              class="edit-input" 
+              data-field="breed" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <% get_custom_field_values(@organization, 'pets', 'breed').each do |breed_value| %>
+          <option value="<%= breed_value %>" 
+                  <%= "selected" if @pet.breed.include?(breed_value) %>>
+            <%= breed_value.titleize %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Color (Multi-select) -->
+    <div class="field-container">
+      <strong><%= get_custom_field_display_name(@organization, 'pets', 'color') %>:</strong>
+      <span class="value" data-field="color" data-edit-field-target="value">
+        <% if @pet.color_names.any? %>
+          <%= @pet.color_names.join(", ") %>
+        <% else %>
+          Not Set
+        <% end %>
+      </span>
+      <button class="edit-button" 
+              data-field="color" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <select multiple 
+              class="edit-input" 
+              data-field="color" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <% get_custom_field_values(@organization, 'pets', 'color').each do |color_value| %>
+          <option value="<%= color_value %>" 
+                  <%= "selected" if @pet.color.include?(color_value) %>>
+            <%= color_value.titleize %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Flags (Multi-select) -->
+    <div class="field-container">
+      <strong><%= get_custom_field_display_name(@organization, 'pets', 'flags') %>:</strong>
+      <span class="value" data-field="flags" data-edit-field-target="value">
+        <% if @pet.flags.any? %>
+          <%= @pet.flags.join(", ") %>
+        <% else %>
+          Not Set
+        <% end %>
+      </span>
+      <button class="edit-button" 
+              data-field="flags" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <select multiple 
+              class="edit-input" 
+              data-field="flags" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <% get_custom_field_values(@organization, 'pets', 'flags').each do |flag_value| %>
+          <option value="<%= flag_value %>" 
+                  <%= "selected" if @pet.flags.include?(flag_value) %>>
+            <%= flag_value.titleize %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Coat Type (Single field) -->
+    <div class="field-container">
+      <strong>Coat Type:</strong>
+      <span class="value" data-field="coat_type" data-edit-field-target="value">
+        <%= @pet.coat_type.present? ? @pet.coat_type.humanize : "Not Set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="coat_type" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <select class="edit-input" 
+              data-field="coat_type" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <% Pet.coat_types.keys.each do |type| %>
+          <option value="<%= type %>" 
+                  <%= "selected" if @pet.coat_type == type %>>
+            <%= type.humanize %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-md-6">
+    <!-- Location -->
+    <div class="field-container">
+      <span class="label"><%= get_custom_field_display_name(@organization, 'pets', 'location') %>:</span>
+      <span class="value" data-field="location" data-edit-field-target="value">
+        <%= @pet.location.present? ? @pet.location : "Not set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="location" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+      </button>
+      <select class="edit-input" 
+              data-field="location" 
+              data-edit-field-target="input" 
+              style="display: none;">
+        <option value="">Select Location</option>
+        <% get_custom_field_values(@organization, 'pets', 'location').each do |location_value| %>
+          <option value="<%= location_value %>" <%= 'selected' if @pet.location == location_value %>>
+            <%= location_value %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Description -->
+    <div class="field-container">
+      <span class="label">Description:</span>
+      <span class="value" data-field="description" data-edit-field-target="value">
+        <%= @pet.description || "Not set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="description" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+      </button>
+      <textarea class="edit-input" 
+                data-field="description" 
+                data-edit-field-target="input" 
+                style="display: none;"><%= @pet.description %></textarea>
+    </div>
+
+    <!-- Entered Shelter (Single date) -->
+    <div class="field-container">
+      <strong>Entered Shelter:</strong>
+      <span class="value" data-field="entered_shelter" data-edit-field-target="value">
+        <%= @pet.entered_shelter.present? ? @pet.entered_shelter.strftime("%B %d, %Y") : "Not Set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="entered_shelter" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <input type="date" 
+             class="edit-input" 
+             data-field="entered_shelter" 
+             data-edit-field-target="input" 
+             value="<%= @pet.entered_shelter %>" 
+             style="display: none;" />
+    </div>
+
+    <!-- Left Shelter (Single date) -->
+    <div class="field-container">
+      <strong>Left Shelter:</strong>
+      <span class="value" data-field="left_shelter" data-edit-field-target="value">
+        <%= @pet.left_shelter.present? ? @pet.left_shelter.strftime("%B %d, %Y") : "Not Set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="left_shelter" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <input type="date" 
+             class="edit-input" 
+             data-field="left_shelter" 
+             data-edit-field-target="input" 
+             value="<%= @pet.left_shelter %>" 
+             style="display: none;" />
+    </div>
+
+    <!-- Microchip (Single text) -->
+    <div class="field-container">
+      <strong>Microchip:</strong>
+      <span class="value" data-field="microchip" data-edit-field-target="value">
+        <%= @pet.microchip.present? ? @pet.microchip : "Not Set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="microchip" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <input type="text" 
+             class="edit-input" 
+             data-field="microchip" 
+             data-edit-field-target="input" 
+             value="<%= @pet.microchip %>" 
+             style="display: none;" />
+    </div>
+
+    <!-- Location & Unit (Grouped: location_unit) -->
+    <div class="field-container">
+      <strong>Location & <%= get_custom_field_display_name(@organization, 'tasks', 'unit') %>:</strong>
+      <span class="value" data-field="location_unit" data-edit-field-target="value">
+        <% location_value = @pet.location.to_s.strip %>
+        <% unit_value = @pet.unit.to_s.strip %>
+        <% if location_value.present? && unit_value.present? %>
+          <%= "#{location_value} - #{unit_value}" %>
+        <% elsif location_value.present? %>
+          <%= location_value %>
+        <% elsif unit_value.present? %>
+          <%= unit_value %>
+        <% else %>
+          Not Set
+        <% end %>
+      </span>
+      <button class="edit-button" 
+              data-field="location_unit" 
+              data-group="location_unit" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <div class="edit-input-group" data-group="location_unit" style="display: none;">
+        <select class="edit-input" 
+                data-field="location" 
+                data-group="location_unit" 
+                data-edit-field-target="input">
+          <option value="">Not Set</option>
+          <% get_custom_field_values(@organization, 'pets', 'location').each do |location_value| %>
+            <option value="<%= location_value %>" 
+                    <%= "selected" if @pet.location == location_value %>>
+              <%= location_value %>
+            </option>
+          <% end %>
+        </select>
+
+        <select class="edit-input" 
+                data-field="unit" 
+                data-group="location_unit" 
+                data-edit-field-target="input">
+          <option value="">Not Set</option>
+          <% get_custom_field_values(@organization, 'tasks', 'unit').each do |unit_value| %>
+            <option value="<%= unit_value %>" 
+                    <%= "selected" if @pet.unit == unit_value %>>
+              <%= unit_value %>
+            </option>
+          <% end %>
+        </select>
+      </div>
+    </div>
+
+    <!-- Date of Death (Single date) -->
+    <div class="field-container">
+      <strong>Date of Death:</strong>
+      <span class="value" data-field="dod" data-edit-field-target="value">
+        <%= @pet.dod.present? ? @pet.dod.strftime("%B %d, %Y") : "Not Set" %>
+      </span>
+      <button class="edit-button" 
+              data-field="dod" 
+              data-edit-field-target="editButton" 
+              data-action="click->edit-field#edit">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <input type="date" 
+             class="edit-input" 
+             data-field="dod" 
+             data-edit-field-target="input" 
+             value="<%= @pet.dod %>" 
+             style="display: none;" />
+    </div>
+  </div>
+</div> 

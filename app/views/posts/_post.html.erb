@@ -1,0 +1,113 @@
+<!-- app/views/posts/_post.html.erb -->
+<div class="post" id="post-<%= post.id %>"
+     data-controller="reaction">
+  <div class="post-header">
+    <!-- Show the author's email or fallback -->
+    <strong><%= post.user&.email || post.organization&.name || "Unknown Author" %></strong>
+    <span>• <%= time_ago_in_words(post.created_at) %> ago</span>
+
+    <!-- Delete Post: only if the current user is the post author -->
+    <% if current_user == post.user %>
+      <% if post.pet.present? && post.pet.organization.present? %>
+        <%= button_to "Delete Post",
+              organization_pet_post_path(post.pet.organization, post.pet, post),
+              method: :delete,
+              class: "btn btn-danger btn-sm float-end",
+              data: { confirm: "Are you sure you want to delete this post?" } %>
+      <% else %>
+        <%= button_to "Delete Post", post_path(post),
+              method: :delete,
+              class: "btn btn-danger btn-sm float-end",
+              data: { confirm: "Are you sure you want to delete this post?" } %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="post-body">
+    <p><%= post.body %></p>
+  </div>
+
+  <% if post.images.attached? %>
+    <div class="post-images">
+      <div id="carousel-<%= post.id %>" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          <% post.images.each_with_index do |image, index| %>
+            <div class="carousel-item <%= 'active' if index.zero? %>">
+              <%= image_tag url_for(image), class: "d-block w-100" %>
+            </div>
+          <% end %>
+        </div>
+        <button class="carousel-control-prev" type="button"
+                data-bs-target="#carousel-<%= post.id %>"
+                data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button"
+                data-bs-target="#carousel-<%= post.id %>"
+                data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+    </div>
+  <% else %>
+    <p>No images attached to this post.</p>
+  <% end %>
+
+  <!-- REACTIONS SECTION -->
+<div class="post-reactions">
+  <% reaction_types = {
+    "Love"            => ["fa-heart",   "#e0245e"],
+    "Laugh"           => ["custom-laugh", "#f7b924"],
+    "Like"            => ["fa-thumbs-up", "#1877f2"],
+    "Congratulations" => ["fa-trophy",  "#ff9800"],
+    "Dislike"         => ["fa-thumbs-down", "#555"],
+    "Angry"           => ["custom-angry",   "#f02849"]
+  } %>
+  <% always_solid = ["Congratulations", "Laugh", "Angry"] %>
+  <% user_reaction = post.reactions.find_by(user_id: current_user.id) %>
+  <% reaction_types.each do |rtype, (icon_class, color)| %>
+    <% count_for_this_type = post.reactions.where(reaction_type: rtype).count %>
+    <% is_selected = (user_reaction&.reaction_type == rtype) %>
+    <button type="button"
+            class="reaction-icon-btn <%= 'selected' if is_selected %>"
+            data-action="click->reaction#sendReaction"
+            data-reaction-type="<%= rtype %>"
+            data-post-id="<%= post.id %>">
+      <% if rtype == "Laugh" %>
+        <% icon_style = "fas" %>
+        <% icon_class = "fa-laugh-squint" %>
+        <% icon_color = is_selected ? "color: #f7b924;" : "color: #bbb;" %>
+        <i class="<%= icon_style %> <%= icon_class %>" style="<%= icon_color %>"></i>
+      <% elsif rtype == "Angry" %>
+        <% icon_style = "fas" %>
+        <% icon_class = "fa-angry" %>
+        <% icon_color = is_selected ? "color: #f02849;" : "color: #bbb;" %>
+        <i class="<%= icon_style %> <%= icon_class %>" style="<%= icon_color %>"></i>
+      <% elsif rtype == "Congratulations" %>
+        <% icon_style = "fas" %>
+        <% icon_color = is_selected ? "color: #ff9800;" : "color: #bbb;" %>
+        <i class="<%= icon_style %> <%= icon_class %>" style="<%= icon_color %>"></i>
+      <% else %>
+        <% icon_style = is_selected ? "fas" : "far" %>
+        <% icon_color = is_selected ? "color: #{color};" : "color: #bbb;" %>
+        <i class="<%= icon_style %> <%= icon_class %>" style="<%= icon_color %>"></i>
+      <% end %>
+      <span class="reaction-count"><%= count_for_this_type %></span>
+    </button>
+  <% end %>
+</div>
+
+<div class="comments-section">
+  <h5>Comments</h5>
+  <turbo-frame id="comments_for_post_<%= post.id %>">
+    <div id="new_comment_form_for_post_<%= post.id %>">
+      <%= render 'comments/form', post: post %>
+    </div>
+    <div class="comments-list">
+      <%= render post.comments %>
+    </div>
+  </turbo-frame>
+</div>
+</div>

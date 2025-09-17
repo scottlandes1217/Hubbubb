@@ -1,0 +1,30 @@
+<%= form_with model: [@pet, @task], local: true do |f| %>
+  <div class="field">
+    <%= f.label :subject %>
+    <%= f.text_field :subject, required: true %>
+  </div>
+
+  <div class="field">
+    <%= f.label :description %>
+    <%= f.text_area :description %>
+  </div>
+
+  <div class="field">
+    <%= f.label :start_time %>
+    <%= f.datetime_select :start_time %>
+  </div>
+
+  <div class="field">
+    <%= f.label :duration_minutes %>
+    <%= f.number_field :duration_minutes %>
+  </div>
+
+  <div class="field">
+    <%= f.label :flag_list, 'Flags' %>
+    <%= f.text_field :flag_list %>
+  </div>
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

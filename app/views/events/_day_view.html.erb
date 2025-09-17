@@ -1,0 +1,72 @@
+<% @organization ||= local_assigns[:organization] %>
+<% @events ||= local_assigns[:events] %>
+<% @start_date ||= local_assigns[:start_date] %>
+<% @end_date ||= local_assigns[:end_date] %>
+<% @calendars ||= local_assigns[:calendars] %>
+<% @selected_calendar_ids ||= local_assigns[:selected_calendar_ids] %>
+<% @view ||= local_assigns[:view] %>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <%= @start_date.strftime("%A, %B %d, %Y") %>
+        </h5>
+      </div>
+      <div class="card-body">
+        <% if @events.any? %>
+          <% @events.each do |event| %>
+            <div class="event-item mb-3" style="border-left-color: <%= event.calendar.color %>">
+              <div class="row align-items-center">
+                <div class="col-md-3">
+                  <div class="fw-bold">
+                    <%= event.start_time.strftime("%H:%M") %>
+                    <% unless event.all_day %>
+                      - <%= event.end_time.strftime("%H:%M") %>
+                    <% end %>
+                  </div>
+                  <div class="small text-muted">
+                    <%= event.duration_hours %> hours
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="mb-1">
+                    <%= link_to event.title, organization_event_path(@organization, event), 
+                        class: "text-decoration-none" %>
+                  </h6>
+                  <p class="text-muted mb-1">
+                    <%= event.description.present? ? event.description : 'No description' %>
+                  </p>
+                  <% if event.location.present? %>
+                    <small class="text-muted">
+                      <i class="fas fa-map-marker-alt"></i> <%= event.location %>
+                    </small>
+                  <% end %>
+                </div>
+                <div class="col-md-3 text-end">
+                  <span class="badge bg-secondary me-1"><%= event.event_type.titleize %></span>
+                  <span class="badge bg-<%= event.priority == 'urgent' ? 'danger' : 
+                                           event.priority == 'high' ? 'warning' : 
+                                           event.priority == 'medium' ? 'info' : 'secondary' %>">
+                    <%= event.priority.titleize %>
+                  </span>
+                  <div class="mt-2">
+                    <small class="text-muted">
+                      Organized by: <%= event.organizer.full_name %>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center py-5">
+            <h4 class="text-muted">No events scheduled for this day</h4>
+            <p class="text-muted">Click "New Event" to create an event for this day.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div> 

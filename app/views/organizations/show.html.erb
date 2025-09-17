@@ -1,0 +1,14 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<h1><%= @organization.name %></h1>
+<p>
+  <strong>Address:</strong> <%= @organization.street_address %>, <%= @organization.city %>, <%= @organization.state %>, <%= @organization.zip %>, <%= @organization.country %>
+</p>
+<p>
+  <strong>Phone:</strong> <%= @organization.phone %>
+</p>
+<p>
+  <strong>Email:</strong> <%= @organization.email %>
+</p>

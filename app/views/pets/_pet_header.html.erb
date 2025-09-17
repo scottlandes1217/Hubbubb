@@ -1,0 +1,52 @@
+<!-- Header Section -->
+<div class="pet-header" <%= (local_assigns[:with_id] == false) ? '' : "id=\"pet_header_#{pet.id}\"" %>>
+  <!-- Pet Photo -->
+  <div class="pet-photo-container" data-action="click->pet#openImageModal">
+    <% if pet.photo.attached? %>
+      <%= image_tag pet.photo, class: "pet-photo", data: { pet_target: "photo" } %>
+      <div class="photo-overlay">Change Photo</div>
+    <% else %>
+      <div class="placeholder-photo">Add Photo</div>
+    <% end %>
+  </div>
+
+  <!-- Editable Name -->
+  <div class="header-details">
+    <div class="field-container name-field-header d-flex align-items-center">
+      <div class="d-flex align-items-center">
+        <span class="value" data-field="name" data-edit-field-target="value"><%= pet.name %></span>
+        <button class="edit-button" 
+                data-field="name" 
+                data-edit-field-target="editButton" 
+                data-action="click->edit-field#edit">
+          <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+        </button>
+        <input class="edit-input" 
+               type="text" 
+               data-field="name" 
+               data-edit-field-target="input" 
+               value="<%= pet.name %>" 
+               style="display: none;" />
+      </div>
+      
+      <!-- Flag Icons -->
+      <div class="flag-icons ms-3" id="pet_flags">
+        <% if pet.flags.present? %>
+          <% pet.flags.each do |flag| %>
+            <% flag_icon = get_flag_icon(pet.organization, flag) %>
+            <% if flag_icon %>
+              <%= image_tag flag_icon, 
+                           class: "flag-icon", 
+                           title: flag,
+                           style: "width: 24px; height: 24px; margin-right: 4px;" %>
+            <% else %>
+              <span class="badge bg-secondary me-1"><%= flag %></span>
+            <% end %>
+          <% end %>
+        <% else %>
+          <span class="text-muted">[No flags]</span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div> 

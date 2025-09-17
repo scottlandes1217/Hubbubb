@@ -1,0 +1,8 @@
+<% @pet.gallery_photos.each do |photo| %>
+  <div class="gallery-item"
+       data-photo-id="<%= photo.blob.signed_id %>"
+       data-photo-url="<%= polymorphic_url(photo, only_path: true) %>"
+       data-action="click->pet#selectImageFromGallery">
+    <%= image_tag photo, class: "gallery-thumbnail" %>
+  </div>
+<% end %>

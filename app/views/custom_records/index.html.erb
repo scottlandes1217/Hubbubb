@@ -1,0 +1,73 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+              <h2>Records in <%= @custom_object.name %></h2>
+      <p class="text-muted mb-0">
+        <%= link_to "← Back to Object", organization_custom_object_path(@organization, @custom_object) %>
+      </p>
+    </div>
+            <%= link_to "Add New Record", new_organization_custom_object_custom_record_path(@organization, @custom_object), class: "btn btn-primary" %>
+  </div>
+
+  <% if @custom_records.any? %>
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @custom_records.each do |record| %>
+                <tr>
+                  <td>
+                    <strong><%= link_to record.name, organization_custom_object_custom_record_path(@organization, @custom_object, record) %></strong>
+                    <% if record.description.present? %>
+                      <br><small class="text-muted"><%= truncate(record.description, length: 50) %></small>
+                    <% end %>
+                  </td>
+                  <td>
+                    <code><%= record.external_id %></code>
+                  </td>
+                  <td>
+                    <small class="text-muted">
+                      <%= record.created_at.strftime("%b %d, %Y") %>
+                    </small>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                                      <%= link_to "View", organization_custom_object_custom_record_path(@organization, @custom_object, record), class: "btn btn-outline-primary" %>
+                <%= link_to "Edit", edit_organization_custom_object_custom_record_path(@organization, @custom_object, record), class: "btn btn-outline-secondary" %>
+                <%= link_to "Delete", organization_custom_object_custom_record_path(@organization, @custom_object, record), 
+                          method: :delete, 
+                          data: { confirm: "Are you sure? This action cannot be undone." },
+                          class: "btn btn-outline-danger" %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="fas fa-database fa-3x text-muted"></i>
+      </div>
+      <h4 class="text-muted">No Records Yet</h4>
+      <p class="text-muted">Start adding records to your custom table.</p>
+              <%= link_to "Add Your First Record", new_organization_custom_object_custom_record_path(@organization, @custom_object), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div> 

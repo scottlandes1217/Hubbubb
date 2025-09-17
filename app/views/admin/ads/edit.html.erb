@@ -1,0 +1,45 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h2 class="h4 mb-0">Edit Ad</h2>
+        </div>
+        <div class="card-body">
+          <% if @parent_ad %>
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+              <i class="fas fa-info-circle me-2"></i>
+              This is a variant of <%= link_to @parent_ad.title, edit_admin_ad_path(@parent_ad), class: "alert-link" %>.
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% end %>
+          
+          <% if @variants.present? %>
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Variants:</strong>
+              <ul class="mb-0 mt-2">
+                <% @variants.each do |variant| %>
+                  <li><%= link_to variant.title, edit_admin_ad_path(variant), class: "alert-link" %></li>
+                <% end %>
+              </ul>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          <% end %>
+          
+          <% if @ad.parent_ad_id.nil? %>
+            <div class="mb-3">
+              <%= button_to 'Create Variant', create_variant_admin_ad_path(@ad), method: :post, class: 'btn btn-outline-secondary' %>
+            </div>
+          <% end %>
+          
+          <%= render 'form', ad: @ad %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,5 @@
+<turbo-stream action="replace" target="comment_<%= @comment.id %>">
+  <template>
+    <%= render partial: "comments/comment", formats: [:html], locals: { comment: @comment } %>
+  </template>
+</turbo-stream> 

@@ -1,0 +1,71 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Users</h1>
+    <%= link_to "New User", new_user_path, class: "btn btn-primary" %>
+  </div>
+
+  <% if current_user.impersonated? %>
+    <div class="alert alert-warning mb-4">
+      You are currently impersonating <%= current_user.full_name %>.
+      <%= button_to "Stop Impersonating", stop_impersonating_user_path(current_user), method: :delete, class: "btn btn-warning btn-sm" %>
+    </div>
+  <% end %>
+
+  <!-- Search form -->
+  <%= form_with url: users_path, method: :get, local: true, class: "mb-4" do %>
+    <div class="input-group">
+      <%= text_field_tag :query, params[:query], placeholder: "Search users by email or name...", class: "form-control" %>
+      <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+  <% end %>
+
+  <!-- Users Table -->
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Organizations</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td><%= user.full_name %></td>
+            <td><%= user.email %></td>
+            <td><%= user.role.titleize %></td>
+            <td>
+              <% if user.shelter_staff? %>
+                <%= user.organizations.map(&:name).join(", ") %>
+              <% else %>
+                -
+              <% end %>
+            </td>
+            <td><%= user.created_at.strftime("%B %d, %Y") %></td>
+            <td>
+              <div class="btn-group">
+                <%= link_to "Edit", edit_user_path(user), class: "btn btn-sm btn-outline-primary" %>
+                <% if current_user.can_impersonate?(user) %>
+                  <%= button_to "Log in As", impersonate_user_path(user), method: :post, class: "btn btn-sm btn-outline-secondary" %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="mt-3">
+    <%= paginate @users %>
+  </div>
+</div> 

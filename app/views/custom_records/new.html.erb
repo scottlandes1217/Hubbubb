@@ -1,0 +1,115 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Add New Record to <%= @custom_object.name %></h3>
+        </div>
+        <div class="card-body">
+                      <%= form_with model: [@organization, @custom_object, @custom_record], local: true do |form| %>
+            <% if @custom_record.errors.any? %>
+              <div class="alert alert-danger">
+                <h5><%= pluralize(@custom_record.errors.count, "error") %> prohibited this record from being saved:</h5>
+                <ul>
+                  <% @custom_record.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :name, "Record Name", class: "form-label" %>
+                  <%= form.text_field :name, class: "form-control", placeholder: "Enter record name..." %>
+                  <div class="form-text">A descriptive name for this record</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :external_id, "External ID", class: "form-label" %>
+                  <%= form.text_field :external_id, class: "form-control", placeholder: "Optional external identifier" %>
+                  <div class="form-text">Optional external ID (auto-generated if left blank)</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :description, "Description", class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe this record..." %>
+            </div>
+
+            <% if @custom_fields.any? %>
+              <hr>
+              <h5>Field Values</h5>
+              
+              <% @custom_fields.each do |field| %>
+                <div class="mb-3">
+                  <%= label_tag "field_values[#{field.api_name}]", field.display_name, class: "form-label" %>
+                  <% if field.required? %>
+                    <span class="text-danger">*</span>
+                  <% end %>
+                  
+                  <% case field.field_type %>
+                  <% when 'text' %>
+                    <%= text_field_tag "field_values[#{field.api_name}]", nil, class: "form-control", placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% when 'textarea' %>
+                    <%= text_area_tag "field_values[#{field.api_name}]", nil, class: "form-control", rows: 3, placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% when 'number', 'currency', 'percent' %>
+                    <%= number_field_tag "field_values[#{field.api_name}]", nil, class: "form-control", step: field.field_type == 'number' ? 'any' : '0.01', placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% when 'date' %>
+                    <%= date_field_tag "field_values[#{field.api_name}]", nil, class: "form-control" %>
+                  <% when 'datetime' %>
+                    <%= datetime_local_field_tag "field_values[#{field.api_name}]", nil, class: "form-control" %>
+                  <% when 'email' %>
+                    <%= email_field_tag "field_values[#{field.api_name}]", nil, class: "form-control", placeholder: "Enter email address..." %>
+                  <% when 'phone' %>
+                    <%= telephone_field_tag "field_values[#{field.api_name}]", nil, class: "form-control", placeholder: "Enter phone number..." %>
+                  <% when 'url' %>
+                    <%= url_field_tag "field_values[#{field.api_name}]", nil, class: "form-control", placeholder: "Enter URL..." %>
+                  <% when 'checkbox' %>
+                    <div class="form-check">
+                      <%= check_box_tag "field_values[#{field.api_name}]", "1", false, class: "form-check-input" %>
+                      <%= label_tag "field_values[#{field.api_name}]", "Yes", class: "form-check-label" %>
+                    </div>
+                  <% when 'picklist' %>
+                    <%= select_tag "field_values[#{field.api_name}]", 
+                        options_for_select(field.picklist_values.map { |v| [v, v] }), 
+                        { prompt: "Select #{field.display_name.downcase}...", class: "form-select" } %>
+                  <% when 'multipicklist' %>
+                    <%= select_tag "field_values[#{field.api_name}]", 
+                        options_for_select(field.picklist_values.map { |v| [v, v] }), 
+                        { multiple: true, class: "form-select", size: 4 } %>
+                  <% else %>
+                    <%= text_field_tag "field_values[#{field.api_name}]", nil, class: "form-control", placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% end %>
+                  
+                  <% if field.description.present? %>
+                    <div class="form-text"><%= field.description %></div>
+                  <% end %>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No fields have been defined for this table yet. 
+                <%= link_to "Add fields", organization_organization_object_fields_path(@organization, @custom_object.api_name) %> to start collecting data.
+              </div>
+            <% end %>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to "Cancel", organization_custom_object_custom_records_path(@organization, @custom_object), class: "btn btn-secondary" %>
+              <%= form.submit "Create Record", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

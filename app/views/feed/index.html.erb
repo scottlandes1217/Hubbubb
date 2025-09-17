@@ -1,0 +1,23 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<h1>Feed</h1>
+
+<div id="feed-container" data-controller="feed">
+  <div data-feed-target="posts">
+    <% @feed_items.each do |item| %>
+      <% if item.is_a?(Post) %>
+        <%= render partial: 'posts/post', locals: { post: item } %>
+      <% elsif item.is_a?(Ad) %>
+        <%= render partial: 'ads/ad', locals: { ad: item } %>
+      <% end %>
+    <% end %>
+  </div>
+  <div id="loading-indicator" data-feed-target="loadingIndicator" style="display: none; text-align: center; font-weight: bold;">
+    Loading...
+  </div>
+  <div id="no-more-posts" style="display: none; text-align: center; margin-top: 20px; font-weight: bold;">
+    No more posts to display.
+  </div>
+</div>

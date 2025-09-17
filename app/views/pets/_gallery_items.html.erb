@@ -1,0 +1,11 @@
+<% @pet.gallery_photos.each do |photo| %>
+  <div class="gallery-item">
+    <%= image_tag photo, class: "gallery-photo" %>
+    <%= button_to "Delete",
+          gallery_organization_pet_path(@organization, @pet, photo_id: photo.id),
+          method: :delete,
+          data: { action: "click->pet#deletePhoto", photo_id: photo.id },
+          class: "btn btn-danger",
+          form: false %>
+  </div>
+<% end %>

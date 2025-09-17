@@ -1,0 +1,923 @@
+<!-- Tabs Component Partial -->
+<script>
+  console.log('[PF] Tabs component partial loaded');
+  
+  // WORKING tabs component - fixed and simplified
+  function buildWorkingTabs(comp) {
+    console.log('[PF] Building tabs for component:', comp);
+    
+    // Check if tabs are already built with proper structure
+    if (comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
+        comp.getEl().querySelector('.rb-del') && 
+        comp.getEl().querySelector('.rb-edit-tabs')) {
+      console.log('[PF] Tabs already exist with proper structure, checking if restoration needed');
+      // Even if structure exists, we might need to restore state after reload
+      addMissingIcons(comp);
+      attachTabClickHandlers(comp);
+      restoreActiveTabState(comp);
+      return;
+    }
+    
+    // Check if basic tabs structure exists but might be missing controls
+    if (comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
+        comp.getEl().querySelector('.pf-tabs-header') && 
+        comp.getEl().querySelector('.pf-tabs-body')) {
+      console.log('[PF] Basic tabs structure exists, adding missing controls and restoring state');
+      // Add missing icons and re-attach click handlers
+      addMissingIcons(comp);
+      attachTabClickHandlers(comp);
+      
+      // Restore the active tab state
+      restoreActiveTabState(comp);
+      return;
+    }
+    
+    console.log('[PF] Tabs need rebuilding or are incomplete');
+    
+    // Get existing tabs data or use defaults
+    let tabs = [];
+    let activeTabId = 'tab1';
+    
+    try {
+      const existingTabsJson = comp.getAttributes()['tabs-json'];
+      if (existingTabsJson) {
+        tabs = JSON.parse(existingTabsJson);
+        activeTabId = comp.getAttributes()['active-tab-id'] || tabs[0]?.id || 'tab1';
+        console.log('[PF] Using existing tabs:', tabs, 'active:', activeTabId);
+      } else {
+        tabs = [
+          { id: 'tab1', title: 'Tab 1' },
+          { id: 'tab2', title: 'Tab 2' }
+        ];
+        // Set initial attributes
+        comp.addAttributes({ 
+          'tabs-json': JSON.stringify(tabs), 
+          'active-tab-id': activeTabId 
+        });
+      }
+    } catch(e) {
+      console.warn('[PF] Error parsing existing tabs, using defaults:', e);
+      tabs = [
+        { id: 'tab1', title: 'Tab 1' },
+        { id: 'tab2', title: 'Tab 2' }
+      ];
+      comp.addAttributes({ 
+        'tabs-json': JSON.stringify(tabs), 
+        'active-tab-id': activeTabId 
+      });
+    }
+    
+    // Only clear if no existing structure
+    if (!comp.getEl() || !comp.getEl().querySelector('.pf-tabs')) {
+      comp.components('');
+    }
+    
+    // Create the main tabs wrapper
+    const tabsWrapper = comp.append('<div class="pf-tabs pf-interactive"></div>')[0];
+    
+    // Create header with tab buttons
+    const header = tabsWrapper.append('<div class="pf-tabs-header"></div>')[0];
+    tabs.forEach((t, i) => {
+      const btn = header.append(`<span class="pf-tab-btn ${i === 0 ? 'active' : ''}" data-role="pf-tab-btn" data-tab-id="${t.id}">${t.title}</span>`)[0];
+    });
+    
+    // Attach click handlers to all tab buttons
+    attachTabClickHandlers(comp);
+    
+    // Create body with tab sections
+    const body = tabsWrapper.append('<div class="pf-tabs-body"></div>')[0];
+    
+    // Create tab sections as proper GrapesJS components
+    tabs.forEach((t, i) => {
+      const section = body.append('<div class="pf-tab-section" data-role="pf-tab-section" data-tab-id="' + t.id + '"></div>')[0];
+      
+      // Set first tab as active
+      if (i === 0) {
+        section.addClass('active');
+      }
+      
+      // Configure section to accept drops
+      section.set({
+        droppable: true,
+        accept: ['record-field', 'record-partial'],
+        selectable: false,
+        hoverable: false,
+        highlightable: false,
+        draggable: false
+      });
+      
+      console.log('[PF] Tab section created:', { id: t.id, droppable: section.get('droppable') });
+    });
+    
+    // Configure tabs wrapper and body to NOT accept drops
+    tabsWrapper.set({
+      droppable: false,
+      accept: []
+    });
+    
+    body.set({
+      droppable: false,
+      accept: []
+    });
+    
+    // Add delete button with SVG icon - ensure it's properly configured
+    const deleteBtn = tabsWrapper.append('<span class="rb-del" title="Delete" data-role="rb-del" aria-label="Delete"></span>')[0];
+    deleteBtn.components('<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>');
+    
+    // Configure delete button to be properly visible and interactive
+    deleteBtn.set({
+      selectable: false,
+      hoverable: false,
+      highlightable: false,
+      draggable: false,
+      droppable: false,
+      editable: false
+    });
+    
+    // Add edit button with pencil icon
+    const editBtn = tabsWrapper.append('<span class="rb-edit-tabs" data-role="rb-edit-tabs" title="Edit Tabs">✎</span>')[0];
+    
+    // Configure edit button
+    editBtn.set({
+      selectable: false,
+      hoverable: false,
+      highlightable: false,
+      draggable: false,
+      droppable: false,
+      editable: false
+    });
+    
+    // Ensure the component is properly configured for selection
+    tabsWrapper.set({
+      selectable: true,
+      hoverable: true,
+      highlightable: true
+    });
+    
+    // CRITICAL: Ensure the main component itself has the right configuration
+    comp.set({
+      droppable: false, // Main component doesn't accept drops
+      selectable: true,
+      hoverable: true,
+      highlightable: true
+    });
+    
+    // Debug: Log the final structure
+    console.log('[PF] Tabs component built successfully');
+    console.log('[PF] Tabs wrapper element:', tabsWrapper.getEl());
+    console.log('[PF] Tabs wrapper classes:', tabsWrapper.getEl()?.className);
+    console.log('[PF] Delete button element:', deleteBtn.getEl());
+    console.log('[PF] Edit button element:', tabsWrapper.find('[data-role="rb-edit-tabs"]')[0]?.getEl());
+    
+    // CRITICAL: After building, ensure all functionality is properly attached
+    // This ensures that restored tabs work exactly like new tabs
+    setTimeout(() => {
+      try {
+        // Re-attach click handlers (in case they were lost during rebuild)
+        attachTabClickHandlers(comp);
+        
+        // Restore active tab state
+        restoreActiveTabState(comp);
+        
+        // Ensure proper component configuration is maintained
+        const finalTabsWrapper = comp.getEl()?.querySelector('.pf-tabs');
+        if (finalTabsWrapper) {
+          // Force the component to recognize its new structure
+          comp.trigger('change:components');
+          
+          console.log('[PF] Tabs component fully configured and ready');
+        }
+      } catch(e) {
+        console.warn('[PF] Error in post-build configuration:', e);
+      }
+    }, 50);
+  }
+
+  // Function to restore the active tab state
+  function restoreActiveTabState(comp) {
+    try {
+      let activeTabId = comp.getAttributes()['active-tab-id'];
+      
+      const tabsWrapper = comp.getEl().querySelector('.pf-tabs');
+      if (!tabsWrapper) return;
+      
+      const header = tabsWrapper.querySelector('.pf-tabs-header');
+      const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
+      
+      if (!header) return;
+      
+      // If no active tab is set, default to the first tab
+      if (!activeTabId) {
+        const firstBtn = header.querySelector('.pf-tab-btn');
+        if (firstBtn) {
+          activeTabId = firstBtn.getAttribute('data-tab-id');
+          // Update the component attribute
+          comp.addAttributes({ 'active-tab-id': activeTabId });
+          console.log('[PF] No active tab set, defaulting to first tab:', activeTabId);
+        }
+      }
+      
+      if (!activeTabId) return;
+      
+      // Remove active from all buttons and sections
+      const allBtns = header.querySelectorAll('.pf-tab-btn');
+      allBtns.forEach(b => b.classList.remove('active'));
+      allSections.forEach(s => s.classList.remove('active'));
+      
+      // Add active to the correct button and section
+      const activeBtn = header.querySelector(`[data-tab-id="${activeTabId}"]`);
+      const activeSection = tabsWrapper.querySelector(`[data-role="pf-tab-section"][data-tab-id="${activeTabId}"]`);
+      
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        console.log('[PF] Restored active button:', activeTabId);
+      }
+      
+      if (activeSection) {
+        activeSection.classList.add('active');
+        console.log('[PF] Restored active section:', activeTabId);
+      }
+      
+      console.log('[PF] Active tab state restored:', activeTabId);
+    } catch(e) {
+      console.warn('[PF] Error restoring active tab state:', e);
+    }
+  }
+  
+  // Function to attach click handlers to tab buttons
+  function attachTabClickHandlers(comp) {
+    try {
+      const tabsWrapper = comp.getEl().querySelector('.pf-tabs');
+      if (!tabsWrapper) return;
+      
+      const header = tabsWrapper.querySelector('.pf-tabs-header');
+      if (!header) return;
+      
+      const tabButtons = header.querySelectorAll('.pf-tab-btn');
+      console.log('[PF] Attaching click handlers to', tabButtons.length, 'tab buttons');
+      
+      // Check if handlers are already attached to the wrapper
+      if (tabsWrapper.hasAttribute('data-handlers-attached')) {
+        console.log('[PF] Click handlers already attached, skipping re-attachment');
+        return;
+      }
+      
+      tabButtons.forEach((btn, index) => {
+        // Ensure no duplicate listeners by removing existing ones (if any)
+        if (btn.__pf_tab_click_listener) {
+          btn.removeEventListener('click', btn.__pf_tab_click_listener);
+        }
+
+        const clickHandler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const tabId = btn.getAttribute('data-tab-id');
+          console.log('[PF] Tab clicked:', tabId);
+          console.log('[PF] Previous active tab:', comp.getAttributes()['active-tab-id']);
+          
+          // Set flag to prevent re-rendering during tab switch
+          comp.addAttributes({ '_switchingTabs': true });
+          
+          // Update active tab
+          comp.addAttributes({ 'active-tab-id': tabId });
+          console.log('[PF] Updated active tab to:', tabId);
+          
+          // Update UI - remove active from all buttons and sections
+          const allBtns = header.querySelectorAll('.pf-tab-btn');
+          const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
+          
+          console.log('[PF] Found buttons:', allBtns.length, 'sections:', allSections.length);
+          
+          allBtns.forEach(b => b.classList.remove('active'));
+          allSections.forEach(s => s.classList.remove('active'));
+          
+          // Add active to clicked button
+          btn.classList.add('active');
+          console.log('[PF] Button activated:', tabId);
+          
+          // Find and activate the corresponding section
+          const section = tabsWrapper.querySelector(`[data-role="pf-tab-section"][data-tab-id="${tabId}"]`);
+          if (section) {
+            section.classList.add('active');
+            console.log('[PF] Tab section activated:', tabId);
+            
+            // Verify the change was applied
+            console.log('[PF] Section active state:', section.classList.contains('active'));
+            console.log('[PF] All sections:', Array.from(tabsWrapper.querySelectorAll('.pf-tab-section')).map(s => ({
+              id: s.getAttribute('data-tab-id'),
+              active: s.classList.contains('active'),
+              visible: s.style.display !== 'none'
+            })));
+          } else {
+            console.warn('[PF] Could not find section for tab:', tabId);
+          }
+          
+          // Update the DOM directly instead of using GrapesJS render
+          console.log('[PF] DOM updated successfully');
+          
+          // Clear the switching flag and ensure active tab is set
+          try {
+            comp.addAttributes({ 
+              'active-tab-id': tabId,
+              '_switchingTabs': false 
+            });
+            console.log('[PF] Tab switch completed successfully');
+          } catch(e) {
+            console.warn('[PF] Could not update component attributes:', e);
+          }
+        };
+
+        btn.addEventListener('click', clickHandler);
+        btn.__pf_tab_click_listener = clickHandler; // Store reference to remove later if needed
+      });
+      
+      // Mark as handlers attached
+      tabsWrapper.setAttribute('data-handlers-attached', 'true');
+      console.log('[PF] Click handlers attached successfully');
+    } catch(e) {
+      console.warn('[PF] Error attaching click handlers:', e);
+    }
+  }
+  
+  // Function to add missing icons without rebuilding the entire structure
+  function addMissingIcons(comp) {
+    try {
+      const tabsWrapper = comp.getEl().querySelector('.pf-tabs');
+      if (!tabsWrapper) return;
+      
+      // Add delete button if missing
+      if (!tabsWrapper.querySelector('.rb-del')) {
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'rb-del';
+        deleteBtn.setAttribute('data-role', 'rb-del');
+        deleteBtn.setAttribute('aria-label', 'Delete');
+        deleteBtn.title = 'Delete';
+        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+        deleteBtn.style.cssText = `
+          position: absolute;
+          top: 4px;
+          right: 6px;
+          background: rgba(0,0,0,0.7);
+          color: #fff;
+          border-radius: 12px;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          text-align: center;
+          font-size: 12px;
+          cursor: pointer;
+          z-index: 9999;
+          display: none;
+        `;
+        tabsWrapper.appendChild(deleteBtn);
+      }
+      
+      // Add edit button if missing
+      if (!tabsWrapper.querySelector('.rb-edit-tabs')) {
+        const editBtn = document.createElement('span');
+        editBtn.className = 'rb-edit-tabs';
+        editBtn.setAttribute('data-role', 'rb-edit-tabs');
+        editBtn.title = 'Edit Tabs';
+        editBtn.textContent = '✎';
+        editBtn.style.cssText = `
+          position: absolute;
+          top: 4px;
+          right: 30px;
+          background: rgba(0,0,0,0.6);
+          color: #fff;
+          border-radius: 12px;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          text-align: center;
+          font-size: 12px;
+          cursor: pointer;
+          z-index: 9999;
+          display: none;
+        `;
+        tabsWrapper.appendChild(editBtn);
+      }
+      
+      console.log('[PF] Missing icons added successfully');
+    } catch(e) {
+      console.warn('[PF] Error adding missing icons:', e);
+    }
+  }
+  
+  // Helper functions for tabs
+  function pfGenerateId(prefix = 't') { 
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`; 
+  }
+  
+  function pfParseTabsJson(attr) { 
+    try { return JSON.parse(attr || '[]'); } catch(_) { return []; } 
+  }
+  
+  function pfStringifyTabsJson(arr) { 
+    try { return JSON.stringify(arr || []); } catch(_) { return '[]'; } 
+  }
+
+  // Handle component drops into tab sections
+  function handleTabSectionDrop(component, tabSection) {
+    try {
+      console.log('[PF] Handling drop into tab section:', { component, tabSection });
+      
+      // Ensure the component is properly configured
+      if (component.set) {
+        component.set({
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
+          draggable: true,
+          droppable: false,
+          copyable: false
+        });
+      }
+      
+      // Add delete button if it doesn't exist
+      const el = component.getEl();
+      if (el && !el.querySelector('.rb-del')) {
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'rb-del';
+        deleteBtn.setAttribute('data-role', 'rb-del');
+        deleteBtn.setAttribute('title', 'Delete');
+        deleteBtn.setAttribute('aria-label', 'Delete');
+        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+        deleteBtn.style.cssText = `
+          position: absolute;
+          top: 4px;
+          right: 6px;
+          background: rgba(0,0,0,0.7);
+          color: #fff;
+          border-radius: 12px;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          text-align: center;
+          font-size: 12px;
+          cursor: pointer;
+          z-index: 9999;
+          display: none;
+        `;
+        
+        // Show on hover/selection
+        el.addEventListener('mouseenter', () => deleteBtn.style.display = 'inline-flex');
+        el.addEventListener('mouseleave', () => deleteBtn.style.display = 'none');
+        
+        // Handle delete
+        deleteBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          component.remove();
+        });
+        
+        el.appendChild(deleteBtn);
+      }
+      
+      console.log('[PF] Component successfully configured in tab section');
+    } catch(e) {
+      console.warn('[PF] Tab section drop handler error:', e);
+    }
+  }
+
+  // Tabs component definition
+  function defineTabsComponent(editor) {
+    editor.DomComponents.addType('record-tabs', {
+      model: {
+        defaults: {
+          'tabs-json': '[]',
+          'active-tab-id': '',
+          tagName: 'div',
+          attributes: { class: 'pf-tabs-container pf-interactive', 'data-comp-kind': 'record-tabs' },
+          editable: false,
+          draggable: true,
+          copyable: false,
+          droppable: false,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
+          badgable: false,
+          toolbar: [],
+          components: '',
+          // Ensure the component can be selected and interacted with
+          lockInnerComponents: false,
+          // Make sure the component itself is interactive
+          interactive: true
+        }
+      },
+      view: {
+        events: { 
+          'click [data-role="rb-del"]': 'onDelete',
+          'click [data-role="rb-edit-tabs"]': 'onEdit'
+        },
+        onRender() {
+          try {
+            // Check if we're in the middle of a tab switch to prevent re-rendering
+            if (this.model.get('_switchingTabs')) {
+              console.log('[PF] Tabs component rendering during switch, skipping');
+              return;
+            }
+            
+            console.log('[PF] Tabs component rendering, model:', this.model);
+            buildWorkingTabs(this.model);
+          } catch(e) { 
+            console.warn('[PF] Tabs render error:', e); 
+          }
+        },
+        onDelete(e) { 
+          e.preventDefault(); 
+          e.stopPropagation(); 
+          try { this.model.remove(); } catch(_) {} 
+        },
+        onEdit(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            // Open the edit modal from the main builder
+            if (window.openTabsConfigModal) {
+              window.openTabsConfigModal(this.model);
+            } else {
+              console.log('[PF] Edit tabs clicked - modal function not available');
+            }
+          } catch(_) {}
+        }
+      }
+    });
+    
+    // Add runtime CSS and JavaScript to the editor's CSS
+    const runtimeCSS = `
+/* RUNTIME: Tabs JavaScript and CSS */
+// Runtime tabs functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Find all tabs components on the page
+  const tabsContainers = document.querySelectorAll('.pf-tabs-container');
+  
+  tabsContainers.forEach(container => {
+    const tabsWrapper = container.querySelector('.pf-tabs');
+    if (!tabsWrapper) return;
+    
+    const header = tabsWrapper.querySelector('.pf-tabs-header');
+    const tabButtons = header.querySelectorAll('.pf-tab-btn');
+    
+    // Attach click handlers to tab buttons
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const tabId = this.getAttribute('data-tab-id');
+        console.log('[PF Runtime] Tab clicked:', tabId);
+        
+        // Remove active from all buttons and sections
+        const allBtns = header.querySelectorAll('.pf-tab-btn');
+        const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
+        
+        allBtns.forEach(b => b.classList.remove('active'));
+        allSections.forEach(s => s.classList.remove('active'));
+        
+        // Add active to clicked button
+        this.classList.add('active');
+        
+        // Find and activate the corresponding section
+        const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
+        if (section) {
+          section.classList.add('active');
+          console.log('[PF Runtime] Tab section activated:', tabId);
+        }
+      });
+    });
+    
+    // Set first tab as active by default if none is active
+    const activeBtn = header.querySelector('.pf-tab-btn.active');
+    if (!activeBtn && tabButtons.length > 0) {
+      const firstBtn = tabButtons[0];
+      const firstTabId = firstBtn.getAttribute('data-tab-id');
+      
+      firstBtn.classList.add('active');
+      const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
+      if (firstSection) {
+        firstSection.classList.add('active');
+      }
+    }
+  });
+});
+
+// Runtime tabs CSS
+.pf-tabs-container {
+  position: relative;
+}
+
+.pf-tabs {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pf-tabs-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+}
+
+.pf-tab-btn {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-right: 1px solid #ddd;
+  background: #f8f9fa;
+  transition: background-color 0.2s;
+}
+
+.pf-tab-btn:hover {
+  background: #e9ecef;
+}
+
+.pf-tab-btn.active {
+  background: #fff;
+  border-bottom: 2px solid #007bff;
+  margin-bottom: -1px;
+}
+
+.pf-tabs-body {
+  background: #fff;
+  padding: 16px;
+}
+
+.pf-tab-section {
+  display: none;
+}
+
+.pf-tab-section.active {
+  display: block;
+}
+
+/* Remove blue outlines on hover for runtime */
+.pf-tabs-container:hover,
+.pf-tabs-container:focus,
+.pf-tabs-container:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.pf-tabs-container *:hover,
+.pf-tabs-container *:focus,
+.pf-tabs-container *:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+`;
+    
+    // Inject the runtime CSS into the editor
+    const styleElement = document.createElement('style');
+    styleElement.textContent = runtimeCSS;
+    document.head.appendChild(styleElement);
+    
+    console.log('[PF] Runtime tabs CSS and JavaScript injected into editor');
+  }
+
+  // Flag to prevent infinite loops
+  let isRestoring = false;
+  
+  // Function to restore tabs after loading a saved layout
+  function restoreTabsAfterLoad(editor) {
+    // Prevent infinite loops
+    if (isRestoring) {
+      console.log('[PF] Already restoring, skipping duplicate call');
+      return;
+    }
+    
+    console.log('[PF] Restoring tabs after load...');
+    isRestoring = true;
+    
+    // Check if editor is properly initialized
+    if (!editor || !editor.DomComponents || !editor.DomComponents.getWrapper) {
+      console.warn('[PF] Editor not properly initialized, skipping restore');
+      isRestoring = false;
+      return;
+    }
+    
+    try {
+      // Try multiple selectors to find tabs components
+      let tabsComponents = editor.DomComponents.getWrapper().find('[data-comp-kind="record-tabs"]');
+      if (!tabsComponents || tabsComponents.length === 0) {
+        tabsComponents = editor.DomComponents.getWrapper().find('.pf-tabs-container');
+      }
+      if (!tabsComponents || tabsComponents.length === 0) {
+        tabsComponents = editor.DomComponents.getWrapper().find('.pf-tabs');
+      }
+      
+      console.log('[PF] Found tabs components to restore:', tabsComponents ? tabsComponents.length : 0);
+      
+      if (tabsComponents && tabsComponents.length > 0) {
+        tabsComponents.forEach(comp => {
+          console.log('[PF] Restoring tabs component:', comp);
+          console.log('[PF] Component element:', comp.getEl());
+          console.log('[PF] Component attributes:', comp.getAttributes());
+          
+          // Force a rebuild to ensure proper structure
+          setTimeout(() => {
+            buildWorkingTabs(comp);
+          }, 100);
+        });
+      } else {
+        console.log('[PF] No tabs components found to restore');
+      }
+    } catch (error) {
+      console.warn('[PF] Error during tabs restore:', error);
+    } finally {
+      // Reset flag after a delay to allow for any pending operations
+      setTimeout(() => {
+        isRestoring = false;
+      }, 500);
+    }
+  }
+  
+  // Function to get runtime CSS and JavaScript for saving
+  function getRuntimeCode() {
+    return `/* RUNTIME: Tabs JavaScript and CSS */
+// Runtime tabs functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Find all tabs components on the page
+  const tabsContainers = document.querySelectorAll('.pf-tabs-container');
+  
+  tabsContainers.forEach(container => {
+    const tabsWrapper = container.querySelector('.pf-tabs');
+    if (!tabsWrapper) return;
+    
+    const header = tabsWrapper.querySelector('.pf-tabs-header');
+    const tabButtons = header.querySelectorAll('.pf-tab-btn');
+    
+    // Attach click handlers to tab buttons
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const tabId = this.getAttribute('data-tab-id');
+        console.log('[PF Runtime] Tab clicked:', tabId);
+        
+        // Remove active from all buttons and sections
+        const allBtns = header.querySelectorAll('.pf-tab-btn');
+        const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
+        
+        allBtns.forEach(b => b.classList.remove('active'));
+        allSections.forEach(s => s.classList.remove('active'));
+        
+        // Add active to clicked button
+        this.classList.add('active');
+        
+        // Find and activate the corresponding section
+        const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
+        if (section) {
+          section.classList.add('active');
+          console.log('[PF Runtime] Tab section activated:', tabId);
+        }
+      });
+    });
+    
+    // Set first tab as active by default if none is active
+    const activeBtn = header.querySelector('.pf-tab-btn.active');
+    if (!activeBtn && tabButtons.length > 0) {
+      const firstBtn = tabButtons[0];
+      const firstTabId = firstBtn.getAttribute('data-tab-id');
+      
+      firstBtn.classList.add('active');
+      const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
+      if (firstSection) {
+        firstSection.classList.add('active');
+      }
+    }
+  });
+});
+
+// Runtime tabs CSS
+.pf-tabs-container {
+  position: relative;
+}
+
+.pf-tabs {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pf-tabs-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+}
+
+.pf-tab-btn {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-right: 1px solid #ddd;
+  background: #f8f9fa;
+  transition: background-color 0.2s;
+}
+
+.pf-tab-btn:hover {
+  background: #e9ecef;
+}
+
+.pf-tab-btn.active {
+  background: #fff;
+  border-bottom: 2px solid #007bff;
+  margin-bottom: -1px;
+}
+
+.pf-tabs-body {
+  background: #fff;
+  padding: 16px;
+}
+
+.pf-tab-section {
+  display: none;
+}
+
+.pf-tab-section.active {
+  display: block;
+}
+
+/* Remove blue outlines on hover for runtime */
+.pf-tabs-container:hover,
+.pf-tabs-container:focus,
+.pf-tabs-container:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.pf-tabs-container *:hover,
+.pf-tabs-container *:focus,
+.pf-tabs-container *:active {
+  outline: none !important;
+  box-shadow: none !important;
+}`;
+  }
+
+  // Export functions for use in main builder
+  window.TabsComponent = {
+    buildWorkingTabs,
+    pfGenerateId,
+    pfParseTabsJson,
+    pfStringifyTabsJson,
+    handleTabSectionDrop,
+    defineTabsComponent,
+    restoreTabsAfterLoad,
+    addMissingIcons,
+    attachTabClickHandlers,
+    restoreActiveTabState,
+    getRuntimeCode
+  };
+  
+  // Make restore function globally available for debugging
+  window.restoreTabs = function() {
+    if (window.gjsEditor && window.gjsEditor.DomComponents && window.gjsEditor.DomComponents.getWrapper) {
+      console.log('[PF] Manual restore triggered');
+      window.TabsComponent.restoreTabsAfterLoad(window.gjsEditor);
+    } else {
+      console.log('[PF] No GrapesJS editor found or not ready');
+      console.log('[PF] gjsEditor:', window.gjsEditor);
+      if (window.gjsEditor) {
+        console.log('[PF] DomComponents:', window.gjsEditor.DomComponents);
+        console.log('[PF] getWrapper:', window.gjsEditor.DomComponents?.getWrapper);
+      }
+    }
+  };
+  
+  // Test function to verify tabs are working
+  window.testTabs = function() {
+    console.log('[PF] Testing tabs functionality...');
+    
+    const tabsContainer = document.querySelector('.pf-tabs-container');
+    if (!tabsContainer) {
+      console.log('[PF] No tabs container found');
+      return;
+    }
+    
+    const tabsWrapper = tabsContainer.querySelector('.pf-tabs');
+    if (!tabsWrapper) {
+      console.log('[PF] No tabs wrapper found');
+      return;
+    }
+    
+    const buttons = tabsWrapper.querySelectorAll('.pf-tab-btn');
+    const sections = tabsWrapper.querySelectorAll('.pf-tab-section');
+    
+    console.log('[PF] Found tabs:', {
+      container: !!tabsContainer,
+      wrapper: !!tabsWrapper,
+      buttons: buttons.length,
+      sections: sections.length,
+      activeButton: tabsWrapper.querySelector('.pf-tab-btn.active')?.textContent,
+      activeSection: tabsWrapper.querySelector('.pf-tab-section.active')?.getAttribute('data-tab-id')
+    });
+    
+    // Test clicking each tab
+    buttons.forEach((btn, index) => {
+      console.log(`[PF] Testing tab ${index + 1}:`, btn.textContent);
+      btn.click();
+    });
+  };
+  
+  console.log('[PF] Tabs component partial fully loaded, TabsComponent available:', !!window.TabsComponent);
+</script>

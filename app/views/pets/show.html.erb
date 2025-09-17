@@ -1,0 +1,125 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<%= turbo_stream_from "pet_#{@pet.id}" %>
+
+<div class="container mt-4" 
+     data-controller="pet edit-field turbo-stream"
+     data-pet-id="<%= @pet.id %>"
+     data-pet-name="<%= @pet.name %>"
+     data-url="<%= organization_pet_path(@organization, @pet) %>"
+     data-pet-url-value="<%= organization_pet_path(@organization, @pet) %>"
+     data-pet-edit-url-value="<%= edit_organization_pet_path(@organization, @pet) %>"
+     data-pet-tasks-url-value="<%= organization_pet_tasks_path(@organization, @pet) %>"
+     data-pet-posts-url-value="<%= organization_pet_posts_path(@organization, @pet) %>"
+     data-pet-gallery-url-value="<%= gallery_organization_pet_path(@organization, @pet) %>">
+
+  <% if @record_layout&.html.present? %>
+    <%= render partial: 'record_layouts/render', locals: { layout: @record_layout, record: @pet, table_type: 'Pet' } %>
+  <% else %>
+
+  <%= turbo_frame_tag "pet_header_#{@pet.id}" do %>
+    <%= render "pets/pet_header", pet: @pet %>
+  <% end %>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs">
+    <button class="tab-link" data-tab="details" data-action="click->pet#switchTab">Details</button>
+    <button class="tab-link" data-tab="feed" data-action="click->pet#switchTab">Feed</button>
+    <button class="tab-link" data-tab="gallery" data-action="click->pet#switchTab">Gallery</button>
+    <button class="tab-link" data-tab="tasks" data-action="click->pet#switchTab">Tasks</button>
+  </div>
+
+  <!-- Tab Content: DETAILS -->
+  <div class="tab-content" id="details" style="display: none;">
+    <h2>Details</h2>
+    <%= render 'details' %>
+  </div>
+
+  <!-- Tab Content: FEED -->
+  <div class="tab-content" id="feed" style="display: none;">
+    <h2>Feed</h2>
+    <%= link_to "Create Post", new_organization_pet_post_path(@pet.organization, @pet), class: "btn btn-primary" %>
+    <div class="pet-posts">
+      <% @posts.each do |post| %>
+        <%= render partial: "posts/post", locals: { post: post } %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Tab Content: GALLERY -->
+  <div class="tab-content" id="gallery" style="display: none;">
+    <h2>Photo Gallery</h2>
+    <%= form_with model: @pet, 
+                  url: gallery_organization_pet_path(@organization, @pet), 
+                  method: :post, 
+                  local: true, 
+                  multipart: true do |f| %>
+      <div class="form-group">
+        <input type="file" name="pet[gallery_photos][]" multiple="true" 
+               class="form-control"
+               data-pet-target="uploadInput" 
+               data-action="change->pet#uploadInputChanged">
+      </div>
+    <% end %>
+    <div class="gallery-container">
+      <!-- Use the partial for the main gallery -->
+      <%= render partial: "pets/gallery_items", 
+                 locals: { pet: @pet, organization: @organization } %>
+    </div>
+  </div>
+
+  <!-- Tab Content: TASKS -->
+  <div class="tab-content" id="tasks" style="display: none;">
+    <h2>Tasks</h2>
+    <%= link_to "Create Task", new_organization_pet_task_path(@organization, @pet), class: "btn btn-primary mb-3" %>
+    <%= render partial: "tasks/tasks", locals: { tasks: @pet.tasks } %>
+  </div>
+
+  <% end %>
+
+  <!-- Modal for Selecting/Uploading Header Image -->
+  <div id="imageModal" class="modal" data-pet-target="imageModal" style="display: none;">
+    <div class="modal-content">
+      <h2>Choose or Upload Image</h2>
+      <div>
+        <h3>Choose from Gallery</h3>
+        <!-- Use the same partial, but pass `modal: true` to show thumbnails and selection attributes -->
+        <div class="gallery" data-pet-target="gallery">
+          <%= render partial: "pets/gallery_items_modal", 
+                     locals: { pet: @pet, organization: @organization, modal: true } %>
+        </div>
+      </div>
+      <div>
+        <h3>Upload a New Image</h3>
+        <input type="file" name="pet[photo]" 
+               data-pet-target="uploadInput" 
+               data-action="change->pet#uploadInputChanged">
+      </div>
+      <div class="preview-section" data-pet-target="selectedImages"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" data-action="click->pet#addSelectedImage">Add Photo</button>
+        <button type="button" class="btn btn-secondary" data-action="click->pet#closeImageModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Save/Cancel Buttons -->
+  <div class="button-container" style="display:none">
+    <button id="save-button" 
+            class="btn btn-primary" 
+            data-edit-field-target="saveButton" 
+            data-action="click->edit-field#save" 
+            style="display: none;">
+      Save Changes
+    </button>
+    <button id="cancel-button" 
+            class="btn btn-secondary" 
+            data-edit-field-target="cancelButton" 
+            data-action="click->edit-field#cancel" 
+            style="display: none;">
+      Cancel
+    </button>
+  </div>
+</div>

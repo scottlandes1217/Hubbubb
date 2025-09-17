@@ -1,0 +1,63 @@
+<% @organization ||= local_assigns[:organization] %>
+<% @events ||= local_assigns[:events] %>
+<% @start_date ||= local_assigns[:start_date] %>
+<% @end_date ||= local_assigns[:end_date] %>
+<% @calendars ||= local_assigns[:calendars] %>
+<% @selected_calendar_ids ||= local_assigns[:selected_calendar_ids] %>
+<% @view ||= local_assigns[:view] %>
+
+<div class="calendar-table-container">
+  <table class="calendar-table">
+    <thead>
+      <tr class="calendar-header-row">
+        <% %w[Sun Mon Tue Wed Thu Fri Sat].each do |day_name| %>
+          <th class="calendar-header-cell" data-calendar-target="headerCell">
+            <%= day_name %>
+          </th>
+        <% end %>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="calendar-week-row">
+        <% (0..6).each do |day_offset| %>
+          <% date = @start_date + day_offset.days %>
+          <% day_events = @events.select { |event| event.start_time.to_date == date } %>
+          <% is_today = date == Date.current %>
+          
+          <td class="calendar-day-cell <%= 'today' if is_today %>" 
+              data-date="<%= date.to_s %>" 
+              data-action="click->calendar#createEvent">
+            <div class="calendar-day-number">
+              <%= date.day %>
+            </div>
+            
+            <div class="calendar-day-events">
+              <% if day_events.any? %>
+                <% day_events.each do |event| %>
+                  <%= link_to edit_organization_event_path(@organization, event), 
+                      class: "event-item d-block text-decoration-none", 
+                      style: "border-left-color: #{event.calendar.color}",
+                      data: { action: "click->calendar#openEventModal" } do %>
+                    <div class="event-title text-truncate" title="<%= event.title %>">
+                      <%= event.title %>
+                    </div>
+                    <div class="event-time small text-muted">
+                      <%= event.start_time.strftime("%H:%M") %>
+                      <% unless event.all_day %>
+                        - <%= event.end_time.strftime("%H:%M") %>
+                      <% end %>
+                    </div>
+                  <% end %>
+                <% end %>
+              <% else %>
+                <div class="text-muted small text-center add-event-hint" style="font-size: 0.7rem; opacity: 0.6;">
+                  Click to add event
+                </div>
+              <% end %>
+            </div>
+          </td>
+        <% end %>
+      </tr>
+    </tbody>
+  </table>
+</div> 

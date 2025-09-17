@@ -1,0 +1,30 @@
+<div class="sidebar-header d-flex justify-content-between align-items-center">
+  <div>
+    <button class="btn btn-outline-secondary sidebar-position-toggle me-2"
+            data-action="click->sidebar#switchPosition"
+            title="Swap sidebar side">
+      <i class="fas fa-arrows-alt-h"></i>
+    </button>
+  </div>
+  <div>
+    <button class="btn-close" data-action="click->sidebar#hide" aria-label="Close"></button>
+  </div>
+</div>
+<div class="sidebar-error-message sidebar-alert alert alert-danger d-flex flex-column align-items-center position-relative" role="alert">
+  <button type="button" class="btn-close position-absolute top-0 end-0 m-2" data-action="click->event-form#closeAlert" aria-label="Close"></button>
+  <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 2rem;"></i>
+  <h6 class="text-danger">Error</h6>
+  <p class="text-muted mb-3"><%= message %></p>
+  <button class="btn btn-outline-secondary btn-sm" data-action="click->sidebar#hide">
+    Close
+  </button>
+</div>
+
+<style>
+.sidebar-alert {
+  max-width: 90%;
+  margin: 24px auto;
+  text-align: left;
+  position: relative;
+}
+</style> 

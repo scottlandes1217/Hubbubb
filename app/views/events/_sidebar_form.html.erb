@@ -1,0 +1,154 @@
+<div class="sidebar-event-form">
+  <div class="sidebar-header d-flex justify-content-between align-items-center">
+    <div>
+      <button class="btn btn-outline-secondary sidebar-position-toggle me-2"
+              data-action="click->sidebar#switchPosition"
+              title="Swap sidebar side">
+        <i class="fas fa-arrows-alt-h"></i>
+      </button>
+    </div>
+    <div>
+      <button class="btn-close" data-action="click->sidebar#hide" aria-label="Close"></button>
+    </div>
+  </div>
+  
+  <div class="sidebar-body">
+    <%= form_with(model: event.persisted? ? [@organization, event] : [@organization, @calendar, event], local: true, 
+        data: { controller: "event-form", event_form_target: "form" }) do |form| %>
+      
+      <div class="mb-3">
+        <%= form.label :title, class: "form-label" %>
+        <%= form.text_field :title, class: "form-control", required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :description, class: "form-label" %>
+        <%= form.text_area :description, class: "form-control", rows: 3 %>
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <div class="mb-3">
+            <%= form.label :start_time, class: "form-label" %>
+            <%= form.datetime_field :start_time, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mb-3">
+            <%= form.label :end_time, class: "form-label" %>
+            <%= form.datetime_field :end_time, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :location, class: "form-label" %>
+        <%= form.text_field :location, class: "form-control" %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :calendar_ids, "Calendars", class: "form-label" %>
+        <div class="calendar-selection-container" style="max-height: 150px;">
+          <% (defined?(available_calendars) && available_calendars ? available_calendars : @available_calendars).each do |calendar| %>
+            <div class="form-check mb-2">
+              <%= check_box_tag "event[calendar_ids][]", calendar.id, calendar.id == (@calendar&.id || event.calendar_id),
+                  class: "form-check-input calendar-checkbox",
+                  data: { action: "change->event-form#toggleCalendar" } %>
+              <%= form.label "calendar_ids_#{calendar.id}", class: "form-check-label d-flex align-items-center gap-2" do %>
+                <span class="calendar-color-indicator" style="background-color: <%= calendar.color %>"></span>
+                <span class="calendar-name"><%= calendar.name %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <div class="mb-3">
+            <%= form.label :event_type, class: "form-label" %>
+            <%= form.select :event_type, Event.event_types.keys.map { |type| [type.titleize, type] }, 
+                { prompt: "Select type" }, { class: "form-control" } %>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mb-3">
+            <%= form.label :priority, class: "form-label" %>
+            <%= form.select :priority, Event.priorities.keys.map { |priority| [priority.titleize, priority] }, 
+                { prompt: "Select priority" }, { class: "form-control" } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          <%= form.check_box :all_day, class: "form-check-input" %>
+          <%= form.label :all_day, "All day event", class: "form-check-label" %>
+        </div>
+      </div>
+
+      <!-- Participants Section -->
+      <div class="mb-3">
+        <label class="form-label">Participants</label>
+        <div class="participants-container" style="max-height: 120px; overflow-y: auto;">
+          <% @organization.users.each do |user| %>
+            <div class="form-check">
+              <%= form.check_box "participant_ids[]", 
+                  { checked: event.participants.include?(user), 
+                    class: "form-check-input" }, 
+                  user.id, 
+                  nil %>
+              <%= form.label "participant_ids_#{user.id}", 
+                  user.full_name, 
+                  class: "form-check-label small" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2">
+        <%= form.submit class: "btn btn-primary", 
+            data: { event_form_target: "submitBtn", action: "click->event-form#submit" } %>
+        <button type="button" class="btn btn-secondary" data-action="click->sidebar#hide">
+          Cancel
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.calendar-color-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  vertical-align: middle;
+}
+.form-check-label.d-flex.align-items-center.gap-2 {
+  gap: 8px;
+  display: flex;
+  align-items: center;
+}
+.calendar-name {
+  font-size: 0.95em;
+  font-weight: 500;
+}
+.sidebar-alert {
+  max-width: 90%;
+  margin: 24px auto;
+  text-align: left;
+  position: relative;
+}
+.global-top-alert {
+  min-width: 340px;
+  max-width: 90vw;
+  margin-top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+</style> 

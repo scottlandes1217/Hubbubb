@@ -1,0 +1,10 @@
+<h1>Welcome, Shelter Staff!</h1>
+<p>Here you can manage your assigned organizations and pets.</p>
+<ul>
+  <% current_user.organizations.each do |organization| %>
+    <li>
+      <%= organization.name %> - 
+      <%= link_to 'View', organization_path(organization) %>
+    </li>
+  <% end %>
+</ul>

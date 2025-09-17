@@ -1,0 +1,27 @@
+.button-container {
+    position: fixed;
+    bottom: 15px; 
+    left: 0;
+    right: 0; 
+    margin: 0 auto; 
+    text-align: center; 
+    background-color: lightgray;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+  }
+  
+  .edit-button {
+    background-color: transparent;
+    border: none; 
+    padding: 0.5rem;
+    cursor: pointer;
+    display: inline-block;
+  }
+  
+  .edit-button i {
+    pointer-events: none;
+    font-size: 12px; 
+    color: #000; 
+  }

@@ -1,0 +1,118 @@
+<div data-controller="post">
+  <h1>Create a New Post</h1>
+
+  <%= form_with model: [@organization, @pet, @post], local: true, data: { action: "submit->post#submitForm" } do |f| %>
+    <!-- Post Content -->
+    <div class="form-group">
+      <%= f.label :body, "Post Content" %>
+      <%= f.text_area :body, class: "form-control", rows: 3, required: true %>
+    </div>
+
+    <!-- Add Images Button -->
+    <div class="form-group">
+      <button type="button" class="btn btn-primary" data-action="click->post#openImageModal">Add Images</button>
+    </div>
+
+    <!-- Selected Images Section -->
+    <div class="form-group">
+      <label>Selected Images:</label>
+      <div id="selected-images" data-post-target="selectedImages" class="selected-images">
+        <% @post.images.each do |image| %>
+          <div class="selected-image-container" data-photo-id="<%= image.signed_id %>">
+            <%= image_tag image, class: "thumbnail" %>
+            <button type="button" class="remove-photo" data-action="click->post#removeImage" data-photo-id="<%= image.signed_id %>">X</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Hidden Inputs for Selected Gallery Images -->
+    <div id="selected-gallery-images">
+      <%# Dynamically added via JavaScript when gallery images are selected %>
+    </div>
+
+    <!-- Hidden File Inputs for Uploaded Images -->
+    <div id="uploaded-images-container">
+      <%# Dynamically added via JavaScript when new images are uploaded %>
+    </div>
+
+    <% if current_user.can_post_as_organization? && current_user.organizations.any? %>
+      <div class="form-group">
+        <%= f.label :organization_id, "Post as" %>
+        <%= f.select :organization_id, options_for_select([["Myself", ""]] + current_user.organizations.map { |org| [org.name, org.id] }), {}, class: "form-control" %>
+      </div>
+    <% end %>
+
+    <%= f.submit "Create Post", class: "btn btn-success" %>
+  <% end %>
+
+  <!-- Modal for Selecting/Uploading Images -->
+  <div id="imageModal" class="modal" data-post-target="imageModal" style="display: none;">
+    <div class="modal-content">
+      <h2>Choose or Upload Images</h2>
+
+      <!-- Gallery Images Section -->
+      <div>
+        <h3>Choose from Gallery</h3>
+        <div class="gallery">
+          <% @pet.gallery_photos.each do |photo| %>
+            <% unless @post.images.find_by(blob_id: photo.blob.id) %>
+              <div class="gallery-item" 
+                   data-photo-id="<%= photo.blob.signed_id %>" 
+                   data-photo-url="<%= polymorphic_url(photo, only_path: true) %>" 
+                   data-action="click->post#selectImageFromGallery">
+                <%= image_tag photo, class: "gallery-thumbnail" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Upload New Images Section -->
+      <div>
+        <h3>Upload New Images</h3>
+        <div class="custom-file-upload">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-action="click->post#triggerFileUpload">
+            Choose Files
+          </button>
+          <span id="file-input-label" data-post-target="fileInputLabel">No files selected</span>
+          <input
+            type="file"
+            name="post[images][]"
+            multiple
+            data-post-target="uploadInput"
+            data-action="change->post#uploadInputChanged"
+            style="display: none;">
+        </div>
+        
+        <!-- Add to Gallery Checkbox -->
+        <% if @pet.present? %>
+          <div
+            id="addToGalleryCheckboxContainer"
+            data-post-target="addToGalleryCheckboxContainer"
+            style="display: none;">
+            <div class="form-check">
+              <input
+                type="checkbox"
+                id="addToGalleryCheckbox"
+                class="form-check-input"
+                checked>
+              <label for="addToGalleryCheckbox" class="form-check-label">
+                Add to Gallery
+              </label>
+            </div>
+          </div>
+        <% end %>
+      </div>      
+
+      <!-- Modal Actions -->
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" data-action="click->post#addSelectedImages">Add Photos</button>
+        <button type="button" class="btn btn-secondary" data-action="click->post#closeImageModal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

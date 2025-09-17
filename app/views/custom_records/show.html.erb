@@ -1,0 +1,32 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-4">
+  <% if @record_layout&.html.present? %>
+    <%= render partial: 'record_layouts/render', locals: { layout: @record_layout, record: @custom_record, table_type: 'CustomObject' } %>
+  <% else %>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><%= @custom_record.name %></h4>
+        <div>
+          <%= link_to 'Edit', edit_organization_custom_object_custom_record_path(@organization, @custom_object, @custom_record), class: 'btn btn-sm btn-primary' %>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if @custom_fields.any? %>
+          <dl class="row">
+            <% @custom_fields.each do |field| %>
+              <dt class="col-sm-3"><%= field.display_name %></dt>
+              <dd class="col-sm-9"><%= @custom_record.field_value(field.api_name) %></dd>
+            <% end %>
+          </dl>
+        <% else %>
+          <p class="text-muted mb-0">No fields defined for this object.</p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+

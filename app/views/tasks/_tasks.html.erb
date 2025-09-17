@@ -1,0 +1,62 @@
+<%= turbo_frame_tag "tasks_table" do %>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Subject</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Type</th>
+        <th>Flags</th>
+        <th>Start Date/Time</th>
+        <th>Duration (minutes)</th>
+        <th>Completed Date/Time</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% tasks.each do |task| %>
+        <tr id="task_row_<%= task.id %>">
+          <td><%= task.subject %></td>
+          <td><%= task.description %></td>
+          <td class="status">
+            <span id="task_status_<%= task.id %>" class="task-status-badge <%= task.status.downcase %>">
+              <%= task.status %>
+            </span>
+          </td>
+          <td><%= task.task_type.present? ? task.task_type : "N/A" %></td>
+          <td>
+            <% if task.flag_list.present? && task.flag_list.any?(&:present?) %>
+              <% task.flag_list.reject(&:blank?).each do |flag| %>
+                <% flag_field = task.pet.organization.organization_fields.find_by(field_type: :flags, value: flag) %>
+                <% if flag_field&.icon&.attached? %>
+                  <%= image_tag flag_field.icon, 
+                               class: "flag-icon", 
+                               title: flag,
+                               style: "width: 24px; height: 24px; margin-right: 4px;" %>
+                <% end %>
+              <% end %>
+            <% end %>
+          </td>
+          <td><%= task.start_time&.strftime("%B %d, %Y %H:%M") %></td>
+          <td><%= task.duration_minutes %></td>
+          <td><%= task.completed_at&.strftime("%B %d, %Y %H:%M") || "N/A" %></td>
+          <td>
+            <%= link_to "View", organization_pet_task_path(task.pet.organization, task.pet, task), class: "btn btn-sm btn-primary" %>
+            <% unless task.status == "Completed" %>
+              <%= button_to "Complete", 
+                  organization_pet_task_path(task.pet.organization, task.pet, task),
+                  method: :patch,
+                  params: { task: { status: "Completed", completed_at: Time.current } },
+                  class: "btn btn-sm btn-success" %>
+            <% end %>
+            <%= button_to "Delete", 
+                organization_pet_task_path(task.pet.organization, task.pet, task),
+                method: :delete,
+                class: "btn btn-sm btn-danger",
+                form: { data: { turbo_confirm: "Are you sure?" } } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

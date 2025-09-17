@@ -1,0 +1,122 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container mt-4">
+  <% if @record_layout&.html.present? %>
+    <%= render partial: 'record_layouts/render', locals: { layout: @record_layout, record: @task, table_type: 'Task' } %>
+  <% else %>
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Task Details</h2>
+          <div>
+            <%= link_to "Back to Tasks", organization_pet_path(@organization, @pet, tab: "tasks"), class: "btn btn-secondary", data: { turbo: false } %>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Subject:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.subject %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Description:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.description %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Status:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.status %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Type:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.task_type.present? ? @task.task_type : "N/A" %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Flags:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.flag_list.join(", ") %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Start Date/Time:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.start_time&.strftime("%B %d, %Y %H:%M") || "N/A" %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Duration (minutes):</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.duration_minutes || "N/A" %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Completed Date/Time:</strong>
+            </div>
+            <div class="col-md-8">
+              <%= @task.completed_at&.strftime("%B %d, %Y %H:%M") || "N/A" %>
+              <%= link_to "Edit", edit_organization_pet_task_path(@organization, @pet, @task), class: "btn btn-sm btn-primary float-end" %>
+            </div>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex justify-content-between">
+                <% unless @task.status == "Completed" %>
+                  <%= button_to "Complete Task", 
+                      organization_pet_task_path(@organization, @pet, @task),
+                      method: :patch,
+                      params: { task: { status: "Completed", completed_at: Time.current } },
+                      class: "btn btn-success" %>
+                <% end %>
+                <%= button_to "Delete Task", 
+                    organization_pet_task_path(@organization, @pet, @task),
+                    method: :delete,
+                    class: "btn btn-danger",
+                    form: { data: { turbo_confirm: "Are you sure?" } } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% end %>
+</div>

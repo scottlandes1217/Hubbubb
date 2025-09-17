@@ -1,0 +1,1202 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="flow-builder-container">
+  <!-- Toolbar -->
+  <div class="builder-toolbar bg-light border-bottom p-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <h4 class="mb-0 me-3"><%= @flow.name %></h4>
+        <span class="badge <%= @flow.active? ? 'bg-success' : 'bg-secondary' %>">
+          <%= @flow.status.titleize %>
+        </span>
+      </div>
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-secondary" id="save-flow">
+          <i class="fas fa-save"></i> Save
+        </button>
+        <button type="button" class="btn btn-outline-primary" id="test-flow">
+          <i class="fas fa-play"></i> Test
+        </button>
+        <%= link_to 'Back to Flows', organization_flows_path(@organization), class: 'btn btn-outline-secondary' %>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder-main">
+    <!-- Block Palette -->
+    <div class="builder-sidebar bg-white border-end" id="block-palette">
+      <div class="p-3 border-bottom"><h6 class="mb-0">Blocks</h6></div>
+      <div class="block-categories">
+        <div class="block-category"><div class="category-header"><i class="fas fa-bolt"></i> Triggers</div>
+          <div class="block-list"><div class="block-item" data-block-type="trigger" draggable="true"><i class="fas fa-bolt"></i><span>Trigger</span></div></div></div>
+        <div class="block-category"><div class="category-header"><i class="fas fa-desktop"></i> Input</div>
+          <div class="block-list"><div class="block-item" data-block-type="screen" draggable="true"><i class="fas fa-desktop"></i><span>Screen</span></div></div></div>
+        <div class="block-category"><div class="category-header"><i class="fas fa-code-branch"></i> Logic</div>
+          <div class="block-list">
+            <div class="block-item" data-block-type="decision" draggable="true"><i class="fas fa-random"></i><span>Decision</span></div>
+            <div class="block-item" data-block-type="assignment" draggable="true"><i class="fas fa-equals"></i><span>Assignment</span></div>
+            <div class="block-item" data-block-type="loop" draggable="true"><i class="fas fa-redo"></i><span>Loop</span></div>
+          </div></div>
+        <div class="block-category"><div class="category-header"><i class="fas fa-database"></i> Data</div>
+          <div class="block-list">
+            <div class="block-item" data-block-type="create_record" draggable="true"><i class="fas fa-plus-circle"></i><span>Create Record</span></div>
+            <div class="block-item" data-block-type="update_record" draggable="true"><i class="fas fa-edit"></i><span>Update Record</span></div>
+            <div class="block-item" data-block-type="delete_record" draggable="true"><i class="fas fa-trash"></i><span>Delete Record</span></div>
+          </div></div>
+        <div class="block-category"><div class="category-header"><i class="fas fa-bolt"></i> Actions</div>
+          <div class="block-list">
+            <div class="block-item" data-block-type="email" draggable="true"><i class="fas fa-envelope"></i><span>Email</span></div>
+            <div class="block-item" data-block-type="notification" draggable="true"><i class="fas fa-bell"></i><span>Notification</span></div>
+            <div class="block-item" data-block-type="api_call" draggable="true"><i class="fas fa-plug"></i><span>API Call</span></div>
+            <div class="block-item" data-block-type="wait" draggable="true"><i class="fas fa-clock"></i><span>Wait</span></div>
+          </div></div>
+      </div>
+    </div>
+
+    <!-- Canvas Pan/Zoom Wrapper -->
+    <div class="builder-canvas">
+      <div id="canvas-controls">
+        <button id="zoom-out" class="canvas-zoom-btn"><i class="fas fa-search-minus"></i></button>
+        <button id="zoom-in" class="canvas-zoom-btn"><i class="fas fa-search-plus"></i></button>
+        <button id="multi-select" class="canvas-zoom-btn"><i class="fas fa-object-group"></i></button>
+      </div>
+      <div id="canvas-wrapper">
+        <div id="flow-canvas">
+          <div id="canvas-inner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Block Properties Modal -->
+  <div class="modal" id="block-properties-modal" tabindex="-1" aria-hidden="true" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050;">
+    <div class="modal-dialog" style="position: relative; width: auto; margin: 1.75rem auto; max-width: 500px;">
+      <div class="modal-content" style="position: relative; display: flex; flex-direction: column; background-color: #fff; border: 1px solid rgba(0,0,0,.2); border-radius: 0.3rem; outline: 0;">
+        <div class="modal-header" style="display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: calc(0.3rem - 1px); border-top-right-radius: calc(0.3rem - 1px);">
+          <h5 class="modal-title" id="block-modal-title"></h5>
+          <button type="button" class="btn-close" aria-label="Close" style="padding: 0; background: 0 0; border: 0; font-size: 1.5rem; font-weight: 700; line-height: 1; color: #000; text-shadow: 0 1px 0 #fff; opacity: .5; cursor: pointer;">&times;</button>
+        </div>
+        <div class="modal-body" id="block-modal-body" style="position: relative; flex: 1 1 auto; padding: 1rem;"></div>
+        <div class="modal-footer" style="display: flex; align-items: center; justify-content: flex-end; padding: 0.75rem; border-top: 1px solid #dee2e6;">
+          <button type="button" class="btn btn-secondary" style="margin-right: 0.5rem;">Cancel</button>
+          <button type="button" class="btn btn-primary" id="save-block-properties">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <%= stylesheet_link_tag "flow_builder", media: "all" %>
+
+<script>
+// Modern Flow Builder Script
+// (Full Salesforce Flow-like UX, pan/zoom, multi-select, modal, SVG lines, keyboard, etc.)
+
+class FlowBuilder {
+  constructor(config) {
+    this.config = config;
+    this.canvas = document.getElementById(config.canvasId);
+    this.inner = document.getElementById('canvas-inner');
+    this.palette = document.getElementById(config.paletteId);
+    this.saveBtn = document.getElementById(config.saveBtnId);
+    this.testBtn = document.getElementById(config.testBtnId);
+    this.zoomInBtn = document.getElementById(config.zoomInId);
+    this.zoomOutBtn = document.getElementById(config.zoomOutId);
+    this.multiSelectBtn = document.getElementById(config.multiSelectId);
+    this.saveUrl = config.saveUrl;
+    this.csrfToken = config.csrfToken;
+    this.blocks = [];
+    this.connections = [];
+    this.selectedBlocks = new Set();
+    this.isMultiSelecting = false;
+    this.selectionBox = null;
+    this.currentZoom = 1;
+    this.panX = 0;
+    this.panY = 0;
+    this.isPanning = false;
+    this.isDraggingBlock = false;
+    this.dragOffset = { x: 0, y: 0 };
+    this.connectionPreview = null;
+    this.connectingPort = null;
+    this.blockCounter = 1;
+    this.isMultiSelectMode = false; // Added for multi-select mode
+    this.init();
+  }
+
+  init() {
+    console.log('Initializing builder, canvas:', this.canvas);
+    this.setupSVG();
+    this.setupPalette();
+    this.setupCanvasEvents();
+    this.setupControls();
+    this.setupModal();
+    this.setupGlobalDragHandlers(); // Setup global drag handlers
+    this.updateTransform(); // Set transform before loading blocks/connections
+    this.loadBlocks(this.config.flowData || []);
+    this.loadConnections(this.config.connectionData || []);
+    this.setupKeyboardShortcuts();
+    // Ensure pointer-events: auto on #canvas-inner
+    this.inner.style.pointerEvents = 'auto';
+  }
+
+  setupSVG() {
+    // SVG for connections
+    this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.svg.setAttribute('id', 'connection-svg');
+    this.inner.insertBefore(this.svg, this.inner.firstChild);
+    this.svg.style.position = 'absolute';
+    this.svg.style.top = '0';
+    this.svg.style.left = '0';
+    this.svg.style.width = '100%';
+    this.svg.style.height = '100%';
+    this.svg.style.zIndex = '5';
+    this.svg.style.pointerEvents = 'none'; // SVG does not block panning
+    // Create separate markers for each color
+    let defs = this.svg.querySelector('defs');
+    if (!defs) {
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      this.svg.appendChild(defs);
+    }
+    
+    // Create gray arrow marker
+    if (!this.svg.querySelector('#arrow-marker-gray')) {
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', 'arrow-marker-gray');
+      marker.setAttribute('markerWidth', '15');
+      marker.setAttribute('markerHeight', '15');
+      marker.setAttribute('refX', '13');
+      marker.setAttribute('refY', '7.5');
+      marker.setAttribute('orient', 'auto');
+      marker.setAttribute('markerUnits', 'userSpaceOnUse');
+      const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      arrow.setAttribute('points', '0,0 0,15 13,7.5');
+      arrow.setAttribute('fill', '#888');
+      arrow.setAttribute('stroke', 'none');
+      marker.appendChild(arrow);
+      defs.appendChild(marker);
+    }
+    // Create blue arrow marker (selected)
+    if (!this.svg.querySelector('#arrow-marker-blue')) {
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', 'arrow-marker-blue');
+      marker.setAttribute('markerWidth', '15');
+      marker.setAttribute('markerHeight', '15');
+      marker.setAttribute('refX', '13');
+      marker.setAttribute('refY', '7.5');
+      marker.setAttribute('orient', 'auto');
+      marker.setAttribute('markerUnits', 'userSpaceOnUse');
+      const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      arrow.setAttribute('points', '0,0 0,15 13,7.5');
+      arrow.setAttribute('fill', '#2196f3');
+      arrow.setAttribute('stroke', 'none');
+      marker.appendChild(arrow);
+      defs.appendChild(marker);
+    }
+  }
+
+  setupPalette() {
+    // Drag and drop from palette
+    this.palette.querySelectorAll('.block-item').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('block-type', item.dataset.blockType);
+      });
+    });
+    this.canvas.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+    this.canvas.addEventListener('drop', e => {
+      e.preventDefault();
+      const blockType = e.dataTransfer.getData('block-type');
+      if (blockType) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left - this.panX) / this.currentZoom;
+        const y = (e.clientY - rect.top - this.panY) / this.currentZoom;
+        this.createBlock(blockType, x, y);
+      }
+    });
+  }
+
+  setupCanvasEvents() {
+    // Canvas click to deselect blocks
+    this.canvas.addEventListener('click', e => {
+      console.log('Canvas clicked!', e.target);
+              if (!e.target.closest('.flow-block') && !e.target.closest('.block-ports')) {
+        this.clearSelection();
+      }
+    });
+    
+    // Canvas mousedown for panning and multi-select
+    this.canvas.addEventListener('mousedown', e => {
+      console.log('Canvas mousedown:', e.target, 'shiftKey:', e.shiftKey, 'multiSelectMode:', this.isMultiSelectMode);
+      
+      // Don't start if clicking on a block or port
+              if (e.target.closest('.flow-block') || e.target.closest('.block-ports')) {
+        return;
+      }
+      
+      // Don't start if we're already dragging a block
+      if (this.isDraggingBlock) return;
+      
+      if (e.shiftKey || this.isMultiSelectMode) {
+        console.log('Starting multi-select box');
+        this.isMultiSelecting = true;
+        this.selectionStart = { x: e.offsetX, y: e.offsetY };
+        this.showSelectionBox(e.offsetX, e.offsetY);
+        e.preventDefault();
+      } else {
+        console.log('Starting pan');
+        this.isPanning = true;
+        this.panStart = { x: e.clientX, y: e.clientY, panX: this.panX, panY: this.panY };
+        this.canvas.style.cursor = 'grabbing';
+        e.preventDefault();
+      }
+    });
+    
+    // Global mousemove for panning and selection box
+    document.addEventListener('mousemove', e => {
+      if (this.isPanning) {
+        this.panX = this.panStart.panX + (e.clientX - this.panStart.x);
+        this.panY = this.panStart.panY + (e.clientY - this.panStart.y);
+        this.updateTransform();
+      }
+      
+      if (this.isMultiSelecting) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.updateSelectionBox(x, y);
+      }
+    });
+    
+    // Global mouseup
+    document.addEventListener('mouseup', e => {
+      if (this.isPanning) {
+        this.isPanning = false;
+        this.canvas.style.cursor = 'grab';
+        console.log('Stopping pan');
+      }
+      
+      if (this.isMultiSelecting) {
+        console.log('Finishing multi-select');
+        this.isMultiSelecting = false;
+        this.selectBlocksInBox();
+        this.hideSelectionBox();
+      }
+    });
+    
+    // Connection selection
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('connection-path') || e.target.classList.contains('connection-click-area')) {
+        console.log('Connection clicked!');
+        e.stopPropagation();
+        let group = e.target;
+        if (group.tagName !== 'g') group = group.closest('g');
+        this.selectConnection(group || e.target);
+              } else if (!e.target.closest('.flow-block') && !e.target.closest('.block-ports')) {
+        this.clearConnectionSelection();
+      }
+    });
+  }
+
+  setupControls() {
+    this.zoomInBtn.addEventListener('click', () => {
+      this.currentZoom = Math.min(2.5, this.currentZoom * 1.1);
+      this.updateTransform();
+      this.redrawConnections(); // Redraw connections after zoom
+    });
+    this.zoomOutBtn.addEventListener('click', () => {
+      this.currentZoom = Math.max(0.2, this.currentZoom * 0.9);
+      this.updateTransform();
+      this.redrawConnections(); // Redraw connections after zoom
+    });
+    this.multiSelectBtn.addEventListener('click', () => {
+      this.isMultiSelectMode = !this.isMultiSelectMode;
+      this.multiSelectBtn.classList.toggle('active');
+      console.log('Multi-select mode toggled:', this.isMultiSelectMode);
+      if (this.isMultiSelectMode) {
+        this.canvas.style.cursor = 'crosshair';
+        this.showNotification('Multi-select mode ON - drag to select blocks', 'info');
+      } else {
+        this.canvas.style.cursor = 'grab';
+        this.showNotification('Multi-select mode OFF', 'info');
+      }
+    });
+            this.saveBtn.addEventListener('click', () => this.saveFlow());
+        this.testBtn.addEventListener('click', () => this.showNotification('Flow test started!', 'success'));
+  }
+
+  setupModal() {
+    // Simple custom modal implementation
+    this.modal = document.getElementById(this.config.modalId);
+    this.modalBackdrop = document.createElement('div');
+    this.modalBackdrop.className = 'modal-backdrop';
+    this.modalBackdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040; display: none;';
+    document.body.appendChild(this.modalBackdrop);
+    
+    document.getElementById('save-block-properties').addEventListener('click', () => {
+      this.hideModal();
+    });
+    
+    // Close modal when clicking backdrop or close button
+    this.modalBackdrop.addEventListener('click', () => this.hideModal());
+    this.modal.querySelector('.btn-close').addEventListener('click', () => this.hideModal());
+    this.modal.querySelector('.btn-secondary').addEventListener('click', () => this.hideModal());
+  }
+
+  setupKeyboardShortcuts() {
+    document.addEventListener('keydown', e => {
+      console.log('KEYDOWN', e.key, document.activeElement);
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        console.log('Delete/Backspace pressed, selectedBlocks:', this.selectedBlocks);
+        this.deleteSelectedBlocks();
+        this.deleteSelectedConnections();
+      }
+      if (e.key === 'Escape') {
+        this.cancelConnection();
+        this.isMultiSelectMode = false;
+        this.multiSelectBtn.classList.remove('active');
+        this.canvas.style.cursor = 'grab';
+        this.hideModal(); // Also close modal on escape
+        this.clearConnectionSelection();
+      }
+    });
+  }
+
+  // Helper to update all block DOM positions based on logical x/y, pan, and zoom
+  updateBlockPositions() {
+    const baseWidth = 200;
+    const baseHeight = 100;
+    this.blocks.forEach(block => {
+      // Always use base size for block
+      block.el.style.width = `${baseWidth}px`;
+      block.el.style.height = `${baseHeight}px`;
+      // Position block (do not multiply by zoom)
+      block.el.style.left = `${block.x}px`;
+      block.el.style.top = `${block.y}px`;
+      // Scale the entire block
+      block.el.style.transform = '';
+      // Remove any inner scaling
+      const inner = block.el.querySelector('.block-inner');
+      if (inner) {
+        inner.style.transform = '';
+        inner.style.width = '100%';
+        inner.style.height = '100%';
+        inner.style.fontSize = '';
+      }
+      // Port: always at bottom center
+      block.el.querySelectorAll('.block-ports').forEach(port => {
+        port.style.width = `14px`;
+        port.style.height = `14px`;
+        port.style.borderWidth = `2px`;
+        port.style.left = `calc(50% - 7px)`;
+        port.style.top = '';
+        port.style.bottom = `-7px`;
+      });
+    });
+  }
+
+  updateTransform() {
+    // No CSS transform on canvas or SVG
+    this.inner.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.currentZoom})`;
+    this.inner.style.transformOrigin = 'top left';
+    this.updateBlockPositions();
+    this.redrawConnections();
+  }
+
+  showSelectionBox(x, y) {
+    if (!this.selectionBox) {
+      this.selectionBox = document.createElement('div');
+      this.selectionBox.id = 'selection-box';
+      this.canvas.appendChild(this.selectionBox);
+    }
+    this.selectionBox.style.display = 'block';
+    this.selectionBox.style.left = `${x}px`;
+    this.selectionBox.style.top = `${y}px`;
+    this.selectionBox.style.width = '1px';
+    this.selectionBox.style.height = '1px';
+    this.selectionBox.startX = x;
+    this.selectionBox.startY = y;
+  }
+  updateSelectionBox(x, y) {
+    if (!this.selectionBox) return;
+    const minX = Math.min(this.selectionBox.startX, x);
+    const minY = Math.min(this.selectionBox.startY, y);
+    const width = Math.abs(x - this.selectionBox.startX);
+    const height = Math.abs(y - this.selectionBox.startY);
+    this.selectionBox.style.left = `${minX}px`;
+    this.selectionBox.style.top = `${minY}px`;
+    this.selectionBox.style.width = `${width}px`;
+    this.selectionBox.style.height = `${height}px`;
+  }
+  hideSelectionBox() {
+    if (this.selectionBox) this.selectionBox.style.display = 'none';
+  }
+  selectBlocksInBox() {
+    if (!this.selectionBox) return;
+    const box = this.selectionBox.getBoundingClientRect();
+    console.log('Selection box:', box);
+    
+    this.blocks.forEach(block => {
+      const rect = block.el.getBoundingClientRect();
+      console.log('Block rect:', block.id, rect);
+      
+      if (
+        rect.left < box.right &&
+        rect.right > box.left &&
+        rect.top < box.bottom &&
+        rect.bottom > box.top
+      ) {
+        console.log('Selecting block in box:', block.id);
+        this.selectBlock(block, true);
+      }
+    });
+  }
+
+  createBlock(type, x, y) {
+    const id = `block_${this.blockCounter++}`;
+    const el = document.createElement('div');
+            el.className = `flow-block block-${type}`;
+    el.id = id;
+    el.dataset.blockType = type;
+    // x, y are in SVG/canvas coordinates
+    const block = { id, type, el, x, y, name: this.getBlockName(type), config: {} };
+    // Prevent overlap on creation
+    if (this.isOverlapping(block, x, y)) {
+      // Find a non-overlapping position (simple: move down until clear)
+      let tryY = y;
+      while (this.isOverlapping(block, x, tryY)) {
+        tryY += 30;
+      }
+      block.y = tryY;
+    }
+    this.blocks.push(block);
+    el.innerHTML = `<div class='block-inner'>${this.blockHTML(type, id)}</div>`;
+    // Append block.el after SVG
+    this.inner.appendChild(el);
+    el.style.zIndex = '10';
+    el.style.pointerEvents = 'auto';
+    this.makeBlockDraggable(block);
+    this.setupBlockPorts(block);
+    this.updateBlockPositions();
+    // Block selection - simplified
+    el.addEventListener('click', e => {
+      console.log('Block clicked:', block.id, 'metaKey:', e.metaKey, 'ctrlKey:', e.ctrlKey, 'shiftKey:', e.shiftKey);
+      
+      // Don't handle click if we're connecting or dragging
+      if (this.connectingPort || (this.globalDragState && this.globalDragState.isDragging)) {
+        console.log('Ignoring click - connecting or dragging');
+        return;
+      }
+      
+      // Check for modifier keys
+      const isMultiSelect = e.metaKey || e.ctrlKey || e.shiftKey;
+      
+      if (!isMultiSelect) {
+        console.log('Single selection - clearing others');
+        this.clearSelection();
+      } else {
+        console.log('Multi-selection - keeping others');
+      }
+      
+      this.selectBlock(block, true);
+      e.stopPropagation();
+    });
+    el.addEventListener('dblclick', e => {
+      console.log('Block double-clicked:', block.id);
+      this.openModal(block);
+      e.stopPropagation();
+    });
+    return block;
+  }
+
+  blockHTML(type, id) {
+    return `
+      <div class="block-header">
+        <div class="block-icon">
+          <i class="${this.getBlockIcon(type)}"></i>
+        </div>
+        <div class="block-info">
+          <h6 class="block-title">${this.getBlockName(type)}</h6>
+          <span class="block-type">${type}</span>
+        </div>
+      </div>
+      <div class="block-content">${this.getBlockDescription(type)}</div>
+      <div class="port-output block-ports" data-port-type="output"></div>
+    `;
+  }
+
+  getBlockName(type) {
+    const names = {
+      trigger: 'New Trigger', screen: 'New Screen', decision: 'New Decision',
+      create_record: 'Create Record', update_record: 'Update Record', delete_record: 'Delete Record',
+      assignment: 'New Assignment', loop: 'New Loop', email: 'Send Email', notification: 'Send Notification',
+      api_call: 'API Call', wait: 'Wait'
+    };
+    return names[type] || 'New Block';
+  }
+  getBlockIcon(type) {
+    const icons = {
+      trigger: 'fas fa-bolt',
+      screen: 'fas fa-desktop', 
+      decision: 'fas fa-random',
+      create_record: 'fas fa-plus-circle',
+      update_record: 'fas fa-edit',
+      delete_record: 'fas fa-trash',
+      assignment: 'fas fa-equals',
+      loop: 'fas fa-redo',
+      email: 'fas fa-envelope',
+      notification: 'fas fa-bell',
+      api_call: 'fas fa-plug',
+      wait: 'fas fa-clock'
+    };
+    return icons[type] || 'fas fa-cube';
+  }
+  getBlockDescription(type) {
+    const desc = {
+              trigger: 'Starts the flow', screen: 'User interface for data input', decision: 'Conditional logic branching',
+      create_record: 'Create new database record', update_record: 'Update existing record', delete_record: 'Delete database record',
+      assignment: 'Set variable values', loop: 'Repeat actions', email: 'Send email notification', notification: 'Send system notification',
+      api_call: 'External API request', wait: 'Pause execution'
+    };
+    return desc[type] || 'Block configuration';
+  }
+
+  makeBlockDraggable(block) {
+    // Global drag state - shared across all blocks
+    if (!this.globalDragState) {
+      this.globalDragState = {
+        isDragging: false,
+        draggedBlocks: [],
+        initialPositions: [],
+        offset: { x: 0, y: 0 }
+      };
+    }
+
+    const dragHandler = e => {
+      console.log('BLOCK mousedown', e.target);
+      e.stopPropagation();
+      e.preventDefault();
+      
+      // Prevent drag if clicking on a port
+      if (e.target.closest('.block-ports')) return;
+      
+      // Find the correct block element and object
+      const blockEl = e.target.closest('.flow-block');
+      const blockObj = this.blocks.find(b => b.el === blockEl);
+      if (!blockObj) return;
+      
+      console.log('Starting drag for block:', blockObj.id, 'selected blocks:', this.selectedBlocks.size);
+      
+      // Start global drag state
+      this.globalDragState.isDragging = true;
+      this.isDraggingBlock = true;
+      
+      // Determine which blocks to drag
+      if (this.selectedBlocks.has(blockObj) && this.selectedBlocks.size > 1) {
+        // Multi-block drag - drag all selected blocks
+        this.globalDragState.draggedBlocks = Array.from(this.selectedBlocks);
+        console.log('Multi-block drag:', this.globalDragState.draggedBlocks.length, 'blocks');
+      } else {
+        // Single block drag - if not already selected, select it
+        if (!this.selectedBlocks.has(blockObj)) {
+          this.clearSelection();
+          this.selectBlock(blockObj, true);
+        }
+        this.globalDragState.draggedBlocks = [blockObj];
+        console.log('Single block drag');
+      }
+      
+      // Store initial positions
+      this.globalDragState.initialPositions = this.globalDragState.draggedBlocks.map(b => ({ 
+        block: b, 
+        x: b.x, 
+        y: b.y 
+      }));
+      
+      // Calculate offset from mouse to block position
+      const canvasRect = this.canvas.getBoundingClientRect();
+      this.globalDragState.offset.x = (e.clientX - canvasRect.left) - blockObj.x;
+      this.globalDragState.offset.y = (e.clientY - canvasRect.top) - blockObj.y;
+      
+      document.body.style.userSelect = 'none';
+    };
+    
+    // Attach drag handler to both block.el and .block-inner
+    block.el.addEventListener('mousedown', dragHandler);
+    const inner = block.el.querySelector('.block-inner');
+    if (inner) inner.addEventListener('mousedown', dragHandler);
+  }
+
+  // Global mousemove handler for all block dragging
+  setupGlobalDragHandlers() {
+    document.addEventListener('mousemove', e => {
+      if (this.globalDragState && this.globalDragState.isDragging && !this.isPanning) {
+        const canvasRect = this.canvas.getBoundingClientRect();
+        
+        // Calculate new position for the primary dragged block
+        const primaryBlock = this.globalDragState.draggedBlocks[0];
+        let newX = (e.clientX - canvasRect.left) - this.globalDragState.offset.x;
+        let newY = (e.clientY - canvasRect.top) - this.globalDragState.offset.y;
+        
+        if (this.globalDragState.draggedBlocks.length > 1) {
+          // Multi-block drag
+          const dx = newX - primaryBlock.x;
+          const dy = newY - primaryBlock.y;
+          
+          // Check if all blocks can move together
+          let canMoveXY = true, canMoveX = true, canMoveY = true;
+          
+          for (const { block, x: bx, y: by } of this.globalDragState.initialPositions) {
+            if (this.isOverlapping(block, bx + dx, by + dy, block)) canMoveXY = false;
+            if (this.isOverlapping(block, bx + dx, by, block)) canMoveX = false;
+            if (this.isOverlapping(block, bx, by + dy, block)) canMoveY = false;
+          }
+          
+          // Apply movement based on what's possible
+          if (canMoveXY) {
+            this.globalDragState.initialPositions.forEach(({ block, x: bx, y: by }) => {
+              block.x = bx + dx;
+              block.y = by + dy;
+            });
+          } else if (canMoveX) {
+            this.globalDragState.initialPositions.forEach(({ block, x: bx }) => {
+              block.x = bx + dx;
+            });
+          } else if (canMoveY) {
+            this.globalDragState.initialPositions.forEach(({ block, y: by }) => {
+              block.y = by + dy;
+            });
+          }
+        } else {
+          // Single block drag
+          const overlapsXY = this.isOverlapping(primaryBlock, newX, newY);
+          const overlapsX = this.isOverlapping(primaryBlock, newX, primaryBlock.y);
+          const overlapsY = this.isOverlapping(primaryBlock, primaryBlock.x, newY);
+          
+          if (!overlapsXY) {
+            primaryBlock.x = newX;
+            primaryBlock.y = newY;
+          } else if (!overlapsX) {
+            primaryBlock.x = newX;
+          } else if (!overlapsY) {
+            primaryBlock.y = newY;
+          }
+        }
+        
+        this.updateBlockPositions();
+        this.redrawConnections();
+      }
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (this.globalDragState && this.globalDragState.isDragging) {
+        this.globalDragState.isDragging = false;
+        this.isDraggingBlock = false;
+        this.globalDragState.draggedBlocks = [];
+        this.globalDragState.initialPositions = [];
+        document.body.style.userSelect = '';
+        this.updateBlockPositions();
+        this.redrawConnections();
+      }
+    });
+  }
+
+  setupBlockPorts(block) {
+    // Make the entire block a connection target
+    block.el.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('block-ports')) {
+        e.stopPropagation();
+        this.startConnection(block, e.target);
+      }
+    });
+    
+    // Make the output port draggable
+    block.el.querySelectorAll('.block-ports').forEach(port => {
+      port.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        this.startConnection(block, port);
+      });
+    });
+  }
+
+  startConnection(block, port) {
+    this.connectingPort = { block, port };
+    this.connectionPreview = this.createSVGPath('preview');
+    this.svg.appendChild(this.connectionPreview);
+    document.addEventListener('mousemove', this.updateConnectionPreview);
+    document.addEventListener('mouseup', this.finishConnection);
+  }
+
+  updateConnectionPreview = (e) => {
+    if (!this.connectingPort) return;
+    // Always use latest logical coordinates for the port
+    const { x, y } = this.getPortCenter(this.connectingPort.port);
+            // Get mouse position relative to flow-canvas
+    const canvasRect = this.canvas.getBoundingClientRect();
+    // Adjust for pan/zoom
+    const invZoom = 1 / this.currentZoom;
+    const endX = (e.clientX - canvasRect.left - this.panX) * invZoom;
+    const endY = (e.clientY - canvasRect.top - this.panY) * invZoom;
+    this.connectionPreview.setAttribute('d', `M ${x} ${y} L ${endX} ${endY}`);
+  }
+
+  finishConnection = (e) => {
+    if (!this.connectingPort) return;
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const targetBlock = this.blocks.find(b => b.el === target || b.el.contains(target));
+    
+    if (targetBlock && targetBlock !== this.connectingPort.block) {
+      // Create a virtual input port at the center of the target block
+      const virtualPort = { dataset: { portType: 'input' }, block: targetBlock };
+      if (this.canConnect(this.connectingPort, { block: targetBlock, port: virtualPort })) {
+        this.createConnection(this.connectingPort, { block: targetBlock, port: virtualPort });
+      } else {
+        console.log('Connection failed:', {
+          fromBlock: this.connectingPort.block.id,
+          toBlock: targetBlock.id,
+          fromType: this.connectingPort.port.dataset.portType,
+          toType: virtualPort.dataset.portType,
+          existingFromConnections: this.connections.filter(c => c.from.block === this.connectingPort.block).length,
+          existingToConnections: this.connections.filter(c => c.to.block === targetBlock).length
+        });
+        this.showNotification('Invalid connection', 'error');
+      }
+    }
+    
+    if (this.connectionPreview && this.connectionPreview.parentNode) {
+      this.svg.removeChild(this.connectionPreview);
+    }
+    this.connectionPreview = null;
+    this.connectingPort = null;
+    document.removeEventListener('mousemove', this.updateConnectionPreview);
+    document.removeEventListener('mouseup', this.finishConnection);
+  }
+
+  canConnect(from, to) {
+    if (from.block === to.block) return false;
+    const fromType = from.port.dataset.portType;
+    const toType = to.port.dataset.portType;
+    if (fromType === toType) return false;
+    if (!["output", "yes", "no"].includes(fromType)) return false;
+    if (toType !== 'input') return false;
+    // Only one outgoing connection per block
+    if (this.connections.some(c => c.from.block === from.block)) {
+      return false;
+    }
+    // Only one incoming per block
+    if (this.connections.some(c => c.to.block === to.block)) {
+      return false;
+    }
+    return true;
+  }
+
+  createConnection(from, to) {
+    const conn = { from, to };
+    conn.path = this.createSVGPath();
+    this.svg.appendChild(conn.path);
+    this.connections.push(conn);
+    this.redrawConnections();
+  }
+
+  deleteConnection(conn) {
+    if (conn.path && conn.path.parentNode) {
+      this.svg.removeChild(conn.path);
+    }
+    const idx = this.connections.indexOf(conn);
+    if (idx !== -1) this.connections.splice(idx, 1);
+    this.redrawConnections();
+  }
+
+  redrawConnections() {
+    this.connections.forEach(conn => {
+      const { x: x1, y: y1 } = this.getPortCenter(conn.from.port);
+      const { x: x2, y: y2 } = this.getPortCenter(conn.to.port);
+      const pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
+      const strokeWidth = 3 * this.currentZoom;
+      const isSelected = this.selectedConnection && (conn.path === (this.selectedConnection.tagName === 'g' ? this.selectedConnection : this.selectedConnection.closest('g')));
+      const color = isSelected ? '#2196f3' : '#888';
+      const markerId = isSelected ? 'arrow-marker-blue' : 'arrow-marker-gray';
+      
+      console.log(`Redrawing connection: selected=${isSelected}, color=${color}, marker=${markerId}`);
+      
+      if (conn.path.tagName === 'g') {
+        const clickArea = conn.path.querySelector('.connection-click-area');
+        const visiblePath = conn.path.querySelector('.connection-path');
+        clickArea.setAttribute('d', pathData);
+        visiblePath.setAttribute('d', pathData);
+        clickArea.setAttribute('stroke-width', 8 * this.currentZoom);
+        visiblePath.setAttribute('stroke-width', strokeWidth);
+        
+        // Completely remove and recreate marker reference
+        visiblePath.removeAttribute('marker-end');
+        // Force browser to re-render by temporarily setting a different marker
+        visiblePath.setAttribute('marker-end', 'url(#arrow-marker-black)');
+        visiblePath.setAttribute('marker-end', `url(#${markerId})`);
+        visiblePath.setAttribute('stroke', color);
+        
+        if (isSelected) {
+          visiblePath.classList.add('selected');
+        } else {
+          visiblePath.classList.remove('selected');
+        }
+      } else {
+        conn.path.setAttribute('d', pathData);
+        conn.path.setAttribute('stroke-width', strokeWidth);
+        
+        // Completely remove and recreate marker reference
+        conn.path.removeAttribute('marker-end');
+        // Force browser to re-render by temporarily setting a different marker
+        conn.path.setAttribute('marker-end', 'url(#arrow-marker-black)');
+        conn.path.setAttribute('marker-end', `url(#${markerId})`);
+        conn.path.setAttribute('stroke', color);
+        
+        if (isSelected) {
+          conn.path.classList.add('selected');
+        } else {
+          conn.path.classList.remove('selected');
+        }
+      }
+    });
+  }
+
+  createSVGPath(cls = '') {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('class', `connection-path${cls ? ' ' + cls : ''}`);
+    path.setAttribute('stroke', cls === 'preview' ? '#2196f3' : '#888');
+    path.setAttribute('stroke-width', '3');
+    path.setAttribute('fill', 'none');
+    path.style.cursor = 'pointer';
+    // Set pointer-events on connection paths
+    path.setAttribute('pointer-events', 'stroke');
+    
+    // Add arrow marker to the path (except for preview)
+    if (!cls.includes('preview')) {
+      path.setAttribute('marker-end', 'url(#arrow-marker-black)');
+    }
+    
+    // Add an invisible wider stroke for easier clicking
+    if (!cls.includes('preview')) {
+      const clickArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      clickArea.setAttribute('class', 'connection-click-area');
+      clickArea.setAttribute('stroke', 'transparent');
+      clickArea.setAttribute('stroke-width', '8');
+      clickArea.setAttribute('fill', 'none');
+      clickArea.style.cursor = 'pointer';
+      clickArea.style.pointerEvents = 'auto';
+      
+      // Group the visible path and click area
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.appendChild(clickArea);
+      group.appendChild(path);
+      return group;
+    }
+    
+    return path;
+  }
+
+  // In getPortCenter, use scaled width/height for all calculations
+  getPortCenter(port) {
+    const baseWidth = 200;
+    const baseHeight = 100;
+    if (port.dataset && port.dataset.portType === 'input') {
+      const block = port.block;
+      const blockWidth = baseWidth;
+      const blockHeight = baseHeight;
+      const left = block.x;
+      const right = left + blockWidth;
+      const top = block.y;
+      const bottom = top + blockHeight;
+      const cx = left + blockWidth / 2;
+      const cy = top + blockHeight / 2;
+      let sourceBlock = null;
+      for (const conn of this.connections) {
+        if (conn.to.block === block) {
+          sourceBlock = conn.from.block;
+          break;
+        }
+      }
+      if (!sourceBlock) {
+        return { x: cx, y: cy };
+      }
+      const sourceBlockWidth = baseWidth;
+      const sourceBlockHeight = baseHeight;
+      const sourceX = sourceBlock.x + sourceBlockWidth / 2;
+      const sourceY = sourceBlock.y + sourceBlockHeight;
+      function lineIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+        const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+        if (denom === 0) return null;
+        const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+        if (ua < 0 || ua > 1) return null;
+        const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+        if (ub < 0 || ub > 1) return null;
+        return {
+          x: x1 + ua * (x2 - x1),
+          y: y1 + ua * (y2 - y1)
+        };
+      }
+      const edges = [
+        [left, top, right, top],
+        [right, top, right, bottom],
+        [right, bottom, left, bottom],
+        [left, bottom, left, top]
+      ];
+      let closest = null;
+      let minDist = Infinity;
+      for (const [x3, y3, x4, y4] of edges) {
+        const pt = lineIntersect(sourceX, sourceY, cx, cy, x3, y3, x4, y4);
+        if (pt) {
+          const dist = Math.hypot(pt.x - sourceX, pt.y - sourceY);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = pt;
+          }
+        }
+      }
+      if (closest) return closest;
+      return { x: cx, y: cy };
+    } else {
+              const block = port.closest('.flow-block');
+      const blockObj = this.blocks.find(b => b.el === block);
+      const blockWidth = baseWidth;
+      const blockHeight = baseHeight;
+      return {
+        x: blockObj.x + blockWidth / 2.15,
+        y: blockObj.y + blockHeight + 1 // 7 = port height / 2
+      };
+    }
+  }
+
+  selectConnection(path) {
+    console.log('Selecting connection:', path);
+    this.clearConnectionSelection();
+    
+    // Handle both direct paths and grouped paths
+    let targetPath = path;
+    if (path.tagName === 'g') {
+      targetPath = path.querySelector('.connection-path');
+    }
+    
+    targetPath.classList.add('selected');
+    this.selectedConnection = path;
+    
+    // Clear block selection when selecting a connection
+    this.clearSelection();
+    console.log('Connection selected:', this.selectedConnection);
+    
+    // Force redraw to update marker colors
+    this.redrawConnections();
+  }
+
+  clearConnectionSelection() {
+    console.log('Clearing connection selection');
+    this.svg.querySelectorAll('.connection-path.selected').forEach(path => {
+      path.classList.remove('selected');
+    });
+    this.selectedConnection = null;
+    
+    // Force redraw to update marker colors
+    this.redrawConnections();
+  }
+
+  deleteSelectedConnections() {
+    if (this.selectedConnection) {
+      // Always find the connection by matching the group or any child path
+      const group = this.selectedConnection.tagName === 'g' ? this.selectedConnection : this.selectedConnection.closest('g');
+      const connectionIndex = this.connections.findIndex(conn => conn.path === group);
+      if (connectionIndex !== -1) {
+        this.deleteConnection(this.connections[connectionIndex]);
+        this.selectedConnection = null;
+      }
+    }
+  }
+
+  clearSelection() {
+    console.log('Clearing block selection');
+    this.selectedBlocks.forEach(b => b.el.classList.remove('selected'));
+    this.selectedBlocks.clear();
+  }
+  
+  selectBlock(block, add = false) {
+    console.log('Selecting block:', block.id, 'add:', add);
+    if (!add) this.clearSelection();
+    block.el.classList.add('selected');
+    this.selectedBlocks.add(block);
+    // Clear connection selection when selecting a block
+    this.clearConnectionSelection();
+    console.log('Selected blocks:', this.selectedBlocks.size);
+  }
+  
+  deleteSelectedBlocks() {
+    console.log('deleteSelectedBlocks called, selectedBlocks:', this.selectedBlocks);
+    this.selectedBlocks.forEach(block => {
+      console.log('Deleting block:', block.id);
+      this.inner.removeChild(block.el);
+      this.blocks = this.blocks.filter(b => b !== block);
+      // Remove connections
+      // Remove all connections related to this block
+      this.connections.filter(conn => conn.from.block === block || conn.to.block === block)
+        .forEach(conn => this.deleteConnection(conn));
+    });
+    this.selectedBlocks.clear();
+    this.redrawConnections();
+  }
+  cancelConnection() {
+    if (this.connectionPreview && this.connectionPreview.parentNode) {
+      this.svg.removeChild(this.connectionPreview);
+    }
+    this.connectionPreview = null;
+    this.connectingPort = null;
+  }
+  openModal(block) {
+    // Populate modal fields
+    document.getElementById('block-modal-title').textContent = this.getBlockName(block.type);
+    document.getElementById('block-modal-body').innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Configuration</label>
+        <textarea class="form-control" id="modal-block-config" rows="3">${block.config.text || ''}</textarea>
+      </div>
+    `;
+    this.modal.block = block;
+    this.modal.style.display = 'block';
+    this.modalBackdrop.style.display = 'block';
+  }
+  hideModal() {
+    this.modal.style.display = 'none';
+    this.modalBackdrop.style.display = 'none';
+    if (this.modal.block) {
+      const name = document.getElementById('modal-block-name').value;
+      const config = document.getElementById('modal-block-config').value;
+      this.modal.block.name = name;
+      this.modal.block.config.text = config;
+      this.modal.block.el.querySelector('.block-title').textContent = name;
+    }
+    this.modal.block = null;
+  }
+  showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-' + (type === 'success' ? 'success' : 'danger') + ' position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+  saveFlow() {
+    const blocks = this.blocks.map(block => ({
+      id: block.id,
+      block_type: block.type,
+      name: block.name,
+      position_x: parseInt(block.el.style.left),
+      position_y: parseInt(block.el.style.top),
+      config: block.config
+    }));
+    const connections = this.connections.map(conn => ({
+      from: { block: conn.from.block.id, port: conn.from.port.dataset.portType },
+      to: { block: conn.to.block.id, port: conn.to.port.dataset.portType }
+    }));
+    fetch(this.saveUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-Token': this.csrfToken
+      },
+      body: JSON.stringify({
+        flow: {
+          layout_data: blocks,
+          connections_data: connections
+        }
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+              if (data.success) this.showNotification('Flow saved!', 'success');
+        else this.showNotification('Error saving flow', 'error');
+      })
+      .catch(() => this.showNotification('Error saving flow', 'error'));
+  }
+  loadBlocks(data) {
+    data.forEach(b => {
+      // Use saved logical x/y
+      const block = this.createBlock(b.block_type, b.position_x, b.position_y);
+      block.id = b.id;
+      block.name = b.name;
+      block.config = b.config || {};
+      block.el.querySelector('.block-title').textContent = b.name;
+    });
+    this.updateBlockPositions();
+  }
+  loadConnections(data) {
+    data.forEach(conn => {
+      const fromBlock = this.blocks.find(b => b.id === conn.from.block);
+      const toBlock = this.blocks.find(b => b.id === conn.to.block);
+      if (fromBlock && toBlock) {
+        const fromPort = fromBlock.el.querySelector(`[data-port-type="${conn.from.port}"]`);
+        // Create virtual input port for target block
+        const virtualPort = { dataset: { portType: 'input' }, block: toBlock };
+        if (fromPort) {
+          this.createConnection({ block: fromBlock, port: fromPort }, { block: toBlock, port: virtualPort });
+        }
+      }
+    });
+  }
+
+  isOverlapping(block, x, y, ignoreBlock = null) {
+    const baseWidth = 200;
+    const baseHeight = 100;
+    return this.blocks.some(b => {
+      if (b === block || b === ignoreBlock) return false;
+      const bx = b.x;
+      const by = b.y;
+      const ax = x;
+      const ay = y;
+      return (
+        ax < bx + baseWidth &&
+        ax + baseWidth > bx &&
+        ay < by + baseHeight &&
+        ay + baseHeight > by
+      );
+    });
+  }
+}
+
+function initFlowBuilder() {
+  if (window.flowBuilderInstance) return;
+  window.flowBuilderInstance = new FlowBuilder({
+  canvasId: 'flow-canvas',
+    svgId: 'connection-svg',
+    paletteId: 'block-palette',
+    modalId: 'block-properties-modal',
+    saveBtnId: 'save-flow',
+    testBtnId: 'test-flow',
+    zoomInId: 'zoom-in',
+    zoomOutId: 'zoom-out',
+    multiSelectId: 'multi-select',
+    flowData: <%= raw (@flow.layout_data || []).to_json %>,
+    connectionData: <%= raw (@flow.connections_data || []).to_json %>,
+    saveUrl: '<%= organization_flow_path(@organization, @flow) %>',
+    csrfToken: document.querySelector('meta[name="csrf-token"]').content
+  });
+}
+
+function destroyFlowBuilder() {
+  if (window.flowBuilderInstance) {
+    // Remove listeners by reloading the container contents
+    const canvas = document.getElementById('flow-canvas');
+    const inner = document.getElementById('canvas-inner');
+    if (inner) inner.innerHTML = '';
+    const svg = document.getElementById('connection-svg');
+    if (svg && svg.parentNode) svg.parentNode.removeChild(svg);
+    window.flowBuilderInstance = null;
+  }
+}
+
+document.addEventListener('turbo:before-cache', destroyFlowBuilder);
+document.addEventListener('turbo:load', function() { destroyFlowBuilder(); initFlowBuilder(); });
+document.addEventListener('DOMContentLoaded', function() { destroyFlowBuilder(); initFlowBuilder(); });
+</script> 

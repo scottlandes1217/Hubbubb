@@ -1,0 +1,250 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org', organization: @organization %>
+<% end %>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-search me-2"></i>
+            Search Results
+            <% if @query.present? %>
+              for "<%= @query %>"
+            <% end %>
+          </h4>
+        </div>
+        
+        <div class="card-body">
+          <!-- Search Form -->
+          <%= form_with url: organization_search_path(@organization), method: :get, local: true, class: "mb-4" do |f| %>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <%= f.text_field :q, value: @query, class: "form-control", placeholder: "Search pets, users, tasks, events, posts..." %>
+                  <%= f.submit "Search", class: "btn btn-primary" %>
+                </div>
+              </div>
+              
+              <div class="col-md-3">
+                <%= f.select :record_type, 
+                    options_for_select([
+                      ['All Records', ''],
+                      ['Pets', 'pets'],
+                      ['Users', 'users'],
+                      ['Tasks', 'tasks'],
+                      ['Events', 'events'],
+                      ['Posts', 'posts']
+                    ], @record_type), 
+                    {}, 
+                    { class: "form-select" } %>
+              </div>
+              
+              <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                  <i class="fas fa-filter me-2"></i>Filters
+                </button>
+              </div>
+            </div>
+            
+            <!-- Filters Collapse -->
+            <div class="collapse mt-3" id="filtersCollapse">
+              <div class="card card-body">
+                <div class="row">
+                  <% if @record_type.blank? || @record_type == 'pets' %>
+                    <div class="col-md-3">
+                      <label class="form-label">Pet Status</label>
+                      <%= f.select "filters[status]", 
+                          options_for_select([
+                            ['All Statuses', ''],
+                            ['Available', 'available'],
+                            ['Adopted', 'adopted'],
+                            ['Pending', 'pending'],
+                            ['Unavailable', 'unavailable']
+                          ], @filters[:status]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                    
+                    <div class="col-md-3">
+                      <label class="form-label">Sex</label>
+                      <%= f.select "filters[sex]", 
+                          options_for_select([
+                            ['All Sexes', ''],
+                            ['Male', 'male'],
+                            ['Female', 'female'],
+                            ['Unknown', 'unknown']
+                          ], @filters[:sex]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                    
+                    <div class="col-md-3">
+                      <label class="form-label">Size</label>
+                      <%= f.select "filters[size]", 
+                          options_for_select([
+                            ['All Sizes', ''],
+                            ['Small', 'small'],
+                            ['Medium', 'medium'],
+                            ['Large', 'large'],
+                            ['X-Large', 'x_large']
+                          ], @filters[:size]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                    
+                    <div class="col-md-3">
+                      <label class="form-label">Species</label>
+                      <%= f.select "filters[species]", 
+                          options_for_select(
+                            [['All Species', '']] + 
+                            @organization.organization_fields.where(field_type: :species).pluck(:value, :value),
+                            @filters[:species]
+                          ), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                  <% end %>
+                  
+                  <% if @record_type.blank? || @record_type == 'users' %>
+                    <div class="col-md-3">
+                      <label class="form-label">User Role</label>
+                      <%= f.select "filters[role]", 
+                          options_for_select([
+                            ['All Roles', ''],
+                            ['Basic User', 'basic_user'],
+                            ['Shelter Staff', 'shelter_staff'],
+                            ['Admin', 'admin']
+                          ], @filters[:role]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                  <% end %>
+                  
+                  <% if @record_type.blank? || @record_type == 'tasks' %>
+                    <div class="col-md-3">
+                      <label class="form-label">Task Status</label>
+                      <%= f.select "filters[status]", 
+                          options_for_select([
+                            ['All Statuses', ''],
+                            ['Scheduled', 'Scheduled'],
+                            ['Pending', 'Pending'],
+                            ['On-Hold', 'On-Hold'],
+                            ['Overdue', 'Overdue'],
+                            ['Completed', 'Completed']
+                          ], @filters[:status]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                  <% end %>
+                  
+                  <% if @record_type.blank? || @record_type == 'events' %>
+                    <div class="col-md-3">
+                      <label class="form-label">Event Type</label>
+                      <%= f.select "filters[event_type]", 
+                          options_for_select([
+                            ['All Types', ''],
+                            ['General', 'general'],
+                            ['Meeting', 'meeting'],
+                            ['Appointment', 'appointment'],
+                            ['Training', 'training'],
+                            ['Maintenance', 'maintenance'],
+                            ['Adoption', 'adoption'],
+                            ['Medical', 'medical'],
+                            ['Grooming', 'grooming'],
+                            ['Exercise', 'exercise'],
+                            ['Feeding', 'feeding']
+                          ], @filters[:event_type]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                    
+                    <div class="col-md-3">
+                      <label class="form-label">Event Status</label>
+                      <%= f.select "filters[status]", 
+                          options_for_select([
+                            ['All Statuses', ''],
+                            ['Scheduled', 'scheduled'],
+                            ['In Progress', 'in_progress'],
+                            ['Completed', 'completed'],
+                            ['Cancelled', 'cancelled']
+                          ], @filters[:status]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                    
+                    <div class="col-md-3">
+                      <label class="form-label">Priority</label>
+                      <%= f.select "filters[priority]", 
+                          options_for_select([
+                            ['All Priorities', ''],
+                            ['Low', 'low'],
+                            ['Medium', 'medium'],
+                            ['High', 'high'],
+                            ['Urgent', 'urgent']
+                          ], @filters[:priority]), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          
+          <!-- Results -->
+          <% if @query.present? %>
+            <% if @results.any? %>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Name/Title</th>
+                      <th>Details</th>
+                      <th>Updated</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @results.each do |result| %>
+                      <tr>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <i class="<%= get_result_icon(result) %> me-2"></i>
+                            <span class="badge bg-secondary"><%= result.class.name.titleize %></span>
+                          </div>
+                        </td>
+                        <td>
+                          <strong><%= get_result_title(result) %></strong>
+                        </td>
+                        <td><%= get_result_details(result) %></td>
+                        <td><%= time_ago_in_words(result.updated_at) %> ago</td>
+                        <td>
+                          <%= link_to "View", get_result_url(result), class: "btn btn-sm btn-outline-primary" %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% else %>
+              <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>No results found</h5>
+                <p class="text-muted">Try adjusting your search terms or filters.</p>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-5">
+              <i class="fas fa-search fa-3x text-muted mb-3"></i>
+              <h5>Enter a search term to get started</h5>
+              <p class="text-muted">Search across pets, users, tasks, events, and posts.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

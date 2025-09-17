@@ -1,0 +1,9 @@
+<div id="new_comment_form_for_post_<%= post.id %>">
+  <% form_model = post.organization.present? ? [post.organization, post, Comment.new] : [post, Comment.new] %>
+  <%= form_with(model: form_model, data: { turbo_frame: "comments_for_post_#{post.id}" }, class: "comment-form") do |f| %>
+    <div class="input-group mb-2">
+      <%= f.text_area :body, placeholder: "Add a comment...", rows: 1, class: "form-control comment-input", style: "resize: none;" %>
+      <button class="btn btn-primary comment-submit" type="submit">Post</button>
+    </div>
+  <% end %>
+</div> 

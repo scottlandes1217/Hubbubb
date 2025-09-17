@@ -1,0 +1,35 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  table_type: MyString
+  table_id: 1
+  name: MyString
+  display_name: MyString
+  api_name: MyString
+  field_type: 1
+  required: false
+  unique: false
+  active: false
+  hidden: false
+  read_only: false
+  picklist_values: MyText
+  formula: MyText
+  lookup_table_id: 1
+  description: MyText
+
+two:
+  table_type: MyString
+  table_id: 1
+  name: MyString
+  display_name: MyString
+  api_name: MyString
+  field_type: 1
+  required: false
+  unique: false
+  active: false
+  hidden: false
+  read_only: false
+  picklist_values: MyText
+  formula: MyText
+  lookup_table_id: 1
+  description: MyText

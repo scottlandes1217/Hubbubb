@@ -1,0 +1,156 @@
+<%= form_with(model: event.persisted? ? [@organization, event] : [@organization, @calendar, event], local: true, 
+    data: { controller: "event-form", event_form_target: "form" }) do |form| %>
+  <div class="row">
+    <div class="col-md-8">
+      <div class="mb-3">
+        <%= form.label :title, class: "form-label" %>
+        <%= form.text_field :title, class: "form-control", required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :description, class: "form-label" %>
+        <%= form.text_area :description, class: "form-control", rows: 4 %>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :start_time, class: "form-label" %>
+            <%= form.datetime_field :start_time, class: "form-control", required: true %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :end_time, class: "form-label" %>
+            <%= form.datetime_field :end_time, class: "form-control", required: true %>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :location, class: "form-label" %>
+            <%= form.text_field :location, class: "form-control" %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <%= form.label :calendar_ids, "Calendars", class: "form-label" %>
+            <div class="calendar-selection-container">
+              <% @available_calendars.each do |calendar| %>
+                <div class="form-check">
+                  <%= form.check_box "calendar_ids[]", 
+                      { checked: calendar.id == (@calendar&.id || event.calendar_id), 
+                        class: "form-check-input calendar-checkbox",
+                        data: { action: "change->event-form#toggleCalendar" } }, 
+                      calendar.id, 
+                      nil %>
+                  <%= form.label "calendar_ids_#{calendar.id}", 
+                      calendar.name, 
+                      class: "form-check-label d-flex align-items-center" %>
+                  <span class="calendar-color-indicator ms-2" style="background-color: <%= calendar.color %>"></span>
+                </div>
+              <% end %>
+            </div>
+            <small class="form-text text-muted">
+              Select one or more calendars for this event
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= form.label :event_type, class: "form-label" %>
+            <%= form.select :event_type, Event.event_types.keys.map { |type| [type.titleize, type] }, 
+                { prompt: "Select event type" }, { class: "form-control" } %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= form.label :priority, class: "form-label" %>
+            <%= form.select :priority, Event.priorities.keys.map { |priority| [priority.titleize, priority] }, 
+                { prompt: "Select priority" }, { class: "form-control" } %>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <%= form.label :status, class: "form-label" %>
+            <%= form.select :status, Event.statuses.keys.map { |status| [status.titleize, status] }, 
+                { prompt: "Select status" }, { class: "form-control" } %>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          <%= form.check_box :all_day, class: "form-check-input" %>
+          <%= form.label :all_day, "All day event", class: "form-check-label" %>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :recurrence_rule, class: "form-label" %>
+        <%= form.text_field :recurrence_rule, class: "form-control", 
+            placeholder: "e.g., FREQ=WEEKLY;INTERVAL=1" %>
+        <small class="form-text text-muted">
+          Optional recurrence rule in iCalendar format
+        </small>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <!-- Participants Section -->
+      <div class="card mb-3">
+        <div class="card-header">
+          <h6 class="card-title mb-0">Participants</h6>
+        </div>
+        <div class="card-body">
+          <% @organization.users.each do |user| %>
+            <div class="form-check">
+              <%= form.check_box "participant_ids[]", 
+                  { checked: event.participants.include?(user), 
+                    class: "form-check-input" }, 
+                  user.id, 
+                  nil %>
+              <%= form.label "participant_ids_#{user.id}", 
+                  user.full_name, 
+                  class: "form-check-label" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Tasks Section -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="card-title mb-0">Related Tasks</h6>
+        </div>
+        <div class="card-body">
+          <% @organization.pets.includes(:tasks).each do |pet| %>
+            <% pet.tasks.each do |task| %>
+              <div class="form-check">
+                <%= form.check_box "task_ids[]", 
+                    { checked: event.tasks.include?(task), 
+                      class: "form-check-input" }, 
+                    task.id, 
+                    nil %>
+                <%= form.label "task_ids_#{task.id}", 
+                    "#{pet.name} - #{task.subject}", 
+                    class: "form-check-label small" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <%= form.submit class: "btn btn-primary", 
+        data: { event_form_target: "submitBtn", action: "click->event-form#submit" } %>
+    <%= link_to "Cancel", organization_events_path(@organization), class: "btn btn-secondary" %>
+  </div>
+<% end %> 

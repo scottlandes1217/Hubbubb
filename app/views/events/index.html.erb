@@ -1,0 +1,424 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container-fluid mt-4" data-controller="calendar sidebar">
+  <div class="row">
+    <!-- Left Sidebar - Calendar Selection -->
+    <div class="col-md-4 col-lg-3">
+      <div class="card calendar-sidebar">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Calendars</h5>
+        </div>
+        <div class="card-body">
+          <%= form_with url: organization_events_path(@organization), method: :get, local: true, class: "calendar-form" do |form| %>
+            <%= form.hidden_field :view, value: @view %>
+            <%= form.hidden_field :start_date, value: @start_date %>
+            
+            <% @calendars.each do |calendar| %>
+              <div class="form-check mb-2 calendar-item">
+                <%= form.check_box "calendar_ids[]", 
+                    { checked: @selected_calendar_ids.include?(calendar.id), 
+                      class: "form-check-input calendar-checkbox",
+                      data: { calendar_id: calendar.id, action: "change->calendar#updateView" } }, 
+                    calendar.id, 
+                    nil %>
+                <%= form.label "calendar_ids_#{calendar.id}", 
+                    class: "form-check-label d-flex align-items-center gap-2 flex-grow-1" do %>
+                  <span class="calendar-color-indicator" style="background-color: <%= calendar.color %>"></span>
+                  <span class="calendar-name"><%= calendar.name %></span>
+                <% end %>
+                
+                <% if calendar.custom_calendar? && calendar.can_manage?(current_user) %>
+                  <button type="button" 
+                          class="btn btn-sm btn-outline-secondary calendar-edit-btn me-1"
+                          data-action="click->calendar#editCalendar"
+                          data-calendar-id="<%= calendar.id %>"
+                          data-calendar-edit-url="<%= edit_organization_calendar_path(@organization, calendar) %>"
+                          title="Edit calendar">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button type="button" 
+                          class="btn btn-sm btn-outline-danger calendar-delete-btn" 
+                          data-action="click->calendar#deleteCalendar"
+                          data-calendar-id="<%= calendar.id %>"
+                          data-calendar-name="<%= calendar.name %>"
+                          title="Delete calendar">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                <% end %>
+              </div>
+            <% end %>
+            
+            <hr class="my-3">
+            
+            <% if current_user.admin? || current_user.shelter_staff? %>
+              <%= link_to new_organization_calendar_path(@organization), class: "btn btn-outline-primary btn-sm w-100" do %>
+                <i class="fas fa-plus me-1"></i> New Calendar
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Calendar Area -->
+    <div class="col-md-8 col-lg-9">
+      <!-- Calendar Header -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div class="btn-group me-3" role="group">
+                <%= link_to "Day", organization_events_path(@organization, view: 'day', start_date: @start_date), 
+                    class: "btn btn-outline-primary #{@view == 'day' ? 'active' : ''}" %>
+                <%= link_to "Week", organization_events_path(@organization, view: 'week', start_date: @start_date), 
+                    class: "btn btn-outline-primary #{@view == 'week' ? 'active' : ''}" %>
+                <%= link_to "Month", organization_events_path(@organization, view: 'month', start_date: @start_date), 
+                    class: "btn btn-outline-primary #{@view == 'month' ? 'active' : ''}" %>
+              </div>
+            </div>
+            
+            <div class="d-flex align-items-center">
+              <%= link_to organization_events_path(@organization, view: @view, start_date: @start_date - 1.send(@view)), 
+                  class: "btn btn-outline-secondary me-2" do %>
+                <i class="fas fa-chevron-left"></i>
+              <% end %>
+              
+              <h4 class="mb-0 mx-3">
+                <% case @view %>
+                <% when 'day' %>
+                  <%= @start_date.strftime("%A, %B %d, %Y") %>
+                <% when 'week' %>
+                  <%= @start_date.strftime("%B %d") %> - <%= @end_date.strftime("%B %d, %Y") %>
+                <% else %>
+                  <%= @start_date.strftime("%B %Y") %>
+                <% end %>
+              </h4>
+              
+              <%= link_to organization_events_path(@organization, view: @view, start_date: @start_date + 1.send(@view)), 
+                  class: "btn btn-outline-secondary me-2" do %>
+                <i class="fas fa-chevron-right"></i>
+              <% end %>
+              
+              <%= link_to "Today", organization_events_path(@organization, view: @view), 
+                  class: "btn btn-outline-primary me-3" %>
+              
+              <% if current_user.admin? || current_user.shelter_staff? %>
+                <% if @calendars.any? %>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-action="click->calendar#openEventModal"
+                    data-calendar-target="newEventButton"
+                    disabled
+                    data-url="<%= new_organization_calendar_event_path(@organization, @calendars.first) %>">
+                    New Event
+                  </button>
+                <% else %>
+                  <%= link_to "Create Calendar First", new_organization_calendar_path(@organization), 
+                      class: "btn btn-warning" %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <turbo-frame id="calendar_view">
+      <div class="row">
+        <div class="col-12">
+          <% case @view %>
+          <% when 'day' %>
+            <%= render 'day_view' %>
+          <% when 'week' %>
+            <%= render 'week_view' %>
+          <% else %>
+            <%= render 'month_view' %>
+          <% end %>
+        </div>
+      </div>
+      </turbo-frame>
+    </div>
+  </div>
+
+  <!-- Sidebar for Event Forms -->
+  <div class="sidebar-container" 
+       data-sidebar-target="sidebar">
+    
+    <!-- Resizer Handle -->
+    <div class="sidebar-resizer" 
+         data-sidebar-target="resizer"
+         data-action="mousedown->sidebar#startResize">
+      <div class="resizer-handle"></div>
+    </div>
+    
+    <!-- Sidebar Content -->
+    <div class="sidebar-content" data-sidebar-target="content">
+      <div class="sidebar-header d-flex justify-content-between align-items-center">
+        <div></div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-outline-secondary sidebar-position-toggle me-2" 
+                  data-action="click->sidebar#switchPosition" 
+                  title="Swap sidebar side">
+            <i class="fas fa-arrows-alt-h"></i>
+          </button>
+          <button class="btn-close" data-action="click->sidebar#hide" aria-label="Close"></button>
+        </div>
+      </div>
+      <!-- Sidebar content will be loaded dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- Custom Error Toast -->
+<div id="custom-error-toast" style="display:none; position:fixed; top:20px; right:20px; z-index:9999; min-width: 220px; max-width: 350px;" class="alert alert-danger shadow"></div>
+
+<!-- Custom Confirmation Modal -->
+<div id="custom-confirm-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:10000; align-items:center; justify-content:center;">
+  <div style="background:white; padding:24px 32px; border-radius:8px; box-shadow:0 2px 16px rgba(0,0,0,0.2); min-width:300px; max-width:90vw;">
+    <div id="custom-confirm-message" style="margin-bottom:20px;"></div>
+    <div style="text-align:right;">
+      <button id="custom-confirm-cancel" class="btn btn-secondary" style="margin-right:8px;">Cancel</button>
+      <button id="custom-confirm-ok" class="btn btn-danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.calendar-color-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  vertical-align: middle;
+}
+
+.event-item {
+  border-left: 4px solid;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.event-item:hover {
+  background: #e9ecef;
+  cursor: pointer;
+}
+
+.calendar-day {
+  min-height: 120px;
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  position: relative;
+}
+
+.calendar-day.today {
+  background-color: #fff3cd;
+}
+
+.calendar-day.other-month {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.calendar-day-number {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #dee2e6;
+}
+
+.calendar-month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #dee2e6;
+}
+
+.calendar-header {
+  background-color: #f8f9fa;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: bold;
+  border: 1px solid #dee2e6;
+}
+
+/* Sidebar Styles */
+.sidebar-container {
+  visibility: visible;
+  transform: translateX(100%);
+}
+
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  cursor: col-resize;
+  z-index: 1061;
+}
+
+.resizer-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 40px;
+  background-color: #dee2e6;
+  border-radius: 2px;
+}
+
+.sidebar-resizer:hover .resizer-handle {
+  background-color: #007bff;
+}
+
+.sidebar-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.sidebar-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sidebar-body {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Calendar Selection Sidebar */
+.calendar-form {
+  margin-bottom: 0;
+}
+
+.calendar-name {
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+.form-check-label {
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.form-check-label:hover {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 0 -8px;
+}
+
+.form-check-label.d-flex.align-items-center.gap-2 {
+  gap: 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-container {
+    width: 100% !important;
+  }
+  
+  .sidebar-toggle,
+  .sidebar-position-toggle {
+    display: none;
+  }
+  
+  /* Stack calendar selection on mobile */
+  .col-md-3.col-lg-2 {
+    margin-bottom: 1rem;
+  }
+}
+
+.calendar-sidebar {
+    margin-top: 20px;
+    overflow-x: hidden;
+}
+
+.calendar-sidebar .card-body {
+    padding-left: 16px;
+    padding-right: 8px;
+}
+
+.calendar-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: -1px 0px 0px 0px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.calendar-item .form-check {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.calendar-item .form-check-label {
+    flex-grow: 1;
+    margin-bottom: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-color-indicator {
+    flex-shrink: 0;
+}
+
+.calendar-name {
+    flex-grow: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.calendar-delete-btn {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    margin-left: 4px;
+}
+
+.calendar-delete-btn:hover {
+    opacity: 1;
+}
+
+.calendar-item:hover .calendar-delete-btn {
+    opacity: 0.8;
+}
+</style>

@@ -1,0 +1,35 @@
+<div class="ad" id="ad-<%= ad.id %>" data-ad-id="<%= ad.id %>">
+  <div class="ad-header">
+    <strong>Sponsored Ad</strong>
+    <span class="float-end"><%= ad.status.capitalize %></span>
+  </div>
+  <div class="ad-title">
+    <h4><%= ad.title %></h4>
+  </div>
+  <% if ad.body.present? %>
+    <div class="ad-body">
+      <%= ad.body.to_s.html_safe %>
+    </div>
+  <% end %>
+  <% if ad.media.attached? %>
+    <div class="ad-media">
+      <% ad.media.each do |media| %>
+        <% if media.image? %>
+          <%= image_tag url_for(media), class: "img-fluid mb-2" %>
+        <% elsif media.video? %>
+          <video controls class="w-100 mb-2">
+            <source src="<%= url_for(media) %>">
+            Your browser does not support the video tag.
+          </video>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="ad-footer text-muted small">
+    <span>Ad ID: <%= ad.id %></span>
+    <% if ad.revenue_share_percentage.to_f > 0 %>
+      <span class="ms-3">Earn <%= ad.revenue_share_percentage %>% back in rewards!</span>
+    <% end %>
+    <button class="btn btn-primary btn-sm ms-3 ad-click-btn" data-ad-id="<%= ad.id %>" data-ad-url="<%= ad.try(:url) || '#' %>">Learn More</button>
+  </div>
+</div> 

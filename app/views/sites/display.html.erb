@@ -1,0 +1,80 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><%= @site.name %></h1>
+        <% if @site.description.present? %>
+          <p class="text-muted"><%= @site.description %></p>
+        <% end %>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div id="form-display">
+            <%= @site.site_html.html_safe if @site.site_html.present? %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @site.site_css.present? %>
+  <style>
+    <%= @site.site_css.html_safe %>
+  </style>
+<% end %>
+
+<% if @site.site_js.present? %>
+  <script>
+    <%= @site.site_js.html_safe %>
+  </script>
+<% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle form submission
+    const form = document.querySelector('#form-display form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Collect form data
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+          data[key] = value;
+        }
+        
+        // Submit to server
+        fetch('<%= submit_organization_site_path(@organization, @site) %>', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            site_data: data
+          })
+        })
+        .then(response => {
+          if (response.ok) {
+            alert('Form submitted successfully!');
+            form.reset();
+          } else {
+            alert('Error submitting form.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error submitting form.');
+        });
+      });
+    }
+  });
+</script> 

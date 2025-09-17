@@ -1,0 +1,5 @@
+<turbo-stream action="replace" target="task_status_<%= task.id %>">
+  <template>
+    <span class="task-status-badge <%= task.status.downcase %>"><%= task.status %></span>
+  </template>
+</turbo-stream> 

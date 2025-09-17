@@ -1,0 +1,23 @@
+#!/bin/bash -e
+
+# Remove a potentially pre-existing server.pid for Rails
+rm -f /rails/tmp/pids/server.pid
+
+# Install/Update gems if needed
+bundle check || bundle install
+
+# If running the rails server then create or migrate existing database
+if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+  # Wait for database to be ready
+  until nc -z -v -w30 db 5432
+  do
+    echo "Waiting for database connection..."
+    sleep 5
+  done
+
+  # Prepare database if needed
+  bundle exec rails db:prepare
+fi
+
+# Then exec the container's main process (what's set as CMD in the Dockerfile)
+exec "${@}"

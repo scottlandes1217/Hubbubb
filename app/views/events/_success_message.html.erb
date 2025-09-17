@@ -1,0 +1,24 @@
+<div class="sidebar-success">
+  <div class="sidebar-header">
+    <h5 class="sidebar-title">Success!</h5>
+    <button class="btn-close" data-action="click->sidebar#hide"></button>
+  </div>
+  
+  <div class="sidebar-body text-center">
+    <div class="mb-4">
+      <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+    </div>
+    <h6 class="text-success mb-3"><%= message %></h6>
+    <p class="text-muted">The calendar will refresh automatically.</p>
+    <button class="btn btn-primary" data-action="click->sidebar#hide">
+      Close
+    </button>
+  </div>
+</div>
+
+<script>
+  // Auto-refresh the page after a short delay
+  setTimeout(() => {
+    window.location.reload()
+  }, 2000)
+</script> 

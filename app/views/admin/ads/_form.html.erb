@@ -1,0 +1,203 @@
+<%= form_with(model: [:admin, @ad], local: true, html: { multipart: true }) do |form| %>
+  <% if @ad.errors.any? %>
+    <div class="alert alert-danger">
+      <h4>There were errors:</h4>
+      <ul>
+        <% @ad.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Basic Info</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <%= form.label :title %>
+            <%= form.text_field :title, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :body %>
+            <%= form.rich_text_area :body, class: 'form-control', style: 'min-height: 200px;' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :media, 'Media (images/videos)' %>
+            <%= form.file_field :media, multiple: true, direct_upload: true, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :url, 'Ad URL (external link)' %>
+            <%= form.url_field :url, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :status %>
+            <%= form.select :status, [['Active', 'active'], ['Inactive', 'inactive'], ['Scheduled', 'scheduled']], {}, class: 'form-select' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :start_at %>
+            <%= form.datetime_select :start_at, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :end_at %>
+            <%= form.datetime_select :end_at, class: 'form-control' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">Ad Frequency & Revenue</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <%= form.label :global_frequency, 'Global Frequency (show every N posts)' %>
+            <%= form.number_field :global_frequency, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :max_impressions_per_user, 'Max Impressions Per User' %>
+            <%= form.number_field :max_impressions_per_user, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :user_cooldown_seconds, 'User Cooldown (seconds)' %>
+            <%= form.number_field :user_cooldown_seconds, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :revenue_generated %>
+            <%= form.number_field :revenue_generated, step: 0.01, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :revenue_share_percentage %>
+            <%= form.number_field :revenue_share_percentage, step: 0.01, class: 'form-control' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Location & Pet Targeting</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <%= form.label :include_locations, 'Include Locations (comma separated)' %>
+            <%= form.text_field :include_locations, value: @ad.include_locations&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :exclude_locations, 'Exclude Locations (comma separated)' %>
+            <%= form.text_field :exclude_locations, value: @ad.exclude_locations&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :pet_types, 'Pet Types (comma separated, e.g. dog,cat)' %>
+            <%= form.text_field :pet_types, value: @ad.pet_types&.join(', '), class: 'form-control' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+          <h5 class="mb-0">Advanced Location Targeting</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <%= form.label :target_states, 'Target States (comma separated)' %>
+            <%= form.text_field :target_states, value: @ad.target_states&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_counties, 'Target Counties (comma separated)' %>
+            <%= form.text_field :target_counties, value: @ad.target_counties&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_cities, 'Target Cities (comma separated)' %>
+            <%= form.text_field :target_cities, value: @ad.target_cities&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_zip_codes, 'Target Zip Codes (comma separated)' %>
+            <%= form.text_field :target_zip_codes, value: @ad.target_zip_codes&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_latitude, 'Target Latitude (for radius targeting)' %>
+            <%= form.number_field :target_latitude, step: 0.000001, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_longitude, 'Target Longitude (for radius targeting)' %>
+            <%= form.number_field :target_longitude, step: 0.000001, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_radius_miles, 'Target Radius (miles)' %>
+            <%= form.number_field :target_radius_miles, step: 0.1, class: 'form-control' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">Demographic & Pet Targeting</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <%= form.label :min_age, 'Minimum User Age' %>
+            <%= form.number_field :min_age, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :max_age, 'Maximum User Age' %>
+            <%= form.number_field :max_age, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_genders, 'Target Genders (comma separated, e.g. male,female,other)' %>
+            <%= form.text_field :target_genders, value: @ad.target_genders&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :target_pet_breeds, 'Target Pet Breeds (comma separated, e.g. labrador,siamese)' %>
+            <%= form.text_field :target_pet_breeds, value: @ad.target_pet_breeds&.join(', '), class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :min_pet_age, 'Minimum Pet Age (years)' %>
+            <%= form.number_field :min_pet_age, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :max_pet_age, 'Maximum Pet Age (years)' %>
+            <%= form.number_field :max_pet_age, class: 'form-control' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0">Ad Budget & Cap</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <%= form.label :impression_cap, 'Impression Cap (max number of views)' %>
+            <%= form.number_field :impression_cap, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :click_cap, 'Click Cap (max number of clicks)' %>
+            <%= form.number_field :click_cap, class: 'form-control' %>
+          </div>
+          <div class="mb-3">
+            <%= form.label :budget_cents, 'Budget (in cents)' %>
+            <%= form.number_field :budget_cents, class: 'form-control' %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex justify-content-center">
+    <%= form.submit class: 'btn btn-success btn-lg px-5' %>
+    <%= link_to 'Cancel', admin_ads_path, class: 'btn btn-secondary btn-lg ms-3' %>
+  </div>
+<% end %> 

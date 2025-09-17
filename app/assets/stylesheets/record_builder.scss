@@ -1,0 +1,9 @@
+@import "views/record_builder";
+
+/* Builder-only cursor behavior: wrappers are interactive */
+.record-field-placeholder,
+.record-partial-placeholder {
+  cursor: pointer;
+}
+
+

@@ -1,0 +1,354 @@
+@import "base/reset";
+@import "base/typography";
+@import "base/variables";
+@import "components/navbar";
+@import "components/buttons";
+@import "components/tabbed_navigation";
+@import "components/search_bar";
+@import "views/pets";
+@import "views/posts";
+@import "views/organization_fields";
+@import "feed";
+@import "calendar";
+@import "views/site_builder";
+
+
+/* General App Styling */
+
+.main-content {
+  margin: 87px 0px 0px 0px;
+  padding: 20px 30px;
+}
+
+.main-nav-dropdown {
+  inset: -1px auto auto -107px !important;
+}
+
+.container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+  max-width: 100% !important;
+  margin: 0px !important;
+}
+
+/* General Alert Banner Styling */
+.alert {
+  position: absolute !important;
+  top: 9px;
+  left: 36%;
+  width: 200px;
+  z-index: 99999;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: .5rem !important;
+}
+
+/* Success Alert */
+.alert-success {
+  background-color: #28a745; /* Green */
+}
+
+/* Error Alert */
+.alert-error {
+  background-color: #dc3545; /* Red */
+}
+
+/* Warning Alert */
+.alert-warning {
+  background-color: #ffc107; /* Yellow */
+  color: #212529; /* Dark text for contrast */
+}
+
+/* Info Alert */
+.alert-info {
+  background-color: #17a2b8; /* Teal */
+}
+
+.carousel {
+  border-radius: 8px; /* Rounded edges for carousel */
+  overflow: hidden;
+}
+
+.carousel-item img {
+  object-fit: cover;
+  height: 300px;
+  width: 100%;
+}
+
+#loading-indicator {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  padding: 16px;
+}
+
+// Pet Gallery CSS //
+
+.gallery-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gallery-item {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.gallery-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.gallery-item .btn-danger {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+// Post Gallery CSS //
+
+/* Gallery Section */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.gallery-item {
+  display: inline-block;
+  margin: 10px;
+  text-align: center;
+  vertical-align: middle;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.gallery-item.selected {
+  border-color: #007bff; /* Highlight border for selected images */
+}
+
+.gallery-thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  width: 80%;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-content h2 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.modal-content .close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-content .close-button:hover {
+  color: #dc3545;
+}
+
+.modal-content .gallery {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.modal-content input[type="file"] {
+  margin: 10px 0;
+}
+
+.modal-content .form-group {
+  margin: 20px 0;
+}
+
+/* Selected Images Section */
+#selected-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.thumbnail:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+// UploadFile CSS//
+
+input[type="file"]::-webkit-file-upload-button + * {
+  display: none;
+}
+
+input[type="file"]::file-selector-button + * {
+  display: none;
+}
+
+/* Task Status Badge Styles */
+.table .status .task-status-badge {
+  display: inline-block;
+  padding: 0.5em 1em;
+  font-size: 1em;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  color: white;
+}
+
+.table .status .task-status-badge.scheduled {
+  background-color: #17a2b8;
+}
+
+.table .status .task-status-badge.pending {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.table .status .task-status-badge.overdue {
+  background-color: #dc3545;
+}
+
+.table .status .task-status-badge.completed {
+  background-color: #28a745;
+}
+
+.table .status .task-status-badge.cancelled {
+  background-color: #6c757d;
+}
+
+/* Organization Tasks Page Styles */
+.badge.scheduled {
+  background-color: #17a2b8;
+}
+
+.badge.pending {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge.overdue {
+  background-color: #dc3545;
+}
+
+.badge.completed {
+  background-color: #28a745;
+}
+
+.badge.on-hold {
+  background-color: #6c757d;
+}
+
+/* Flag icon styles */
+.flag-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+/* Task action buttons */
+.btn-group .btn {
+  margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Task header styles */
+.task-header {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #dee2e6;
+}
+
+.task-title {
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.global-top-alert {
+  min-width: 350px;
+  max-width: 90vw;
+  width: 600px;
+  padding: 1rem 2rem !important;
+  font-size: 1.1rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .global-top-alert {
+    width: 95vw;
+    min-width: 0;
+    max-width: 98vw;
+    padding: 1rem 0.5rem !important;
+    font-size: 1rem;
+  }
+}

@@ -1,0 +1,95 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-9">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><%= @calendar.name %></h1>
+        <div>
+          <%= link_to "Back to Calendars", organization_calendars_path(@organization), class: "btn btn-outline-secondary" %>
+          <% if @calendar.can_edit?(current_user) %>
+            <%= link_to "New Event", new_organization_calendar_event_path(@organization, @calendar), class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Calendar View</h5>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-primary" data-calendar-view="day">Day</button>
+              <button type="button" class="btn btn-outline-primary" data-calendar-view="week">Week</button>
+              <button type="button" class="btn btn-outline-primary active" data-calendar-view="month">Month</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="calendar-container">
+            <!-- Calendar will be rendered here by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <!-- Calendar Details -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Calendar Details</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Name:</strong> <%= @calendar.name %></p>
+          <p><strong>Description:</strong> <%= @calendar.description %></p>
+          <p><strong>Created by:</strong> <%= @calendar.created_by.full_name %></p>
+          <p><strong>Visibility:</strong> <%= @calendar.is_public? ? 'Public' : 'Private' %></p>
+          
+          <% if @calendar.can_edit?(current_user) %>
+            <%= link_to "Edit Calendar", edit_organization_calendar_path(@organization, @calendar), class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Calendar Shares -->
+      <% if @calendar.can_manage?(current_user) %>
+        <div class="card mt-3">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Calendar Sharing</h5>
+          </div>
+          <div class="card-body">
+            <%= render 'shares_list', calendar: @calendar %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Upcoming Events -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Upcoming Events</h5>
+        </div>
+        <div class="card-body">
+          <% upcoming_events = @calendar.events.where('start_time >= ?', Time.current).order(:start_time).limit(5) %>
+          <% if upcoming_events.any? %>
+            <% upcoming_events.each do |event| %>
+              <div class="mb-2">
+                <strong><%= event.title %></strong><br>
+                <small class="text-muted">
+                  <%= event.start_time.strftime("%b %d, %Y at %I:%M %p") %>
+                </small>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted">No upcoming events</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize calendar view
+  document.addEventListener('DOMContentLoaded', function() {
+    // This would be handled by the calendar controller
+    console.log('Calendar show page loaded');
+  });
+</script>

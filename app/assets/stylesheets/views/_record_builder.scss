@@ -1,0 +1,417 @@
+.pf-tabs .rb-edit-tabs {
+  position: absolute;
+  top: 4px;
+  right: 30px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-radius: 12px;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: auto !important;
+  cursor: pointer;
+  z-index: 9999;
+  display: none;
+}
+.pf-tabs .rb-edit-tabs:hover {
+  background: rgba(13,110,253,0.9);
+}
+.pf-tabs:hover > .rb-edit-tabs, .pf-tabs.gjs-selected > .rb-edit-tabs {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+.record-field-placeholder {
+  background: #fff;
+}
+
+.record-partial-placeholder {
+  background: #f8f9fa;
+}
+
+// Hide drag hover UI and element tags on hover
+.gjs-selected,
+.gjs-hovered {
+  outline: none !important;
+}
+
+// Hide GrapesJS toolbar to prevent jumping; we use inline controls
+.gjs-toolbar,
+.gjs-selected .gjs-toolbar,
+.gjs-hovered .gjs-toolbar,
+[data-gjs-toolbar] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.gjs-comp-selected,
+.gjs-comp-hover {
+  box-shadow: none !important;
+}
+
+.gjs-badge {
+  display: none !important;
+}
+
+// Hide GrapesJS selection indicators on inner elements
+.gjs-selected .rf-row,
+.gjs-selected .rf-content,
+.gjs-selected .rf-label,
+.gjs-selected .rf-value,
+.gjs-selected .rf-icon,
+.gjs-selected .partial-content-wrapper,
+.gjs-selected .partial-content-wrapper * {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+// Ensure proper selection behavior for record components
+.record-field-placeholder,
+.record-partial-placeholder {
+  position: relative;
+  /* Only the builder canvas should use pointer; real pages should not. */
+  cursor: default;
+}
+
+/* These rules should only apply in the builder iframe; move to injected canvas CSS. */
+/* Intentionally left empty to avoid affecting real pages */
+
+// Inline delete control - unified approach
+.pf-interactive .rb-del {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border-radius: 12px;
+  width: 22px;
+  height: 22px;
+  display: none; /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: auto !important;
+  z-index: 9999;
+}
+
+// Tabs component styling
+.pf-tabs {
+  position: relative;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #fff;
+  margin-bottom: 1rem;
+}
+
+.pf-tabs-header {
+  display: flex;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 6px 6px 0 0;
+}
+
+.pf-tab-btn {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-right: 1px solid #dee2e6;
+  transition: background-color 0.2s;
+}
+
+.pf-tab-btn:hover {
+  background: #e9ecef;
+}
+
+.pf-tab-btn.active {
+  background: #fff;
+  border-bottom: 2px solid #007bff;
+  margin-bottom: -1px;
+}
+
+.pf-tabs-body {
+  padding: 16px;
+  min-height: 100px;
+  /* Ensure body doesn't show drop highlighting */
+  pointer-events: none;
+}
+
+.pf-tabs-body > * {
+  pointer-events: auto;
+}
+
+.pf-tab-section {
+  display: none;
+  min-height: 50px;
+  border: 2px dashed #dee2e6;
+  border-radius: 4px;
+  margin: 8px 0;
+  padding: 16px;
+  position: relative;
+}
+
+.pf-tab-section.active {
+  display: block;
+}
+
+// Show drop zone when dragging over ONLY tab sections
+.pf-tab-section.dragover {
+  border-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+// Ensure tab sections can receive drops
+.pf-tab-section {
+  pointer-events: auto !important;
+}
+
+// Prevent parent containers from showing drop highlighting, but allow hover/selection
+.pf-tabs {
+  pointer-events: auto !important;
+}
+
+.pf-tabs-body {
+  pointer-events: none !important;
+}
+
+.pf-tabs-body > * {
+  pointer-events: auto;
+}
+
+/* Ensure clicks on icon elements also trigger the button */
+.rb-del,
+.rb-del * {
+  pointer-events: auto !important;
+}
+
+.pf-interactive .rb-del:hover {
+  background: rgba(220,53,69,0.9);
+}
+
+/* Show delete icon on hover/selection for ALL interactive components */
+.pf-interactive:hover > .rb-del,
+.pf-interactive.gjs-selected > .rb-del { 
+  display: inline-flex !important; 
+}
+
+// Hide built-in right-side panels completely
+.gjs-pn-views,
+.gjs-pn-views-container,
+.gjs-pn-options,
+.gjs-pn-views-container ~ .gjs-pn-panel,
+.gjs-pn-panel,
+.gjs-pn-panels,
+.gjs-pn-panel.gjs-pn-views,
+.gjs-pn-panel.gjs-pn-options,
+.gjs-pn-panel.gjs-pn-devices-c {
+  display: none !important;
+}
+
+.gjs-sm,
+.gjs-trt,
+.gjs-clm,
+.gjs-layer-manager {
+  display: none !important;
+}
+
+.gjs-editor,
+.gjs-cv-canvas {
+  height: calc(100vh - 127px) !important;
+  width: 100% !important;
+}
+
+.gjs-cv-canvas,
+.gjs-frame-wrapper,
+.gjs-frame,
+.gjs-canvas__frames {
+  width: 100% !important;
+}
+
+/* Hide panels globally only affected inside builder via iframe; no global styling here. */
+
+#record-leftbar .leftbar-item:hover {
+  background: #f8f9fa;
+}
+
+.gjs-one-bg {
+  background-color: #ffffff !important;
+}
+
+[data-gjs-type="wrapper"] {
+  padding: 5px !important;
+}
+
+// Make GrapesJS toolbar stick to the selected wrapper by hiding inner toolbars
+.gjs-toolbar-item {
+  pointer-events: auto !important;
+}
+
+// Keep badge hidden to reduce noise, but show toolbar
+.gjs-badge { display: none !important; }
+
+// Ensure fields and partials inside tabs show delete buttons
+.pf-tab-section .record-field-placeholder,
+.pf-tab-section .record-partial-placeholder {
+  position: relative;
+}
+
+.pf-tab-section .pf-interactive .rb-del {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border-radius: 12px;
+  width: 22px;
+  height: 22px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: auto !important;
+  z-index: 9999;
+}
+
+.pf-tab-section .pf-interactive:hover > .rb-del,
+.pf-tab-section .pf-interactive.gjs-selected > .rb-del {
+  display: inline-flex !important;
+}
+
+/* Force GrapesJS overlays to be minimal and avoid inner selection */
+.gjs-badge { display: none !important; }
+.gjs-comp-selected, .gjs-comp-hover { box-shadow: none !important; outline: none !important; }
+.gjs-selected .gjs-toolbar { display: block !important; }
+
+/* Hide inner-document toolbars only, not the top panel toolbar */
+/* TEMPORARILY DISABLED TO FIX CANVAS VISIBILITY ISSUE */
+/*
+.gjs-cv-canvas .gjs-toolbar,
+.gjs-frame .gjs-toolbar,
+[data-gjs-toolbar]:not(.gjs-pn-panel [data-gjs-toolbar]),
+[class*='gjs-toolbar']:not(.gjs-pn-panel [class*='gjs-toolbar']),
+.gjs-highlighter,
+.gjs-highlighter-sel,
+.gjs-resizer,
+.gjs-selection,
+.gjs-ghost,
+.gjs-dashed,
+.gjs-badge,
+.gjs-offset-v,
+.gjs-offset-h { 
+  display: none !important; 
+  visibility: hidden !important; 
+  opacity: 0 !important; 
+}
+*/
+
+/* Never show hover/selection for the root wrapper */
+[data-gjs-type="wrapper"] { outline: none !important; }
+.gjs-selected[data-gjs-type="wrapper"] { outline: none !important; box-shadow: none !important; }
+
+/* Visual hover outline is handled inside the iframe via injected CSS */
+.builder-title { font-size: 1.25rem; text-align: center; }
+.builder-btn-row { margin-left: 25% !important; }
+
+/* Ensure delete and edit buttons are visible on tabs components */
+.pf-tabs-container:hover .rb-del,
+.pf-tabs-container:hover .rb-edit-tabs {
+  display: inline-flex !important;
+}
+
+.pf-tabs-container .rb-del,
+.pf-tabs-container .rb-edit-tabs {
+  display: none;
+}
+
+/* Additional styling for delete and edit buttons */
+.rb-del, .rb-edit-tabs {
+  position: absolute !important;
+  top: 4px !important;
+  background: rgba(0,0,0,0.7) !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  width: 22px !important;
+  height: 22px !important;
+  line-height: 22px !important;
+  text-align: center !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  z-index: 9999 !important;
+  display: none !important;
+}
+
+.rb-del {
+  right: 6px !important;
+}
+
+.rb-edit-tabs {
+  right: 30px !important;
+}
+
+/* Ensure tabs components show delete buttons on hover */
+.pf-tabs-container:hover > .pf-tabs > .rb-del,
+.pf-tabs-container.gjs-selected > .pf-tabs > .rb-del,
+.pf-tabs-container:hover > .pf-tabs > .rb-edit-tabs,
+.pf-tabs-container.gjs-selected > .pf-tabs > .rb-edit-tabs {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure tab sections are properly configured for drops */
+.pf-tab-section {
+  min-height: 40px !important;
+  padding: 6px !important;
+  border: 1px dashed #ced4da !important;
+  border-radius: 4px !important;
+}
+
+/* Left sidebar styling */
+#record-leftbar {
+  background: #fff;
+  border-right: 1px solid #dee2e6;
+}
+
+#record-leftbar .leftbar-item {
+  cursor: grab;
+  transition: background-color 0.2s ease;
+  border: 1px solid transparent;
+}
+
+#record-leftbar .leftbar-item:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+#record-leftbar .leftbar-item:active {
+  cursor: grabbing;
+}
+
+#record-leftbar .builder-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+#record-leftbar .builder-btn-row {
+  margin-left: 0 !important;
+  justify-content: space-between;
+}
+
+#record-leftbar .btn-link {
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+#record-leftbar .btn-link:hover {
+  color: #0d6efd !important;
+}
+
+#record-leftbar .btn-link.text-warning:hover {
+  color: #dc3545 !important;
+}

@@ -1,0 +1,124 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            <i class="fas fa-search me-2"></i>
+            Admin Search Results
+            <% if @query.present? %>
+              for "<%= @query %>"
+            <% end %>
+          </h4>
+        </div>
+        <div class="card-body">
+          <!-- Search Form -->
+          <%= form_with url: admin_search_path, method: :get, local: true, class: "mb-4" do |f| %>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <%= f.text_field :q, value: @query, class: "form-control", placeholder: "Search users, organizations, pets..." %>
+                  <%= f.submit "Search", class: "btn btn-primary" %>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <%= f.select :record_type, 
+                    options_for_select([
+                      ['All Records', ''],
+                      ['Organizations', 'organizations'],
+                      ['Users', 'users'],
+                      ['Pets', 'pets']
+                    ], @record_type), 
+                    {}, 
+                    { class: "form-select" } %>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                  <i class="fas fa-filter me-2"></i>Filters
+                </button>
+              </div>
+            </div>
+            <!-- Filters Collapse (add more as needed) -->
+            <div class="collapse mt-3" id="filtersCollapse">
+              <div class="card card-body">
+                <div class="row">
+                  <% if @record_type.blank? || @record_type == 'users' %>
+                    <div class="col-md-3">
+                      <label class="form-label">User Role</label>
+                      <%= f.select "filters[role]", 
+                          options_for_select([
+                            ['All Roles', ''],
+                            ['Basic User', 'basic_user'],
+                            ['Shelter Staff', 'shelter_staff'],
+                            ['Admin', 'admin']
+                          ], @filters&.dig(:role)), 
+                          {}, 
+                          { class: "form-select" } %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Results -->
+          <% if @query.present? %>
+            <% if @results.any? %>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Name/Title</th>
+                      <th>Details</th>
+                      <th>Updated</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @results.each do |result| %>
+                      <tr>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <i class="<%= result[:icon] || 'fas fa-question' %> me-2"></i>
+                            <span class="badge bg-secondary"><%= result[:type]&.titleize || 'Unknown' %></span>
+                          </div>
+                        </td>
+                        <td>
+                          <strong><%= result[:title] %></strong>
+                        </td>
+                        <td><%= result[:subtitle] %></td>
+                        <td><%= result[:recent] ? 'Recent' : '' %></td>
+                        <td>
+                          <% if result[:url] %>
+                            <%= link_to "View", result[:url], class: "btn btn-sm btn-outline-primary" %>
+                          <% end %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% else %>
+              <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>No results found</h5>
+                <p class="text-muted">Try adjusting your search terms or filters.</p>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-5">
+              <i class="fas fa-search fa-3x text-muted mb-3"></i>
+              <h5>Enter a search term to get started</h5>
+              <p class="text-muted">Search across users, organizations, and pets.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,119 @@
+<div class="sidebar-header d-flex justify-content-between align-items-center">
+  <div>
+    <button class="btn btn-outline-secondary sidebar-position-toggle me-2"
+            data-action="click->sidebar#switchPosition"
+            title="Swap sidebar side">
+      <i class="fas fa-arrows-alt-h"></i>
+    </button>
+  </div>
+  <div>
+    <button class="btn-close" data-action="click->sidebar#hide" aria-label="Close"></button>
+  </div>
+</div>
+
+<div class="sidebar-body">
+  <%= form_with(model: [@organization, calendar]) do |form| %>
+    <% if calendar.errors.any? %>
+      <div class="alert alert-danger">
+        <h4><%= pluralize(calendar.errors.count, "error") %> prohibited this calendar from being saved:</h4>
+        <ul>
+          <% calendar.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="mb-3">
+      <%= form.label :name, class: "form-label" %>
+      <%= form.text_field :name, class: "form-control", required: true %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :description, class: "form-label" %>
+      <%= form.text_area :description, class: "form-control", rows: 3 %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :color, class: "form-label" %>
+      <div class="d-flex align-items-center">
+        <%= form.color_field :color, class: "form-control form-control-color me-2", style: "width: 60px;" %>
+        <span class="text-muted">Choose a color for this calendar</span>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <div class="form-check">
+        <%= form.check_box :is_public, class: "form-check-input" %>
+        <%= form.label :is_public, "Make this calendar public", class: "form-check-label" %>
+      </div>
+      <small class="form-text text-muted">
+        Public calendars are visible to all organization members. Private calendars are only visible to you and administrators.
+      </small>
+    </div>
+
+    <!-- Calendar Sharing Section -->
+    <% if @calendar.persisted? %>
+      <div class="card mt-4" 
+           data-controller="calendar-sharing"
+           data-share-url="<%= organization_calendar_calendar_shares_path(@organization, @calendar) %>">
+        <div class="card-header">
+          <h6 class="card-title mb-0">Share Calendar</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Share with organization members:</label>
+            <select class="form-select" 
+                    data-calendar-sharing-target="userSelect"
+                    data-action="change->calendar-sharing#userSelected">
+              <option value="">Select a user...</option>
+              <% @organization.users.each do |user| %>
+                <option value="<%= user.id %>"><%= user.full_name %> (<%= user.email %>)</option>
+              <% end %>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Or share with email address:</label>
+            <input type="email" 
+                   class="form-control" 
+                   data-calendar-sharing-target="emailInput"
+                   data-action="input->calendar-sharing#emailChanged"
+                   placeholder="Enter email address">
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Permission level:</label>
+            <select class="form-select" data-calendar-sharing-target="permissionSelect">
+              <option value="view">View only</option>
+              <option value="edit">Can edit events</option>
+              <option value="manage">Can manage calendar</option>
+            </select>
+          </div>
+          
+          <button type="button" 
+                  class="btn btn-primary" 
+                  data-calendar-sharing-target="shareBtn"
+                  data-action="click->calendar-sharing#share">
+            Share Calendar
+          </button>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="mt-4">
+      <%= hidden_field_tag :view, params[:view] || @view %>
+      <%= hidden_field_tag :start_date, params[:start_date] || @start_date %>
+      <% Array(params[:calendar_ids] || @selected_calendar_ids).each do |cid| %>
+        <%= hidden_field_tag 'calendar_ids[]', cid %>
+      <% end %>
+    </div>
+
+    <div class="mt-4 d-grid gap-2">
+      <%= form.submit class: "btn btn-primary" %>
+      <button type="button" class="btn btn-secondary" data-action="click->sidebar#hide">
+        Cancel
+      </button>
+    </div>
+  <% end %>
+</div> 

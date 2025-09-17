@@ -1,0 +1,32 @@
+<div class="mb-3 organization-select" style="<%= 'display: none;' unless f.object.shelter_staff? %>">
+  <%= f.label :organization_ids, "Organizations", class: "form-label" %>
+  <%= f.collection_select :organization_ids, Organization.all, :id, :name, {}, { multiple: true, class: "form-select #{'is-invalid' if f.object.errors[:organizations].any?}" } %>
+  <% if f.object.errors[:organizations].any? %>
+    <div class="invalid-feedback">
+      <%= f.object.errors[:organizations].join(', ') %>
+    </div>
+  <% end %>
+  <div class="form-text">Hold Ctrl/Cmd to select multiple organizations</div>
+</div>
+
+<script>
+// Wait for both DOM and Turbo to be ready
+document.addEventListener('turbo:load', function() {
+  const roleSelect = document.querySelector('select[name="user[role]"]');
+  const organizationSelect = document.querySelector('.organization-select');
+
+  function toggleOrganizationSelect() {
+    if (roleSelect && roleSelect.value === 'shelter_staff') {
+      organizationSelect.style.display = 'block';
+    } else {
+      organizationSelect.style.display = 'none';
+    }
+  }
+
+  if (roleSelect) {
+    roleSelect.addEventListener('change', toggleOrganizationSelect);
+    // Run once on page load
+    toggleOrganizationSelect();
+  }
+});
+</script> 

@@ -1,0 +1,253 @@
+<div class="sidebar-event-details">
+  <!-- Header with title and actions -->
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <h4 class="mb-0"><%= event.title %></h4>
+    <div class="btn-group btn-group-sm">
+      <% if event.can_edit?(current_user) %>
+        <%= link_to edit_organization_event_path(@organization, event), 
+            class: "btn btn-outline-primary btn-sm",
+            data: { action: "click->calendar#openEventModal" } do %>
+          <i class="fas fa-edit"></i>
+        <% end %>
+        <%= link_to organization_event_path(@organization, event), 
+            method: :delete, 
+            data: { confirm: "Are you sure you want to delete this event?" }, 
+            class: "btn btn-outline-danger btn-sm" do %>
+          <i class="fas fa-trash"></i>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  
+  <!-- Debug info -->
+  <div class="alert alert-info">
+    <strong>Debug Info:</strong><br>
+    Event ID: <%= event.id %><br>
+    Event Title: <%= event.title %><br>
+    Calendar: <%= event.calendar&.name %><br>
+    Organizer: <%= event.organizer&.full_name %>
+  </div>
+
+  <!-- Date & Time -->
+  <div class="mb-3">
+    <div class="d-flex align-items-center mb-2">
+      <i class="fas fa-calendar-alt text-primary me-2"></i>
+      <strong>Date & Time</strong>
+    </div>
+    <div class="ps-4">
+      <%= event.start_time.strftime("%A, %B %d, %Y") %><br>
+      <small class="text-muted">
+        <%= event.start_time.strftime("%H:%M") %>
+        <% unless event.all_day %>
+          - <%= event.end_time.strftime("%H:%M") %>
+        <% end %>
+        <% if event.all_day %>
+          <span class="badge bg-info ms-1">All Day</span>
+        <% end %>
+      </small>
+    </div>
+  </div>
+
+  <!-- Location -->
+  <% if event.location.present? %>
+    <div class="mb-3">
+      <div class="d-flex align-items-center mb-2">
+        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+        <strong>Location</strong>
+      </div>
+      <div class="ps-4">
+        <%= event.location %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Description -->
+  <% if event.description.present? %>
+    <div class="mb-3">
+      <div class="d-flex align-items-center mb-2">
+        <i class="fas fa-align-left text-primary me-2"></i>
+        <strong>Description</strong>
+      </div>
+      <div class="ps-4">
+        <%= simple_format(event.description) %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Calendar -->
+  <div class="mb-3">
+    <div class="d-flex align-items-center mb-2">
+      <i class="fas fa-calendar text-primary me-2"></i>
+      <strong>Calendar</strong>
+    </div>
+    <div class="ps-4">
+      <span class="calendar-color-indicator" style="background-color: <%= event.calendar.color %>"></span>
+      <%= event.calendar.name %>
+      <% if event.duplicate_events.any? %>
+        <br>
+        <small class="text-muted">
+          Also in: 
+          <% event.duplicate_events.each do |duplicate| %>
+            <span class="calendar-color-indicator" style="background-color: <%= duplicate.calendar.color %>"></span>
+            <%= duplicate.calendar.name %>
+            <% unless duplicate == event.duplicate_events.last %>, <% end %>
+          <% end %>
+        </small>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Status and Priority -->
+  <div class="mb-3">
+    <div class="row">
+      <div class="col-6">
+        <div class="d-flex align-items-center mb-1">
+          <i class="fas fa-info-circle text-primary me-2"></i>
+          <strong>Status</strong>
+        </div>
+        <div class="ps-4">
+          <span class="badge bg-<%= event.status == 'completed' ? 'success' : 
+                                   event.status == 'cancelled' ? 'danger' : 
+                                   event.status == 'in_progress' ? 'warning' : 'info' %>">
+            <%= event.status.titleize %>
+          </span>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="d-flex align-items-center mb-1">
+          <i class="fas fa-exclamation-triangle text-primary me-2"></i>
+          <strong>Priority</strong>
+        </div>
+        <div class="ps-4">
+          <span class="badge bg-<%= event.priority == 'urgent' ? 'danger' : 
+                                   event.priority == 'high' ? 'warning' : 
+                                   event.priority == 'medium' ? 'info' : 'secondary' %>">
+            <%= event.priority.titleize %>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Organizer -->
+  <div class="mb-3">
+    <div class="d-flex align-items-center mb-2">
+      <i class="fas fa-user text-primary me-2"></i>
+      <strong>Organizer</strong>
+    </div>
+    <div class="ps-4">
+      <div class="d-flex align-items-center">
+        <div class="avatar-placeholder small me-2">
+          <%= event.organizer.first_name[0].upcase %>
+        </div>
+        <div>
+          <div class="fw-bold"><%= event.organizer.full_name %></div>
+          <small class="text-muted"><%= event.organizer.email %></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Participants -->
+  <div class="mb-3">
+    <div class="d-flex align-items-center mb-2">
+      <i class="fas fa-users text-primary me-2"></i>
+      <strong>Participants (<%= event.participants.count %>)</strong>
+    </div>
+    <div class="ps-4">
+      <% if event.participants.any? %>
+        <% event.participants.limit(3).each do |participant| %>
+          <div class="d-flex align-items-center mb-1">
+            <div class="avatar-placeholder small me-2">
+              <%= participant.first_name[0].upcase %>
+            </div>
+            <div>
+              <div class="fw-bold"><%= participant.full_name %></div>
+              <small class="text-muted">
+                <% participant_event = event.event_participants.find_by(user: participant) %>
+                <%= participant_event&.role&.titleize %>
+              </small>
+            </div>
+          </div>
+        <% end %>
+        <% if event.participants.count > 3 %>
+          <small class="text-muted">+<%= event.participants.count - 3 %> more</small>
+        <% end %>
+      <% else %>
+        <p class="text-muted mb-0">No participants</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Related Tasks -->
+  <% if event.tasks.any? %>
+    <div class="mb-3">
+      <div class="d-flex align-items-center mb-2">
+        <i class="fas fa-tasks text-primary me-2"></i>
+        <strong>Related Tasks (<%= event.tasks.count %>)</strong>
+      </div>
+      <div class="ps-4">
+        <% event.tasks.limit(3).each do |task| %>
+          <div class="mb-1">
+            <div class="fw-bold"><%= task.subject %></div>
+            <small class="text-muted">
+              <%= task.pet.name %> - <%= task.status %>
+            </small>
+          </div>
+        <% end %>
+        <% if event.tasks.count > 3 %>
+          <small class="text-muted">+<%= event.tasks.count - 3 %> more</small>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Actions -->
+  <div class="mt-4 pt-3 border-top">
+    <div class="d-grid gap-2">
+      <% if event.can_edit?(current_user) %>
+        <%= link_to "Edit Event", edit_organization_event_path(@organization, event), 
+            class: "btn btn-primary btn-sm",
+            data: { action: "click->calendar#openEventModal" } %>
+      <% end %>
+      <%= link_to "View Full Details", organization_event_path(@organization, event), 
+          class: "btn btn-outline-secondary btn-sm" %>
+    </div>
+  </div>
+</div>
+
+<style>
+.calendar-color-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.avatar-placeholder.small {
+  width: 24px;
+  height: 24px;
+  font-size: 0.7em;
+}
+
+.sidebar-event-details {
+  padding: 1rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+</style> 

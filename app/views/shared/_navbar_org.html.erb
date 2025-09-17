@@ -1,0 +1,241 @@
+<%# --- FLEXBOX HEADER LAYOUT: 3 columns, 2 center rows --- %>
+<div class="org-header-flex" style="position:fixed; top:0; width:100%; z-index:10; background:#212529; display:flex; align-items:stretch; min-height:87px;">
+  <!-- LEFT COLUMN: Org name/logo -->
+  <div class="org-header-left d-flex align-items-center justify-content-start px-3" style="flex:0 0 auto;">
+    <% if @organization.present? %>
+      <%= link_to organization_path(@organization), class: "navbar-brand fw-bold text-truncate my-0 py-0", style: "color:#fff;" do %>
+        <i class="fas fa-building me-2"></i><span style="max-width:120px; display:inline-block; vertical-align:middle; color:#fff;" class="text-truncate"><%= @organization.name %></span>
+      <% end %>
+    <% else %>
+      <%= link_to root_path, class: "navbar-brand fw-bold my-0 py-0", style: "color:#fff;" do %>
+        <i class="fas fa-paw me-2"></i>hubbubb
+      <% end %>
+    <% end %>
+  </div>
+
+  <!-- CENTER COLUMN: 2 rows (search, then nav/tabs/3-dots) -->
+  <div class="org-header-center d-flex flex-column justify-content-center" style="flex:1 1 0; min-width:0;">
+    <!-- Row 1: Search bar -->
+    <div class="org-header-search d-flex justify-content-center align-items-center py-2" style="width:100%;">
+      <%= render 'shared/search_bar', organization: @organization %>
+    </div>
+    <!-- Row 2: Main nav, tabs, 3-dots -->
+    <div class="org-header-navrow d-flex align-items-center">
+      <!-- Main nav dropdown -->
+      <div class="navbar-nav align-items-center my-0 py-0">
+        <div class="nav-item dropdown d-flex align-items-center" id="mainNavDropdownWrapper">
+          <%# Determine current section and icon %>
+          <% current_section = nil; current_icon = nil; current_path = nil %>
+          <% if @organization.present? %>
+            <% if current_page?(organization_path(@organization)) %>
+              <% current_section = 'Home'; current_icon = 'fas fa-home'; current_path = organization_path(@organization) %>
+            <% elsif current_page?(organization_pets_path(@organization)) || (request.path.match?(/\/organizations\/\d+\/pets\/\d+/) && !request.path.match?(/\/pets\/\d+\/(edit|new)/)) %>
+              <% current_section = 'Pets'; current_icon = 'fas fa-paw'; current_path = organization_pets_path(@organization) %>
+            <% elsif current_page?(organization_events_path(@organization)) || request.path.match?(/\/organizations\/\d+\/events\/\d+/) %>
+              <% current_section = 'Calendar'; current_icon = 'fas fa-calendar'; current_path = organization_events_path(@organization) %>
+            <% elsif current_page?(organization_tasks_path(@organization)) || request.path.match?(/\/organizations\/\d+\/tasks\/\d+/) %>
+              <% current_section = 'Tasks'; current_icon = 'fas fa-tasks'; current_path = organization_tasks_path(@organization) %>
+            <% elsif current_page?(feed_index_path) %>
+              <% current_section = 'Social'; current_icon = 'fas fa-users'; current_path = feed_index_path %>
+            <% elsif current_page?(organization_flows_path(@organization)) || request.path.match?(/\/organizations\/\d+\/flows\/\d+/) || 
+                      current_page?(organization_sites_path(@organization)) || request.path.match?(/\/organizations\/\d+\/sites\/\d+/) ||
+                      current_page?(edit_organization_path(@organization)) || 
+                      current_page?(organization_objects_path(@organization)) %>
+              <% current_section = 'Settings'; current_icon = 'fas fa-cog'; current_path = '#' %>
+            <% else %>
+              <% current_section = 'Navigation'; current_icon = 'fas fa-bars'; current_path = '#' %>
+            <% end %>
+          <% else %>
+            <% current_section = 'Navigation'; current_icon = 'fas fa-bars'; current_path = '#' %>
+          <% end %>
+
+          <%# Icon+name link to section index %>
+          <%= link_to current_path, class: "main-nav-link d-flex align-items-center px-2 py-1", style: "text-decoration:none; color:#fff; font-size:1.15rem;" do %>
+            <i class="<%= current_icon %> me-2"></i>
+            <span><%= current_section %></span>
+          <% end %>
+
+          <%# Dropdown arrow button only opens menu %>
+          <button class="btn btn-link px-2 py-1 ms-1" type="button" id="mainNavDropdown" data-bs-toggle="dropdown" aria-expanded="false" tabindex="0" style="color:#fff; font-size:1.15rem;">
+            <i class="fas fa-caret-down"></i>
+          </button>
+
+          <ul class="dropdown-menu main-nav-dropdown" aria-labelledby="mainNavDropdown" style="z-index:20;">
+            <li>
+              <%= link_to (@organization.present? ? organization_path(@organization) : root_path), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(@organization.present? ? organization_path(@organization) : root_path) ? 'active' : ''}" do %>
+                <i class="fas fa-home me-3 text-muted"></i>
+                <span>Home</span>
+              <% end %>
+            </li>
+            <% if @organization.present? %>
+              <li>
+                <%= link_to organization_pets_path(@organization), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_pets_path(@organization)) || (request.path.match?(/\/organizations\/\d+\/pets\/\d+/) && !request.path.match?(/\/pets\/\d+\/(edit|new)/)) ? 'active' : ''}" do %>
+                  <i class="fas fa-paw me-3 text-muted"></i>
+                  <span>Pets</span>
+                <% end %>
+              </li>
+              <li>
+                <%= link_to organization_events_path(@organization), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_events_path(@organization)) || request.path.match?(/\/organizations\/\d+\/events\/\d+/) ? 'active' : ''}" do %>
+                  <i class="fas fa-calendar me-3 text-muted"></i>
+                  <span>Calendar</span>
+                <% end %>
+              </li>
+              <li>
+                <%= link_to organization_tasks_path(@organization), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_tasks_path(@organization)) || request.path.match?(/\/organizations\/\d+\/tasks\/\d+/) ? 'active' : ''}" do %>
+                  <i class="fas fa-tasks me-3 text-muted"></i>
+                  <span>Tasks</span>
+                <% end %>
+              </li>
+
+              
+              
+              <% @organization.custom_objects.in_navigation.active.each do |table| %>
+                <li>
+                                      <%= link_to organization_custom_object_path(@organization, table), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_custom_object_path(@organization, table)) || request.path.match?(/\/organizations\/\d+\/custom_objects\/#{table.id}\//) ? 'active' : ''}" do %>
+                    <% if table.font_awesome_icon? %>
+                      <i class="<%= table.font_awesome_icon %> me-3 text-muted"></i>
+                    <% elsif table.uploaded_icon? && table.icon.attached? %>
+                      <img src="<%= url_for(table.icon) %>" alt="<%= table.name %>" style="max-width: 16px; max-height: 16px;" class="me-3">
+                    <% else %>
+                      <i class="fas fa-database me-3 text-muted"></i>
+                    <% end %>
+                                            <span><%= table.name %></span>
+                  <% end %>
+                </li>
+              <% end %>
+            <% end %>
+            <li>
+              <%= link_to feed_index_path, class: "dropdown-item d-flex align-items-center py-2 #{current_page?(feed_index_path) ? 'active' : ''}" do %>
+                <i class="fas fa-users me-3 text-muted"></i>
+                <span>Social</span>
+              <% end %>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- Tabs (flex:1, min-width:0, scrollable) -->
+      <div class="d-flex align-items-center" style="flex:1 1 0; min-width:0; overflow-x:auto;">
+        <%= render 'shared/tabbed_navigation' %>
+      </div>
+      <!-- 3-dots dropdown -->
+      <div class="dropdown ms-3" style="flex-shrink:0;">
+        <a class="btn btn-sm btn-outline-secondary dropdown-toggle px-2 py-1" href="#" id="tabMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Tab actions" role="button">
+          <i class="fas fa-ellipsis-h fa-lg"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end mt-1" aria-labelledby="tabMenuDropdown" style="min-width: 180px;">
+          <li><hr class="tab-menu-divider"></li>
+          <li><a class="dropdown-item" href="#" onclick="document.dispatchEvent(new CustomEvent('unpinAllTabs')); return false;">Unpin all tabs</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: Settings and user nav -->
+  <div class="org-header-right d-flex align-items-center justify-content-end px-3" style="flex:0 0 auto; min-width:80px;">
+    <% if user_signed_in? && current_user.impersonated? %>
+      <div class="nav-item me-3">
+        <div class="alert alert-warning mb-0 py-1 px-2 small">
+          <i class="fas fa-user-secret me-1"></i>
+          Impersonating: <%= current_user.email %>
+          <%= button_to "Stop", stop_impersonating_user_path(current_user), method: :delete, class: "btn btn-warning btn-sm ms-2" %>
+        </div>
+      </div>
+    <% end %>
+    
+    <!-- Settings Dropdown -->
+    <div class="nav-item dropdown me-3">
+      <a class="user-nav-link dropdown-toggle d-flex align-items-center" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-cog me-2"></i>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="settingsDropdown" style="min-width: 220px; z-index:20;">
+        <li class="dropdown-header text-muted small px-3 py-2">
+          <i class="fas fa-cog me-2"></i>Settings
+        </li>
+        <li>
+          <%= link_to organization_flows_path(@organization), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_flows_path(@organization)) || request.path.match?(/\/organizations\/\d+\/flows\/\d+/) ? 'active' : ''}" do %>
+            <i class="fas fa-project-diagram me-3 text-muted"></i>
+            <span>Flows</span>
+          <% end %>
+        </li>
+        <li>
+          <%= link_to organization_sites_path(@organization), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_sites_path(@organization)) || request.path.match?(/\/organizations\/\d+\/sites\/\d+/) ? 'active' : ''}" do %>
+            <i class="fas fa-file-alt me-3 text-muted"></i>
+            <span>Sites</span>
+          <% end %>
+        </li>
+        <%# Edit Page button: only show on record pages (Pet, Task, CustomRecord) %>
+        <% begin
+             builder_params = nil
+             if defined?(@pet) && @pet.present?
+               builder_params = { table_type: 'Pet' }
+             elsif defined?(@task) && @task.present?
+               builder_params = { table_type: 'Task' }
+             elsif defined?(@custom_object) && @custom_object.present? && (defined?(@custom_record) && @custom_record.present?)
+               builder_params = { table_type: 'CustomObject', table_id: @custom_object.id }
+             end
+           %>
+          <% if builder_params %>
+            <li>
+              <%= link_to builder_organization_record_layout_path(@organization, **builder_params.merge(return_to: request.fullpath)), class: "dropdown-item d-flex align-items-center py-2" do %>
+                <i class="fas fa-pencil-ruler me-3 text-muted"></i>
+                <span>Edit Page</span>
+              <% end %>
+            </li>
+          <% end %>
+        <% rescue %>
+        <% end %>
+        <% if current_user.shelter_staff? || current_user.admin? %>
+          <% if @organization.present? %>
+            <li>
+              <%= link_to edit_organization_path(@organization), class: "dropdown-item d-flex align-items-center py-2" do %>
+                <i class="fas fa-building me-3 text-muted"></i>
+                <span>Edit Organization</span>
+              <% end %>
+            </li>
+            <li>
+              <%= link_to organization_objects_path(@organization), class: "dropdown-item d-flex align-items-center py-2" do %>
+                <i class="fas fa-table me-3 text-muted"></i>
+                <span>Objects</span>
+              <% end %>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div>
+    
+    <!-- User Dropdown -->
+    <div class="nav-item dropdown">
+      <a class="user-nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-user-circle me-2"></i>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="userDropdown" style="min-width: 220px; z-index:20;">
+        <li class="dropdown-header text-muted small px-3 py-2">
+          <i class="fas fa-user me-2"></i>Account
+        </li>
+        <li>
+          <%= link_to edit_user_registration_path, class: "dropdown-item d-flex align-items-center py-2" do %>
+            <i class="fas fa-user-cog me-3 text-muted"></i>
+            <span>Profile Settings</span>
+          <% end %>
+        </li>
+
+        <% if current_user.admin? || (current_user.shelter_staff? && current_user.organizations.size > 1) %>
+          <li>
+            <%= link_to organizations_path, class: "dropdown-item d-flex align-items-center py-2" do %>
+              <i class="fas fa-exchange-alt me-3 text-muted"></i>
+              <span>Switch Organizations</span>
+            <% end %>
+          </li>
+        <% end %>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <%= button_to destroy_user_session_path, method: :delete, class: "dropdown-item d-flex align-items-center py-2 text-danger", form: { data: { turbo: false } } do %>
+            <i class="fas fa-sign-out-alt me-3"></i>
+            <span>Sign Out</span>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<%# REMINDER: Add margin-top to main content to offset header height %>

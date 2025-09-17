@@ -1,0 +1,72 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Something Went Wrong
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <i class="fas fa-bug fa-3x text-danger mb-3"></i>
+          <h5 class="text-muted">We're experiencing some technical difficulties</h5>
+        </div>
+        
+        <div class="alert alert-warning">
+          <h6><i class="fas fa-info-circle me-2"></i>What you can do:</h6>
+          <ul class="mb-0">
+            <li>Try refreshing the page</li>
+            <li>Wait a few moments and try again</li>
+            <li>If the problem persists, contact support</li>
+          </ul>
+        </div>
+
+        <div class="text-center">
+          <button class="btn btn-primary me-2" onclick="window.location.reload()">
+            <i class="fas fa-sync-alt me-1"></i>
+            Refresh Page
+          </button>
+          <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-1"></i>
+            Go Home
+          </a>
+        </div>
+
+        <% if Rails.env.development? %>
+          <hr>
+          <div class="mt-3">
+            <h6 class="text-muted">Developer Information:</h6>
+            <div class="alert alert-light">
+              <strong>Error:</strong> <%= @exception&.class&.name || 'Unknown Error' %><br>
+              <strong>Message:</strong> <%= @exception&.message || 'No message available' %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.fa-bug {
+  opacity: 0.7;
+}
+
+.alert {
+  border-left: 4px solid;
+}
+
+.alert-warning {
+  border-left-color: #ffc107;
+}
+
+.alert-light {
+  border-left-color: #6c757d;
+  background-color: #f8f9fa;
+}
+</style> 

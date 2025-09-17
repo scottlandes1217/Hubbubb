@@ -1,0 +1,11 @@
+<turbo-stream action="append" target="comments_for_post_<%= @post.id %>">
+  <template>
+    <%= render partial: "comments/comment", formats: [:html], locals: { comment: @comment } %>
+  </template>
+</turbo-stream>
+
+<turbo-stream action="replace" target="new_comment_form_for_post_<%= @post.id %>">
+  <template>
+    <%= render partial: "comments/form", formats: [:html], locals: { post: @post } %>
+  </template>
+</turbo-stream> 

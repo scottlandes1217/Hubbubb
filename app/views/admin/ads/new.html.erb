@@ -1,0 +1,18 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h2 class="h4 mb-0">New Ad</h2>
+        </div>
+        <div class="card-body">
+          <%= render 'form', ad: @ad %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

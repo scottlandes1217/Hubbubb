@@ -1,0 +1,59 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Ad Center</h1>
+    <%= link_to 'New Ad', new_admin_ad_path, class: 'btn btn-primary' %>
+  </div>
+
+  <!-- Ads Table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="border-0">Title</th>
+              <th class="border-0">Status</th>
+              <th class="border-0">Created At</th>
+              <th class="border-0 text-end" style="width: 150px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @ads.any? %>
+              <% @ads.each do |ad| %>
+                <tr>
+                  <td>
+                    <div class="fw-medium"><%= ad.title %></div>
+                  </td>
+                  <td>
+                    <span class="badge bg-<%= ad.status == 'active' ? 'success' : 'secondary' %>">
+                      <%= ad.status.titleize %>
+                    </span>
+                  </td>
+                  <td class="text-muted small">
+                    <%= ad.created_at.strftime('%B %d, %Y') %>
+                  </td>
+                  <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                      <%= link_to 'Edit', edit_admin_ad_path(ad), class: 'btn btn-outline-primary btn-sm' %>
+                      <%= link_to 'Delete', admin_ad_path(ad), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn btn-outline-danger btn-sm' %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  <i class="fas fa-bullhorn"></i> No ads found
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div> 

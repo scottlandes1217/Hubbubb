@@ -1,0 +1,38 @@
+<div id="calendar_shares_list">
+  <h6>Shared with:</h6>
+  <% if calendar.calendar_shares.any? %>
+    <div class="list-group">
+      <% calendar.calendar_shares.includes(:user).each do |share| %>
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <% if share.user %>
+              <strong><%= share.user.full_name %></strong>
+              <small class="text-muted">(<%= share.user.email %>)</small>
+            <% else %>
+              <strong><%= share.email %></strong>
+              <small class="text-muted">(Pending invitation)</small>
+            <% end %>
+            <br>
+            <span class="badge bg-<%= share.permission == 'manage' ? 'danger' : 
+                                   share.permission == 'edit' ? 'warning' : 'info' %>">
+              <%= share.permission.titleize %>
+            </span>
+            <span class="badge bg-<%= share.status == 'accepted' ? 'success' : 
+                                   share.status == 'declined' ? 'danger' : 'secondary' %>">
+              <%= share.status.titleize %>
+            </span>
+          </div>
+          <div>
+            <%= button_to "Remove", 
+                organization_calendar_calendar_share_path(@organization, calendar, share),
+                method: :delete,
+                class: "btn btn-sm btn-outline-danger",
+                form: { data: { turbo_confirm: "Are you sure?" } } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-muted">No shares yet.</p>
+  <% end %>
+</div> 

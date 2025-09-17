@@ -1,0 +1,2423 @@
+/* line 1, app/assets/stylesheets/components/_buttons.scss */
+.button-container {
+  position: fixed;
+  bottom: 15px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  text-align: center;
+  background-color: lightgray;
+  padding: 10px;
+  z-index: 1000;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+/* line 15, app/assets/stylesheets/components/_buttons.scss */
+.edit-button {
+  background-color: transparent;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* line 23, app/assets/stylesheets/components/_buttons.scss */
+.edit-button i {
+  pointer-events: none;
+  font-size: 12px;
+  color: #000;
+}
+
+/* line 1, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation {
+  flex: 1;
+  margin: 0 1rem;
+  min-width: 0;
+}
+
+/* line 7, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .navbar,
+.tabbed-navigation .navbar-expand-lg,
+.tabbed-navigation .container-fluid,
+.tabbed-navigation .tabbed-navigation,
+.tabbed-navigation .tabbed-navigation .nav-tabs-container,
+.tabbed-navigation .tabbed-navigation .nav-tabs,
+.tabbed-navigation .tabbed-navigation .nav-tabs-scroll {
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* line 19, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .navbar::after,
+.tabbed-navigation .navbar-expand-lg::after,
+.tabbed-navigation .container-fluid::after,
+.tabbed-navigation .tabbed-navigation::after,
+.tabbed-navigation .tabbed-navigation .nav-tabs-container::after {
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  content: none !important;
+}
+
+/* line 30, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tabs-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border-radius: 0.375rem;
+  padding: 0.25rem;
+  height: 30px;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* line 43, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tabs-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* line 49, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+  width: 100%;
+  height: 32px;
+  border: none !important;
+  border-bottom: none !important;
+  --bs-nav-tabs-border-width: 0 !important;
+  --bs-nav-tabs-border-color: transparent !important;
+}
+
+/* line 64, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 2px;
+  cursor: grab;
+  transition: width 0.18s cubic-bezier(0.4, 0, 0.2, 1), transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width, transform;
+}
+
+/* line 73, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab:active {
+  cursor: grabbing;
+}
+
+/* line 77, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.dragging {
+  opacity: 0.5;
+  z-index: 1000;
+}
+
+/* line 82, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.drag-before {
+  border-left: 2px solid #007bff;
+  margin-left: -2px;
+}
+
+/* line 87, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.drag-after {
+  border-right: 2px solid #007bff;
+  margin-right: -2px;
+}
+
+/* line 92, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-content {
+  display: flex;
+  height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 8px 8px 0px 0px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* line 104, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-content:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* line 109, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-content.active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* line 116, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-title {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 0.5rem;
+  min-width: 0;
+  margin-left: 10px;
+}
+
+/* line 129, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-actions {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  gap: 0.25rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+/* line 137, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.nav-tab-content:hover .tabbed-navigation .nav-tab .nav-tab-actions {
+  opacity: 1;
+}
+
+/* line 141, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.nav-tab-content.active .tabbed-navigation .nav-tab .nav-tab-actions {
+  opacity: 1;
+}
+
+/* line 146, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-pin,
+.tabbed-navigation .nav-tab .nav-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 0.125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+}
+
+/* line 161, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-pin:hover,
+.tabbed-navigation .nav-tab .nav-tab-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* line 166, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-pin.pinned,
+.tabbed-navigation .nav-tab .nav-tab-close.pinned {
+  color: #ffd700;
+}
+
+/* line 169, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-pin.pinned:hover,
+.tabbed-navigation .nav-tab .nav-tab-close.pinned:hover {
+  color: #ffed4e;
+}
+
+/* line 175, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-close:hover {
+  background: rgba(220, 53, 69, 0.2);
+  color: #ff6b6b;
+}
+
+/* line 184, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.tab-overflowed {
+  width: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  transform: translateX(-60px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* line 195, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tabs-actions {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  z-index: 2;
+}
+
+/* line 200, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tabs-actions .btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* line 217, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar,
+.navbar-expand-lg,
+.container-fluid {
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+  /* line 227, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation {
+    margin: 0 0.5rem;
+  }
+  /* line 230, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab {
+    min-width: 100px;
+    max-width: 150px;
+  }
+  /* line 234, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab .nav-tab-title {
+    font-size: 0.8rem;
+  }
+  /* line 238, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab .nav-tab-actions {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 576px) {
+  /* line 246, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation {
+    margin: 0 0.25rem;
+  }
+  /* line 249, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab {
+    min-width: 80px;
+    max-width: 120px;
+  }
+  /* line 253, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab .nav-tab-content {
+    padding: 0.25rem 0.375rem;
+  }
+  /* line 257, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab .nav-tab-title {
+    font-size: 0.75rem;
+    margin-right: 0.25rem;
+  }
+  /* line 262, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab .nav-tab-actions {
+    gap: 0.125rem;
+  }
+  /* line 266, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tab .nav-tab-pin,
+.tabbed-navigation .nav-tab .nav-tab-close {
+    width: 14px;
+    height: 14px;
+    font-size: 0.625rem;
+  }
+}
+
+/* line 277, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tabs-container,
+.tabbed-navigation .nav-tabs,
+.tabbed-navigation .nav-tab {
+  height: 100%;
+  min-height: 0;
+  align-items: flex-end !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 8px 8px 0px 0px;
+}
+
+/* line 288, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab-content {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 0.25rem 0.25rem 0 0;
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 1.15rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* line 304, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar {
+  height: 72px;
+  min-height: 72px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+/* line 314, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar > .container-fluid,
+.navbar .navbar-brand,
+.navbar .navbar-nav,
+.tabbed-navigation,
+.tabbed-navigation .nav-tabs-container,
+.tabbed-navigation .nav-tabs,
+.tabbed-navigation .nav-tab,
+.tabbed-navigation .nav-tab-content {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* line 329, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar-expand-lg .navbar-nav .user-nav-link, .navbar-expand-lg .navbar-nav .main-nav-link {
+  margin-top: 25px;
+  margin-left: 35px;
+}
+
+/* line 335, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.search-nav-container {
+  margin-top: 15px;
+}
+
+/* line 339, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.dropdown-menu {
+  padding: 0px !important;
+  top: 98% !important;
+  left: 38px !important;
+}
+
+/* line 346, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar .navbar-brand,
+.navbar .navbar-nav,
+.tabbed-navigation .nav-tabs-container,
+.tabbed-navigation .nav-tabs,
+.tabbed-navigation .nav-tab,
+.tabbed-navigation .nav-tab-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* line 357, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar .navbar-nav.ms-auto {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  justify-content: flex-end !important;
+}
+
+/* line 364, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar-org .user-nav-link, .navbar-org .main-nav-link {
+  margin-left: 30px;
+  margin-right: 40px;
+  margin-top: 25px;
+}
+
+/* line 371, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar .navbar-nav.align-bottom,
+.navbar .nav-tabs-actions.align-bottom {
+  align-self: flex-end !important;
+  margin-bottom: 6px;
+  /* adjust as needed for perfect vertical alignment */
+}
+
+/* line 377, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar .navbar-nav.align-bottom {
+  margin-right: 1rem;
+}
+
+/* line 381, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar .nav-tabs-actions.align-bottom {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+/* line 386, app/assets/stylesheets/components/_tabbed_navigation.scss */
+#mainNavDropdown {
+  font-size: 20px;
+}
+
+/* line 391, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.admin-users-actions.btn-group {
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  gap: 0.5rem;
+}
+
+/* line 398, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.pin-pet-btn {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+/* line 402, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.pin-pet-btn.pinned {
+  background-color: #ffc107 !important;
+  border-color: #ffc107 !important;
+}
+
+/* line 406, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.pin-pet-btn.pinned i {
+  color: #343a40 !important;
+}
+
+/* line 409, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.pin-pet-btn:not(.pinned) i {
+  color: #ffc107 !important;
+}
+
+/* line 414, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar-nav {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  /* line 422, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tabs {
+    max-width: 60vw;
+  }
+}
+
+@media (max-width: 600px) {
+  /* line 427, app/assets/stylesheets/components/_tabbed_navigation.scss */
+  .tabbed-navigation .nav-tabs {
+    max-width: 40vw;
+  }
+}
+
+/* line 432, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.tab-overflowed {
+  display: none !important;
+}
+
+/* line 436, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar-dark .navbar-nav .main-nav-link,
+.navbar-dark .navbar-nav .main-nav-link:visited,
+.navbar-dark .navbar-nav .main-nav-link:active,
+.navbar-dark .navbar-nav .main-nav-link:focus,
+.navbar-dark .navbar-nav .main-nav-link:hover,
+.navbar-dark .navbar-nav .user-nav-link,
+.navbar-dark .navbar-nav .user-nav-link:visited,
+.navbar-dark .navbar-nav .user-nav-link:active,
+.navbar-dark .navbar-nav .user-nav-link:focus,
+.navbar-dark .navbar-nav .user-nav-link:hover {
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+/* line 451, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar-expand-lg .navbar-nav .user-nav-link, .navbar-expand-lg .navbar-nav .main-nav-link {
+  margin-top: 25px;
+  margin-left: 35px;
+}
+
+/* line 456, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar-org .user-nav-link, .navbar-org .main-nav-link {
+  margin-left: 30px;
+  margin-right: 40px;
+}
+
+/* line 461, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab i {
+  color: #fff !important;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+/* line 466, app/assets/stylesheets/components/_tabbed_navigation.scss */
+#overflowed-tabs-list i {
+  color: #222 !important;
+}
+
+/* line 470, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab {
+  background: #23272b;
+  color: #e0e0e0;
+  border: .5px solid white;
+}
+
+/* line 475, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab .nav-tab-title,
+.tabbed-navigation .nav-tab i {
+  color: #e0e0e0 !important;
+}
+
+/* line 479, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.active,
+.tabbed-navigation .nav-tab-content.active {
+  background: #444a50 !important;
+  color: #fff !important;
+}
+
+/* line 484, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation .nav-tab.active .nav-tab-title,
+.tabbed-navigation .nav-tab.active i {
+  color: #fff !important;
+}
+
+/* line 490, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.navbar,
+.navbar-dark.bg-dark {
+  background: linear-gradient(180deg, #23272b 0%, #343a40 100%) !important;
+  border-bottom: 1px solid #222;
+}
+
+/* line 496, app/assets/stylesheets/components/_tabbed_navigation.scss */
+#overflowed-tabs-list .dropdown-item.active {
+  background: #23272b !important;
+  color: #fff !important;
+}
+
+/* line 501, app/assets/stylesheets/components/_tabbed_navigation.scss */
+#overflowed-tabs-list .dropdown-item.active .active-icon {
+  color: #fff !important;
+}
+
+/* line 505, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tab-menu-divider {
+  margin: 0px 0px 2px 0px;
+}
+
+/* line 510, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.tabbed-navigation-center-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* line 519, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.search-nav-above-tabs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 1.5rem 0 0.5rem 0;
+  z-index: 10;
+}
+
+/* line 528, app/assets/stylesheets/components/_tabbed_navigation.scss */
+.org-header-area {
+  width: 100%;
+  position: relative;
+  z-index: 20;
+  background: transparent;
+}
+
+/* line 2, app/assets/stylesheets/components/_search_bar.scss */
+.search-nav-container {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 1rem;
+  position: relative;
+}
+
+/* line 9, app/assets/stylesheets/components/_search_bar.scss */
+.search-container {
+  position: relative;
+  width: 100%;
+}
+
+/* line 14, app/assets/stylesheets/components/_search_bar.scss */
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* line 19, app/assets/stylesheets/components/_search_bar.scss */
+.search-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+/* line 28, app/assets/stylesheets/components/_search_bar.scss */
+.search-input-group:focus-within {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* line 35, app/assets/stylesheets/components/_search_bar.scss */
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* line 43, app/assets/stylesheets/components/_search_bar.scss */
+.search-input {
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  padding: 0.5rem 0.75rem 0.5rem 2.5rem !important;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+/* line 51, app/assets/stylesheets/components/_search_bar.scss */
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* line 55, app/assets/stylesheets/components/_search_bar.scss */
+.search-input:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* line 61, app/assets/stylesheets/components/_search_bar.scss */
+.search-loading {
+  position: absolute;
+  right: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  z-index: 2;
+}
+
+/* line 69, app/assets/stylesheets/components/_search_bar.scss */
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 0.25rem;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+/* line 84, app/assets/stylesheets/components/_search_bar.scss */
+.search-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  background: #f8f9fa;
+}
+
+/* line 92, app/assets/stylesheets/components/_search_bar.scss */
+.search-results-header .search-results-title {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.875rem;
+}
+
+/* line 98, app/assets/stylesheets/components/_search_bar.scss */
+.search-results-header .btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* line 104, app/assets/stylesheets/components/_search_bar.scss */
+.search-results-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* line 109, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f8f9fa;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+
+/* line 118, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-item:hover, .search-result-item.selected {
+  background-color: #f8f9fa;
+}
+
+/* line 123, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+/* line 128, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9ecef;
+  border-radius: 0.375rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* line 139, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-icon i {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* line 145, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* line 150, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-title {
+  font-weight: 500;
+  color: #212529;
+  font-size: 0.875rem;
+  margin-bottom: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* line 160, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-subtitle {
+  color: #6c757d;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* line 168, app/assets/stylesheets/components/_search_bar.scss */
+.search-result-badge {
+  background: #28a745;
+  color: white;
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* line 178, app/assets/stylesheets/components/_search_bar.scss */
+.search-results-footer {
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #f0f0f0;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  /* line 187, app/assets/stylesheets/components/_search_bar.scss */
+  .search-nav-container {
+    max-width: 300px;
+    margin: 0 0.5rem;
+  }
+  /* line 192, app/assets/stylesheets/components/_search_bar.scss */
+  .search-input {
+    font-size: 0.875rem;
+  }
+  /* line 196, app/assets/stylesheets/components/_search_bar.scss */
+  .search-results-dropdown {
+    max-height: 350px;
+  }
+  /* line 200, app/assets/stylesheets/components/_search_bar.scss */
+  .search-results-list {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 576px) {
+  /* line 206, app/assets/stylesheets/components/_search_bar.scss */
+  .search-nav-container {
+    max-width: 250px;
+    margin: 0 0.25rem;
+  }
+  /* line 211, app/assets/stylesheets/components/_search_bar.scss */
+  .search-input {
+    font-size: 0.8rem;
+    padding: 0.375rem 0.75rem 0.375rem 2.25rem !important;
+  }
+  /* line 216, app/assets/stylesheets/components/_search_bar.scss */
+  .search-icon {
+    left: 0.625rem;
+  }
+  /* line 220, app/assets/stylesheets/components/_search_bar.scss */
+  .search-results-dropdown {
+    max-height: 300px;
+  }
+  /* line 224, app/assets/stylesheets/components/_search_bar.scss */
+  .search-results-list {
+    max-height: 200px;
+  }
+  /* line 228, app/assets/stylesheets/components/_search_bar.scss */
+  .search-result-item {
+    padding: 0.5rem 0.75rem;
+  }
+  /* line 232, app/assets/stylesheets/components/_search_bar.scss */
+  .search-result-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 0.5rem;
+  }
+  /* line 238, app/assets/stylesheets/components/_search_bar.scss */
+  .search-result-title {
+    font-size: 0.8rem;
+  }
+  /* line 242, app/assets/stylesheets/components/_search_bar.scss */
+  .search-result-subtitle {
+    font-size: 0.7rem;
+  }
+}
+
+/* line 248, app/assets/stylesheets/components/_search_bar.scss */
+.navbar-dark .search-input-group {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* line 252, app/assets/stylesheets/components/_search_bar.scss */
+.navbar-dark .search-input-group:focus-within {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* line 258, app/assets/stylesheets/components/_search_bar.scss */
+.navbar-dark .search-input {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* line 261, app/assets/stylesheets/components/_search_bar.scss */
+.navbar-dark .search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* line 266, app/assets/stylesheets/components/_search_bar.scss */
+.navbar-dark .search-icon,
+.navbar-dark .search-loading {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* line 3, app/assets/stylesheets/views/pets.scss */
+.pet-photo-container {
+  position: relative;
+  /* Reference point for overlay */
+  width: 200px;
+  /* Adjust to fit your design */
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Clip the overlay and image to the circular shape */
+  cursor: pointer;
+  margin: 10px;
+}
+
+/* line 13, app/assets/stylesheets/views/pets.scss */
+.pet-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Ensure the image fills the container */
+  border-radius: 50%;
+  /* Keep the image circular */
+}
+
+/* line 20, app/assets/stylesheets/views/pets.scss */
+.photo-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent overlay */
+  color: white;
+  font-size: 18px;
+  opacity: 0;
+  /* Start invisible */
+  transition: opacity 0.3s ease-in-out;
+  /* Smooth fade-in effect */
+}
+
+/* line 36, app/assets/stylesheets/views/pets.scss */
+.pet-photo-container:hover .photo-overlay {
+  opacity: 1;
+  /* Fully visible on hover */
+}
+
+/* line 40, app/assets/stylesheets/views/pets.scss */
+.placeholder-photo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  color: #777;
+  border: 2px dashed #ccc;
+  font-size: 16px;
+  border-radius: 50%;
+  /* Circular placeholder */
+}
+
+/* line 54, app/assets/stylesheets/views/pets.scss */
+.tabs {
+  display: flex;
+  margin-bottom: -1px;
+}
+
+/* line 59, app/assets/stylesheets/views/pets.scss */
+.tab-link {
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  border: 1px solid #ccc;
+  margin-right: 5px;
+  border-radius: 4px 4px 0 0;
+}
+
+/* line 68, app/assets/stylesheets/views/pets.scss */
+.tab-link.active {
+  background-color: #ffffff;
+  border-bottom: none;
+}
+
+/* line 73, app/assets/stylesheets/views/pets.scss */
+.tab-content {
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 0 4px 4px 4px;
+  background-color: #ffffff;
+}
+
+/* line 80, app/assets/stylesheets/views/pets.scss */
+.pet-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+/* line 86, app/assets/stylesheets/views/pets.scss */
+.pet-header .pin-button-container .pin-pet-btn {
+  transition: all 0.2s ease;
+}
+
+/* line 89, app/assets/stylesheets/views/pets.scss */
+.pet-header .pin-button-container .pin-pet-btn.pinned {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+/* line 94, app/assets/stylesheets/views/pets.scss */
+.pet-header .pin-button-container .pin-pet-btn.pinned i {
+  color: #856404;
+}
+
+/* line 99, app/assets/stylesheets/views/pets.scss */
+.pet-header .pin-button-container .pin-pet-btn:hover {
+  transform: scale(1.05);
+}
+
+/* line 106, app/assets/stylesheets/views/pets.scss */
+.header-image-container {
+  margin-right: 20px;
+}
+
+/* line 110, app/assets/stylesheets/views/pets.scss */
+.header-details {
+  margin-left: 20px;
+}
+
+/* line 114, app/assets/stylesheets/views/pets.scss */
+.header-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* line 121, app/assets/stylesheets/views/pets.scss */
+.name-field-header span.value {
+  font-size: 2.5em;
+}
+
+/* line 125, app/assets/stylesheets/views/pets.scss */
+.name-field-header .edit-input {
+  font-size: 24px;
+}
+
+/* line 130, app/assets/stylesheets/views/pets.scss */
+.pin-pet-btn {
+  transition: all 0.2s ease;
+}
+
+/* line 133, app/assets/stylesheets/views/pets.scss */
+.pin-pet-btn.pinned {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+
+/* line 138, app/assets/stylesheets/views/pets.scss */
+.pin-pet-btn.pinned i {
+  color: #856404;
+}
+
+/* line 143, app/assets/stylesheets/views/pets.scss */
+.pin-pet-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Basic container for the post, optional styling */
+/* line 4, app/assets/stylesheets/views/posts.scss */
+#feed-container {
+  max-width: 830px;
+  /* Restrict feed width */
+  margin: 0 auto;
+  /* Center the feed */
+  padding: 16px;
+  background-color: #f3f4f6;
+  /* Subtle background */
+  border-radius: 8px;
+  /* Rounded edges */
+}
+
+/* line 12, app/assets/stylesheets/views/posts.scss */
+.post {
+  background: #fff;
+  /* White background for posts */
+  border: 1px solid #ddd;
+  /* Light border for separation */
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  /* Spacing between posts */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* Slight shadow for depth */
+}
+
+/* line 21, app/assets/stylesheets/views/posts.scss */
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* line 28, app/assets/stylesheets/views/posts.scss */
+.post-header strong {
+  font-size: 16px;
+  color: #333;
+}
+
+/* line 33, app/assets/stylesheets/views/posts.scss */
+.post-header span {
+  font-size: 12px;
+  color: #666;
+}
+
+/* line 38, app/assets/stylesheets/views/posts.scss */
+.post-body {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #444;
+}
+
+/* line 44, app/assets/stylesheets/views/posts.scss */
+.post-images {
+  margin-top: 12px;
+}
+
+/* Reaction buttons */
+/* line 49, app/assets/stylesheets/views/posts.scss */
+.reaction-button {
+  background-color: #f4f4f4;
+  border: none;
+  padding: 8px 14px;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  /* for wrapping nicely if narrow screen */
+  border-radius: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  /* so icon + text can align horizontally */
+  align-items: center;
+  font-size: 14px;
+  color: #444;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  /* Icon spacing */
+  /* "Active" or "pressed" style */
+  /* If user selected this reaction, highlight it */
+}
+
+/* line 64, app/assets/stylesheets/views/posts.scss */
+.reaction-button i {
+  margin-right: 6px;
+}
+
+/* line 68, app/assets/stylesheets/views/posts.scss */
+.reaction-button:hover {
+  background-color: #e7e7e7;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* line 74, app/assets/stylesheets/views/posts.scss */
+.reaction-button:active {
+  background-color: #ddd;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* line 80, app/assets/stylesheets/views/posts.scss */
+.reaction-button.selected {
+  background-color: #ffc107;
+  /* Slightly golden highlight */
+  color: #212529;
+  /* Dark text on highlight */
+  font-weight: 500;
+  /* Slightly bolder text */
+}
+
+/* If you use a container for all buttons (e.g. .post-reactions) */
+/* line 88, app/assets/stylesheets/views/posts.scss */
+.post-reactions {
+  margin-top: 12px;
+}
+
+/* line 1, app/assets/stylesheets/views/organization_fields.scss */
+.container {
+  max-width: 800px;
+}
+
+/* line 5, app/assets/stylesheets/views/organization_fields.scss */
+.field-group {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+/* line 12, app/assets/stylesheets/views/organization_fields.scss */
+.field-type-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+/* line 18, app/assets/stylesheets/views/organization_fields.scss */
+.list-group {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* line 25, app/assets/stylesheets/views/organization_fields.scss */
+.list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+}
+
+/* line 32, app/assets/stylesheets/views/organization_fields.scss */
+.add-field-form input {
+  font-size: 1rem;
+  padding: 8px;
+}
+
+/* line 37, app/assets/stylesheets/views/organization_fields.scss */
+.add-field-form button {
+  font-size: 1rem;
+  padding: 10px;
+}
+
+/* line 1, app/assets/stylesheets/feed.scss */
+.comment-form .input-group {
+  display: flex;
+  align-items: center;
+}
+
+/* line 6, app/assets/stylesheets/feed.scss */
+.comment-input {
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  margin-right: 8px;
+  flex: 1 1 auto;
+  min-height: 38px;
+  max-height: 80px;
+  background: #fafafa;
+}
+
+/* line 17, app/assets/stylesheets/feed.scss */
+.comment-submit {
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-weight: bold;
+}
+
+/* line 23, app/assets/stylesheets/feed.scss */
+.comments-list {
+  margin-top: 10px;
+}
+
+/* line 27, app/assets/stylesheets/feed.scss */
+.comment {
+  background: #f7f7f7;
+  border-radius: 16px;
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* line 37, app/assets/stylesheets/feed.scss */
+.comment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+/* line 45, app/assets/stylesheets/feed.scss */
+.comment strong {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #555;
+  margin-right: 10px;
+}
+
+/* line 52, app/assets/stylesheets/feed.scss */
+.comment-body {
+  font-size: 1.08em;
+  color: #222;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+/* line 59, app/assets/stylesheets/feed.scss */
+.delete-comment {
+  background: #fff0f0;
+  color: #d33;
+  border: 1px solid #f5c2c7;
+  border-radius: 12px;
+  padding: 2px 12px;
+  font-size: 0.95em;
+  margin-left: 8px;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+/* line 71, app/assets/stylesheets/feed.scss */
+.delete-comment:hover {
+  background: #d33;
+  color: #fff;
+  border-color: #d33;
+}
+
+/* line 77, app/assets/stylesheets/feed.scss */
+.comment-reactions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* line 84, app/assets/stylesheets/feed.scss */
+.reaction-btn {
+  background: #f0f0ff;
+  color: #333;
+  border: 1px solid #b3b3e6;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.95em;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+/* line 95, app/assets/stylesheets/feed.scss */
+.reaction-btn.selected, .reaction-btn:active {
+  background: #4f8cff;
+  color: #fff;
+  border-color: #4f8cff;
+}
+
+/* line 101, app/assets/stylesheets/feed.scss */
+.reaction-count {
+  font-size: 0.95em;
+  color: #666;
+  margin-right: 8px;
+  margin-left: 2px;
+}
+
+/* line 108, app/assets/stylesheets/feed.scss */
+.comment-reactions-bar.centered {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+/* line 117, app/assets/stylesheets/feed.scss */
+.reaction-icon-btn {
+  background: #fff;
+  border: none;
+  border-radius: 30%;
+  width: 36px;
+  height: 33px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  padding: 0;
+  margin: 0;
+}
+
+/* line 131, app/assets/stylesheets/feed.scss */
+.reaction-icon-btn.selected {
+  background: #fff;
+}
+
+/* line 135, app/assets/stylesheets/feed.scss */
+.reaction-icon-btn i {
+  font-size: 1.25em;
+  color: #bbb;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: color 0.2s, -webkit-text-stroke 0.2s;
+}
+
+/* line 144, app/assets/stylesheets/feed.scss */
+.reaction-icon-btn.selected i {
+  -webkit-text-stroke: 1px #222;
+  text-stroke: 1px #222;
+}
+
+/* line 149, app/assets/stylesheets/feed.scss */
+.post-reactions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+/* line 2, app/assets/stylesheets/calendar.scss */
+.calendar-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* line 9, app/assets/stylesheets/calendar.scss */
+.calendar-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+/* line 16, app/assets/stylesheets/calendar.scss */
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* line 23, app/assets/stylesheets/calendar.scss */
+.calendar-nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+/* line 33, app/assets/stylesheets/calendar.scss */
+.calendar-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* line 37, app/assets/stylesheets/calendar.scss */
+.calendar-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* line 44, app/assets/stylesheets/calendar.scss */
+.calendar-table-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* line 51, app/assets/stylesheets/calendar.scss */
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* line 57, app/assets/stylesheets/calendar.scss */
+.calendar-header-row {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* line 62, app/assets/stylesheets/calendar.scss */
+.calendar-header-cell {
+  padding: 15px 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  transition: all 0.3s ease;
+  position: relative;
+  background: transparent;
+  /* Remove individual cell backgrounds */
+}
+
+/* line 73, app/assets/stylesheets/calendar.scss */
+.calendar-week-row {
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* line 77, app/assets/stylesheets/calendar.scss */
+.calendar-week-row:last-child {
+  border-bottom: none;
+}
+
+/* line 81, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell {
+  background: white;
+  min-height: 120px;
+  padding: 8px;
+  border: 1px solid #e9ecef;
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  vertical-align: top;
+}
+
+/* line 92, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* line 98, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell.today {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-color: #ffc107;
+}
+
+/* line 103, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell.other-month {
+  background: #f8f9fa;
+  color: #adb5bd;
+}
+
+/* line 108, app/assets/stylesheets/calendar.scss */
+.calendar-day-number {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  position: relative;
+}
+
+/* line 116, app/assets/stylesheets/calendar.scss */
+.calendar-day-number::after {
+  content: '+';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* line 134, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell:hover .calendar-day-number::after {
+  opacity: 1;
+}
+
+/* line 138, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell.other-month .calendar-day-number {
+  color: #adb5bd;
+}
+
+/* line 142, app/assets/stylesheets/calendar.scss */
+.calendar-day-cell.today .calendar-day-number {
+  color: #856404;
+  font-weight: 700;
+}
+
+/* line 147, app/assets/stylesheets/calendar.scss */
+.calendar-day-events {
+  min-height: 60px;
+}
+
+/* line 151, app/assets/stylesheets/calendar.scss */
+.event-item {
+  border-left: 4px solid;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* line 165, app/assets/stylesheets/calendar.scss */
+.event-item:hover {
+  background: #e9ecef;
+  transform: translateX(2px);
+  text-decoration: none;
+  color: inherit;
+}
+
+/* line 172, app/assets/stylesheets/calendar.scss */
+.event-item .event-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* line 180, app/assets/stylesheets/calendar.scss */
+.event-item .event-time {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+/* line 185, app/assets/stylesheets/calendar.scss */
+.add-event-hint {
+  padding: 8px;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
+  background: #f8f9fa;
+  margin-top: 4px;
+}
+
+/* line 194, app/assets/stylesheets/calendar.scss */
+.calendar-color-indicator {
+  display: flex;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+/* line 205, app/assets/stylesheets/calendar.scss */
+.calendar-color-indicator:hover {
+  transform: scale(1.2);
+}
+
+/* line 210, app/assets/stylesheets/calendar.scss */
+.calendar-selection {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+/* line 217, app/assets/stylesheets/calendar.scss */
+.calendar-checkbox:checked + .form-check-label {
+  font-weight: 600;
+  background: rgba(0, 123, 255, 0.1);
+  border-radius: 4px;
+  padding: 0px 0px 0px 5px;
+  margin: -4px -8px;
+}
+
+/* line 225, app/assets/stylesheets/calendar.scss */
+.calendar-checkbox:checked + .form-check-label .badge {
+  transform: scale(1.1);
+}
+
+/* line 229, app/assets/stylesheets/calendar.scss */
+.calendar-selection-header {
+  background: #f8f9fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 8px 8px 0 0;
+}
+
+/* line 236, app/assets/stylesheets/calendar.scss */
+.calendar-selection-body {
+  padding: 20px;
+}
+
+/* line 240, app/assets/stylesheets/calendar.scss */
+.calendar-checkbox {
+  margin-right: 8px;
+}
+
+/* line 244, app/assets/stylesheets/calendar.scss */
+.calendar-checkbox:checked + .form-check-label {
+  font-weight: 600;
+}
+
+/* line 249, app/assets/stylesheets/calendar.scss */
+.event-form {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+/* line 256, app/assets/stylesheets/calendar.scss */
+.event-form .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+/* line 262, app/assets/stylesheets/calendar.scss */
+.event-form .form-control {
+  border-radius: 6px;
+  border: 2px solid #e9ecef;
+  transition: border-color 0.2s ease;
+}
+
+/* line 268, app/assets/stylesheets/calendar.scss */
+.event-form .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* line 274, app/assets/stylesheets/calendar.scss */
+.event-details {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* line 280, app/assets/stylesheets/calendar.scss */
+.event-details-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 8px 8px 0 0;
+}
+
+/* line 287, app/assets/stylesheets/calendar.scss */
+.event-details-body {
+  padding: 30px;
+}
+
+/* line 292, app/assets/stylesheets/calendar.scss */
+.avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* line 305, app/assets/stylesheets/calendar.scss */
+.avatar-placeholder.small {
+  width: 30px;
+  height: 30px;
+  font-size: 0.9rem;
+}
+
+/* line 312, app/assets/stylesheets/calendar.scss */
+.badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  /* line 320, app/assets/stylesheets/calendar.scss */
+  .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+  /* line 324, app/assets/stylesheets/calendar.scss */
+  .calendar-day {
+    min-height: 80px;
+  }
+  /* line 328, app/assets/stylesheets/calendar.scss */
+  .event-item {
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+  /* line 333, app/assets/stylesheets/calendar.scss */
+  .calendar-nav {
+    flex-direction: column;
+    gap: 10px;
+  }
+  /* line 338, app/assets/stylesheets/calendar.scss */
+  .calendar-title {
+    font-size: 1.2rem;
+  }
+}
+
+/* line 344, app/assets/stylesheets/calendar.scss */
+.calendar-day {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* line 360, app/assets/stylesheets/calendar.scss */
+.calendar-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #6c757d;
+}
+
+/* line 368, app/assets/stylesheets/calendar.scss */
+.calendar-loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e9ecef;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* line 385, app/assets/stylesheets/calendar.scss */
+.calendar-share-item {
+  border-left: 3px solid #007bff;
+  padding-left: 10px;
+  margin-bottom: 10px;
+}
+
+/* line 391, app/assets/stylesheets/calendar.scss */
+.calendar-share-item.pending {
+  border-left-color: #ffc107;
+}
+
+/* line 395, app/assets/stylesheets/calendar.scss */
+.calendar-share-item.accepted {
+  border-left-color: #28a745;
+}
+
+/* line 399, app/assets/stylesheets/calendar.scss */
+.calendar-share-item.declined {
+  border-left-color: #dc3545;
+}
+
+/* line 403, app/assets/stylesheets/calendar.scss */
+.share-permission-badge {
+  font-size: 0.75em;
+  padding: 2px 6px;
+}
+
+/* line 408, app/assets/stylesheets/calendar.scss */
+.share-status-badge {
+  font-size: 0.75em;
+  padding: 2px 6px;
+}
+
+/* line 413, app/assets/stylesheets/calendar.scss */
+.calendar-sharing-form {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+/* line 420, app/assets/stylesheets/calendar.scss */
+.user-select-container {
+  position: relative;
+}
+
+/* line 424, app/assets/stylesheets/calendar.scss */
+.user-select-container .form-select {
+  padding-right: 30px;
+}
+
+/* line 428, app/assets/stylesheets/calendar.scss */
+.email-input-container {
+  position: relative;
+}
+
+/* line 432, app/assets/stylesheets/calendar.scss */
+.email-input-container .form-control {
+  padding-right: 30px;
+}
+
+/* line 436, app/assets/stylesheets/calendar.scss */
+.share-btn {
+  transition: all 0.2s ease;
+}
+
+/* line 440, app/assets/stylesheets/calendar.scss */
+.share-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* line 445, app/assets/stylesheets/calendar.scss */
+.calendar-shares-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* line 450, app/assets/stylesheets/calendar.scss */
+.calendar-share-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+/* line 462, app/assets/stylesheets/calendar.scss */
+.calendar-share-entry:hover {
+  background: #e9ecef;
+  border-color: #ced4da;
+}
+
+/* line 467, app/assets/stylesheets/calendar.scss */
+.calendar-share-info {
+  flex: 1;
+}
+
+/* line 471, app/assets/stylesheets/calendar.scss */
+.calendar-share-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* line 477, app/assets/stylesheets/calendar.scss */
+.calendar-share-remove {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.8em;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* line 488, app/assets/stylesheets/calendar.scss */
+.calendar-share-remove:hover {
+  background: #c82333;
+}
+
+/* line 493, app/assets/stylesheets/calendar.scss */
+.calendar-selection-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 10px;
+  background: #f8f9fa;
+}
+
+/* line 502, app/assets/stylesheets/calendar.scss */
+.calendar-selection-container .form-check {
+  margin-bottom: 8px;
+  padding-left: 25px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+/* line 509, app/assets/stylesheets/calendar.scss */
+.calendar-selection-container .form-check:last-child {
+  margin-bottom: 0;
+}
+
+/* line 513, app/assets/stylesheets/calendar.scss */
+.calendar-selection-container .form-check-label {
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+/* line 519, app/assets/stylesheets/calendar.scss */
+.calendar-selection-container .calendar-checkbox:checked + .form-check-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* line 524, app/assets/stylesheets/calendar.scss */
+.calendar-color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+/* General App Styling */
+/* line 16, app/assets/stylesheets/application.scss */
+.mt-4 {
+  margin-top: 0px !important;
+}
+
+/* line 20, app/assets/stylesheets/application.scss */
+.container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+  max-width: 100% !important;
+  margin: 0px !important;
+}
+
+/* General Alert Banner Styling */
+/* line 26, app/assets/stylesheets/application.scss */
+.alert {
+  position: absolute !important;
+  top: 9px;
+  left: 36%;
+  width: 200px;
+  z-index: 1000;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: .5rem !important;
+}
+
+/* Success Alert */
+/* line 39, app/assets/stylesheets/application.scss */
+.alert-success {
+  background-color: #28a745;
+  /* Green */
+}
+
+/* Error Alert */
+/* line 44, app/assets/stylesheets/application.scss */
+.alert-error {
+  background-color: #dc3545;
+  /* Red */
+}
+
+/* Warning Alert */
+/* line 49, app/assets/stylesheets/application.scss */
+.alert-warning {
+  background-color: #ffc107;
+  /* Yellow */
+  color: #212529;
+  /* Dark text for contrast */
+}
+
+/* Info Alert */
+/* line 55, app/assets/stylesheets/application.scss */
+.alert-info {
+  background-color: #17a2b8;
+  /* Teal */
+}
+
+/* line 59, app/assets/stylesheets/application.scss */
+.carousel {
+  border-radius: 8px;
+  /* Rounded edges for carousel */
+  overflow: hidden;
+}
+
+/* line 64, app/assets/stylesheets/application.scss */
+.carousel-item img {
+  object-fit: cover;
+  height: 300px;
+  width: 100%;
+}
+
+/* line 70, app/assets/stylesheets/application.scss */
+#loading-indicator {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  padding: 16px;
+}
+
+/* line 79, app/assets/stylesheets/application.scss */
+.gallery-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* line 85, app/assets/stylesheets/application.scss */
+.gallery-item {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+/* line 91, app/assets/stylesheets/application.scss */
+.gallery-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* line 98, app/assets/stylesheets/application.scss */
+.gallery-item .btn-danger {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+/* Gallery Section */
+/* line 109, app/assets/stylesheets/application.scss */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* line 116, app/assets/stylesheets/application.scss */
+.gallery-item {
+  display: inline-block;
+  margin: 10px;
+  text-align: center;
+  vertical-align: middle;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s ease-in-out;
+}
+
+/* line 126, app/assets/stylesheets/application.scss */
+.gallery-item.selected {
+  border-color: #007bff;
+  /* Highlight border for selected images */
+}
+
+/* line 130, app/assets/stylesheets/application.scss */
+.gallery-thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Modal */
+/* line 138, app/assets/stylesheets/application.scss */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+/* line 151, app/assets/stylesheets/application.scss */
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* line 162, app/assets/stylesheets/application.scss */
+.modal-content h2 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* line 168, app/assets/stylesheets/application.scss */
+.modal-content .close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* line 178, app/assets/stylesheets/application.scss */
+.modal-content .close-button:hover {
+  color: #dc3545;
+}
+
+/* line 182, app/assets/stylesheets/application.scss */
+.modal-content .gallery {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+/* line 191, app/assets/stylesheets/application.scss */
+.modal-content input[type="file"] {
+  margin: 10px 0;
+}
+
+/* line 195, app/assets/stylesheets/application.scss */
+.modal-content .form-group {
+  margin: 20px 0;
+}
+
+/* Selected Images Section */
+/* line 200, app/assets/stylesheets/application.scss */
+#selected-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* line 207, app/assets/stylesheets/application.scss */
+.thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+/* line 215, app/assets/stylesheets/application.scss */
+.thumbnail:hover {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* line 221, app/assets/stylesheets/application.scss */
+input[type="file"]::-webkit-file-upload-button + * {
+  display: none;
+}
+
+/* line 225, app/assets/stylesheets/application.scss */
+input[type="file"]::file-selector-button + * {
+  display: none;
+}
+
+/* Task Status Badge Styles */
+/* line 230, app/assets/stylesheets/application.scss */
+.table .status .task-status-badge {
+  display: inline-block;
+  padding: 0.5em 1em;
+  font-size: 1em;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  color: white;
+}
+
+/* line 243, app/assets/stylesheets/application.scss */
+.table .status .task-status-badge.scheduled {
+  background-color: #17a2b8;
+}
+
+/* line 247, app/assets/stylesheets/application.scss */
+.table .status .task-status-badge.pending {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+/* line 252, app/assets/stylesheets/application.scss */
+.table .status .task-status-badge.overdue {
+  background-color: #dc3545;
+}
+
+/* line 256, app/assets/stylesheets/application.scss */
+.table .status .task-status-badge.completed {
+  background-color: #28a745;
+}
+
+/* line 260, app/assets/stylesheets/application.scss */
+.table .status .task-status-badge.cancelled {
+  background-color: #6c757d;
+}
+
+/* Organization Tasks Page Styles */
+/* line 265, app/assets/stylesheets/application.scss */
+.badge.scheduled {
+  background-color: #17a2b8;
+}
+
+/* line 269, app/assets/stylesheets/application.scss */
+.badge.pending {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+/* line 274, app/assets/stylesheets/application.scss */
+.badge.overdue {
+  background-color: #dc3545;
+}
+
+/* line 278, app/assets/stylesheets/application.scss */
+.badge.completed {
+  background-color: #28a745;
+}
+
+/* line 282, app/assets/stylesheets/application.scss */
+.badge.on-hold {
+  background-color: #6c757d;
+}
+
+/* Flag icon styles */
+/* line 287, app/assets/stylesheets/application.scss */
+.flag-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+/* Task action buttons */
+/* line 296, app/assets/stylesheets/application.scss */
+.btn-group .btn {
+  margin-right: 2px;
+}
+
+/* line 300, app/assets/stylesheets/application.scss */
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+/* Task header styles */
+/* line 305, app/assets/stylesheets/application.scss */
+.task-header {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #dee2e6;
+}
+
+/* line 313, app/assets/stylesheets/application.scss */
+.task-title {
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+/* line 318, app/assets/stylesheets/application.scss */
+.task-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* line 325, app/assets/stylesheets/application.scss */
+.task-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* line 331, app/assets/stylesheets/application.scss */
+.global-top-alert {
+  min-width: 350px;
+  max-width: 90vw;
+  width: 600px;
+  padding: 1rem 2rem !important;
+  font-size: 1.1rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  /* line 341, app/assets/stylesheets/application.scss */
+  .global-top-alert {
+    width: 95vw;
+    min-width: 0;
+    max-width: 98vw;
+    padding: 1rem 0.5rem !important;
+    font-size: 1rem;
+  }
+}

@@ -1,0 +1,1449 @@
+<%= render 'shared/navbar_org' %>
+
+<div class="builder-container d-flex" style="height: calc(100vh - 87px);">
+  <div id="record-leftbar" class="border-end" style="width:300px; overflow:auto; background:#fff;"></div>
+  <div id="gjs" style="flex:1 1 auto;">
+    <div style="text-align: center; padding: 20px; color: #666;">Loading record page builder...</div>
+  </div>
+  <script type="application/json" id="record-layout-metadata">
+    <%= record_layout_metadata_json(@organization, @table_type, @table_id) %>
+  </script>
+  <script type="application/json" id="record-layout-preview">
+    <%= record_layout_preview_json(@organization, @table_type, @table_id) %>
+  </script>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.7/dist/css/grapes.min.css">
+<link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css">
+<%= stylesheet_link_tag 'record_builder', media: 'all' %>
+
+<!-- Include tabs component partial -->
+<%= render 'tabs_component' %>
+
+<style>
+  /* Force GrapesJS overlays to be minimal and avoid inner selection */
+  .gjs-badge { display: none !important; }
+  .gjs-comp-selected, .gjs-comp-hover { box-shadow: none !important; outline: none !important; }
+  .gjs-selected .gjs-toolbar { display: block !important; }
+  /* Hide inner-document toolbars only, not the top panel toolbar */
+  .gjs-cv-canvas .gjs-toolbar,
+  .gjs-frame .gjs-toolbar,
+  [data-gjs-toolbar]:not(.gjs-pn-panel [data-gjs-toolbar]),
+  [class*='gjs-toolbar']:not(.gjs-pn-panel [class*='gjs-toolbar']),
+  .gjs-highlighter,
+  .gjs-highlighter-sel,
+  .gjs-resizer,
+  .gjs-selection,
+  .gjs-ghost,
+  .gjs-dashed,
+  .gjs-badge,
+  .gjs-offset-v,
+  .gjs-offset-h { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+  /* Never show hover/selection for the root wrapper */
+  [data-gjs-type="wrapper"] { outline: none !important; }
+  .gjs-selected[data-gjs-type="wrapper"] { outline: none !important; box-shadow: none !important; }
+  /* Visual hover outline is handled inside the iframe via injected CSS */
+  .builder-title { font-size: 1.25rem; text-align: center; }
+  .builder-btn-row { margin-left: 25% !important; }
+  
+  /* Ensure delete and edit buttons are visible on tabs components */
+  .pf-tabs-container:hover .rb-del,
+  .pf-tabs-container:hover .rb-edit-tabs {
+    display: inline-flex !important;
+  }
+  
+  .pf-tabs-container .rb-del,
+  .pf-tabs-container .rb-edit-tabs {
+    display: none;
+  }
+  
+  /* Additional styling for delete and edit buttons */
+  .rb-del, .rb-edit-tabs {
+    position: absolute !important;
+    top: 4px !important;
+    background: rgba(0,0,0,0.7) !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    width: 22px !important;
+    height: 22px !important;
+    line-height: 22px !important;
+    text-align: center !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    z-index: 9999 !important;
+    display: none !important;
+  }
+  
+  .rb-del {
+    right: 6px !important;
+  }
+  
+  .rb-edit-tabs {
+    right: 30px !important;
+  }
+</style>
+
+<script src="https://unpkg.com/grapesjs@0.21.7/dist/grapes.min.js"></script>
+<script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/index.js"></script>
+
+<script>
+  function destroyRecordPageBuilder() {
+    if (window.rpEditorInstance) {
+      try {
+        window.rpEditorInstance.destroy();
+      } catch (e) {}
+      window.rpEditorInstance = null;
+      window.rpEditorInitialized = false;
+    }
+  }
+
+  function waitFor(conditionFn, cb, { attempts = 20, interval = 100 } = {}) {
+    if (conditionFn()) return cb();
+    let tries = 0;
+    const t = setInterval(() => {
+      tries += 1;
+      if (conditionFn()) {
+        clearInterval(t);
+        cb();
+      } else if (tries >= attempts) {
+        clearInterval(t);
+      }
+    }, interval);
+  }
+
+  function initRecordPageBuilder() {
+    if (window.rpEditorInitialized) return;
+    waitFor(() => !!window.grapesjs && document.getElementById('gjs'), () => {
+      if (window.rpEditorInitialized) return;
+              const editor = grapesjs.init({
+        container: '#gjs',
+      height: '100%',
+      width: 'auto',
+      storageManager: false,
+        plugins: ['grapesjs-preset-webpage'],
+        pluginsOpts: { 'grapesjs-preset-webpage': {} },
+        blockManager: { appendTo: null },
+        styleManager: { appendTo: null },
+        traitManager: { appendTo: null },
+        selectorManager: { appendTo: null },
+      canvas: {
+        styles: [
+          'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+          'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css',
+          'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
+          '<%= asset_path "application.css" %>',
+          '<%= asset_path "record_builder.css" %>'
+        ]
+      }
+      });
+
+      window.rpEditorInstance = editor;
+      window.rpEditorInitialized = true;
+      window.gjsEditor = editor; // Make editor globally available for debugging
+      
+
+
+    // Aggressively suppress GrapesJS floating overlays (toolbar/highlighters) inside iframe
+    const suppressGrapesOverlays = () => {
+      try {
+        const fdoc = editor.Canvas.getDocument();
+        if (!fdoc) return;
+        const selectors = [
+          '.gjs-toolbar',
+          "[data-gjs-toolbar]",
+          "[class*='gjs-toolbar']",
+          '.gjs-highlighter',
+          '.gjs-highlighter-sel',
+          '.gjs-resizer',
+          '.gjs-selection',
+          '.gjs-ghost',
+          '.gjs-dashed',
+          '.gjs-badge',
+          '.gjs-offset-v',
+          '.gjs-offset-h'
+        ];
+        selectors.forEach(sel => {
+          fdoc.querySelectorAll(sel).forEach(el => {
+            try {
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('visibility', 'hidden', 'important');
+              el.style.setProperty('opacity', '0', 'important');
+              el.classList.add('pf-hidden');
+              // Do NOT remove nodes; removing triggers GrapesJS to recreate them and causes DOM churn
+            } catch (_) {}
+          });
+        });
+      } catch (_) {}
+    };
+
+    const observeOverlays = () => {
+      try {
+        const fdoc = editor.Canvas.getDocument();
+        if (!fdoc || !fdoc.body) return;
+        suppressGrapesOverlays();
+        if (window.__pfMo) { try { window.__pfMo.disconnect(); } catch (_) {} }
+        const mo = new MutationObserver(() => suppressGrapesOverlays());
+        mo.observe(fdoc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+        window.__pfMo = mo;
+        // Avoid periodic DOM removals; just hide via CSS when mutations occur
+      } catch (_) {}
+    };
+
+    // Guard to only allow wrapper selection/hover
+      const isWrapperComp = (comp) => {
+      try { const a = comp && comp.getAttributes ? comp.getAttributes() : {}; return !!(a && (a['field-api-name'] || a['partial-name'] || a['data-comp-kind'])); } catch (_) { return false; }
+    };
+    const selectWrapperIfInner = (comp) => {
+      try {
+        if (!comp) return;
+        if (isWrapperComp(comp)) return;
+        const parent = comp.parent && comp.parent();
+        if (parent && isWrapperComp(parent)) { editor.select(parent); }
+      } catch (_) {}
+    };
+      editor.on('component:selected', comp => {
+        try { comp && comp.set && comp.set('toolbar', []); } catch(_) {}
+        // If root wrapper is selected, immediately shift selection to first real wrapper
+        try {
+          const a = comp && comp.getAttributes ? comp.getAttributes() : {};
+          if (a && a['data-gjs-type'] === 'wrapper') {
+            const root = editor.DomComponents.getWrapper();
+            const first = (root && root.find && root.find('[field-api-name], [partial-name], [data-comp-kind="record-tabs"]')) || [];
+            if (first && first[0]) { editor.select(first[0]); return; }
+          }
+        } catch(_) {}
+        selectWrapperIfInner(comp);
+      });
+    editor.on('component:hovered', selectWrapperIfInner);
+    editor.on('component:hover', selectWrapperIfInner);
+
+    // Defer canvas CSS injection until editor load to ensure it is inside iframe
+      const injectCanvasCss = () => {
+      const css = `
+        .record-field-placeholder, .record-partial-placeholder { position: relative; cursor: pointer; background: #fff; }
+        .record-partial-placeholder { background: #f8f9fa; }
+        .record-field-placeholder *, .record-partial-placeholder * { pointer-events: none; }
+          .record-field-placeholder:hover, .record-partial-placeholder:hover { outline: 1px solid #0d6efd !important; }
+        .partial-content-wrapper, .partial-content-wrapper * { pointer-events: none; user-select: none; }
+        .rf-label { margin-bottom: 2px; font-weight: 600; }
+        .edit-button { margin-left: 8px; color: #6c757d; flex: 0 0 auto; border: 0; background: transparent; padding: 2px; }
+        .edit-button .fas { color: #6c757d; }
+        .rf-edit, .rf-edit-row { display: none !important; }
+        .gjs-badge { display: none !important; }
+        /* Hide GrapesJS toolbar to avoid jumping; we render inline controls */
+        .gjs-toolbar, .gjs-toolbar * { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+        /* Keep other visual overlays hidden to avoid jumping */
+          .gjs-highlighter, .gjs-highlighter-sel, .gjs-resizer, .gjs-selection, .gjs-ghost, .gjs-dashed { display: none !important; visibility: hidden !important; opacity: 0 !important; }
+          /* Also hide default wrapper hover outline to avoid initial hover flash */
+          [data-gjs-type="wrapper"].gjs-hovered { outline: none !important; box-shadow: none !important; }
+        .rb-del { position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 10px; width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 12px; pointer-events: auto !important; cursor: pointer; z-index: 9999; }
+        .rb-del * { pointer-events: auto !important; }
+        .rb-del:hover { background: rgba(220,53,69,0.9); }
+        
+
+          /* Never outline or show selection for the root wrapper */
+          .gjs-selected[data-gjs-type="wrapper"] { outline: none !important; box-shadow: none !important; }
+
+        /* Tabs component styles inside builder canvas */
+        .pf-tabs { position: relative; background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
+        .pf-tabs:hover { outline: 1px solid #0d6efd !important; }
+        .pf-tabs-header { display: flex; gap: 6px; border-bottom: 1px solid #dee2e6; padding-bottom: 6px; margin-bottom: 8px; }
+        .pf-tab-btn { background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px 4px 0 0; padding: 4px 8px; font-size: 12px; cursor: pointer; pointer-events: auto; }
+        .pf-tab-btn.active { background: #fff; border-bottom-color: #fff; }
+        .pf-tabs-body { position: relative; }
+        .pf-tab-section { min-height: 40px; padding: 6px; border: 1px dashed #ced4da; border-radius: 4px; background: #fff; }
+        .pf-tab-section:not(.active) { display: none; }
+        .pf-tabs .rb-edit-tabs {
+          position: absolute;
+          top: 4px;
+          right: 30px;
+          background: rgba(0,0,0,0.6);
+          color: #fff;
+          border-radius: 12px;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          text-align: center;
+          font-size: 12px;
+          pointer-events: auto !important;
+          cursor: pointer;
+          z-index: 9999;
+          display: none !important;
+        }
+        .pf-tabs .rb-edit-tabs:hover { background: rgba(13,110,253,0.9); }
+        .pf-tabs:hover > .rb-edit-tabs, .pf-tabs.gjs-selected > .rb-edit-tabs { display: inline-flex !important; align-items: center; justify-content: center; }
+        /* Tabs delete button visibility and sizing to match fields/partials */
+        .pf-tabs > .rb-del {
+          display: none !important;
+          width: 22px;
+          height: 22px;
+          line-height: 22px;
+          border-radius: 12px;
+          right: 6px;
+          top: 4px;
+        }
+        .pf-tabs:hover > .rb-del, .pf-tabs.gjs-selected > .rb-del {
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+        }
+        /* Show delete icon for fields inside tab sections on hover/selection */
+        .pf-tab-section .record-field-placeholder:hover > .rb-del,
+        .pf-tab-section .record-field-placeholder.gjs-selected > .rb-del { display: inline-flex !important; align-items: center; justify-content: center; }
+        /* Prevent drops into header/body via component config instead of pointer-events */
+        
+        /* RUNTIME: Tabs JavaScript and CSS for actual record page - REMOVED FROM CSS COMMENT */
+      `;
+      try { editor.addStyle(css); } catch (_) {}
+      try {
+        const fdoc = editor.Canvas.getDocument();
+        if (fdoc && fdoc.head) {
+          const style = fdoc.createElement('style');
+          style.type = 'text/css';
+          style.appendChild(fdoc.createTextNode(css));
+          fdoc.head.appendChild(style);
+          
+
+        }
+      } catch (_) {}
+    };
+
+    // Keep top buttons; we will only hide right-side managers via CSS and force canvas full-width
+
+    // Load existing HTML/CSS/JS if present
+    const initialHtml = <%= raw (@layout&.layout_html || "''").to_json %>;
+    const initialCss = <%= raw (@layout&.layout_css || "''").to_json %>;
+    if (initialHtml && initialHtml.length > 0) editor.setComponents(initialHtml);
+    if (initialCss && initialCss.length > 0) editor.setStyle(initialCss);
+
+    // Minimal block set: headings, text, image, two columns
+    editor.BlockManager.add('rp-heading', { label: 'Heading', category: 'Basic', content: '<h2>Heading</h2>' });
+    editor.BlockManager.add('rp-text', { label: 'Text', category: 'Basic', content: '<p>Text</p>' });
+    editor.BlockManager.add('rp-image', { label: 'Image', category: 'Basic', content: { type: 'image' } });
+    editor.BlockManager.add('rp-2col', { label: '2 Columns', category: 'Layout', content: '<div class="row"><div class="col-md-6"><p>Left</p></div><div class="col-md-6"><p>Right</p></div></div>' });
+
+    // Field placeholder: will live-render using preview data in builder
+    editor.DomComponents.addType('record-field', {
+      model: {
+        defaults: {
+          'field-api-name': '',
+          'field-label': '',
+          tagName: 'div',
+          attributes: { class: 'record-field-placeholder pf-interactive border rounded p-2 mb-2 bg-white' },
+          editable: false,
+          draggable: true,
+          copyable: false,
+          droppable: false,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
+          badgable: false,
+          toolbar: [],
+          components: [
+            { tagName: 'span', attributes: { class: 'rb-del', title: 'Delete', 'data-role': 'rb-del', 'aria-label': 'Delete' }, content: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>' },
+            { type: 'text', content: '' }
+          ],
+          traits: [
+            { type: 'text', name: 'field-api-name', label: 'Field API Name' },
+            { type: 'text', name: 'field-label', label: 'Label' }
+          ]
+        }
+      },
+      view: {
+        events: { 'click .rb-del': 'onDelete' },
+        onDelete(e) { e.preventDefault(); e.stopPropagation(); try { this.model.remove(); } catch (_) {} }
+      }
+    });
+    editor.BlockManager.add('rp-field', {
+      label: 'Field',
+      category: 'Fields',
+      media: '<i class="fa fa-tag"></i>',
+      content: { type: 'record-field' }
+    });
+
+    // Partial include placeholder: will live-render using preview HTML in builder
+    editor.DomComponents.addType('record-partial', {
+      model: {
+        defaults: {
+          'partial-name': '',
+          tagName: 'div',
+          attributes: { class: 'record-partial-placeholder pf-interactive border rounded p-2 mb-2 bg-light' },
+          editable: false,
+          draggable: true,
+          copyable: false,
+          droppable: false,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
+          badgable: false,
+          toolbar: [],
+          components: [
+            { tagName: 'span', attributes: { class: 'rb-del', title: 'Delete', 'data-role': 'rb-del', 'aria-label': 'Delete' }, content: '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>' },
+            { type: 'text', content: '' }
+          ],
+          traits: [{ type: 'text', name: 'partial-name', label: 'Partial name' }]
+        }
+      },
+      view: {
+        events: { 'click [data-role="rb-del"]': 'onDelete' },
+        onDelete(e) { e.preventDefault(); e.stopPropagation(); try { this.model.remove(); } catch (_) {} }
+      }
+    });
+
+    // Tabs component functions are now defined in the partial
+
+    // Tabs component is now defined in the partial
+    window.TabsComponent.defineTabsComponent(editor);
+    
+    // Restore tabs after loading saved layout
+    editor.on('load', () => {
+      setTimeout(() => {
+        // Ensure editor is fully ready before restoring
+        if (editor && editor.DomComponents && editor.DomComponents.getWrapper) {
+          console.log('[PF] Editor load event - restoring tabs');
+          window.TabsComponent.restoreTabsAfterLoad(editor);
+        } else {
+          console.warn('[PF] Editor not ready in load event, retrying...');
+          // Retry after a longer delay
+          setTimeout(() => {
+            if (editor && editor.DomComponents && editor.DomComponents.getWrapper) {
+              console.log('[PF] Retry successful - restoring tabs');
+              window.TabsComponent.restoreTabsAfterLoad(editor);
+            } else {
+              console.warn('[PF] Editor still not ready after retry, but continuing anyway');
+              // Try to restore anyway - the editor might be ready enough
+              try {
+                window.TabsComponent.restoreTabsAfterLoad(editor);
+              } catch(e) {
+                console.warn('[PF] Final restore attempt failed:', e);
+              }
+            }
+          }, 1000);
+        }
+      }, 500);
+    });
+    
+    // Also restore on component:add to catch newly added components
+    editor.on('component:add', (component) => {
+      if (component.get('type') === 'record-tabs') {
+        // Only restore if editor is fully ready
+        if (editor && editor.DomComponents && editor.DomComponents.getWrapper) {
+          setTimeout(() => {
+            window.TabsComponent.restoreTabsAfterLoad(editor);
+          }, 100);
+        }
+      }
+    });
+    
+    // Note: Removed component:update listener as it was causing infinite loops
+    // when modifying component attributes during restoration
+    
+    // Add top toolbar buttons (Undo, Redo, Save) - REMOVED: too early, panels don't exist yet
+    
+    // Build left UI and wire preview & DnD only after editor is fully loaded
+    editor.on('load', () => {
+      // Ensure options panel exists and add buttons (in case earlier add ran before panels)
+      try {
+        console.log('[PF] Editor loaded, adding toolbar buttons...');
+        const optionsPanel = editor.Panels.getPanel('options') || editor.Panels.addPanel({ id: 'options' });
+        console.log('[PF] Options panel:', optionsPanel);
+        
+        editor.Panels.addButton('options', [
+          { id: 'undo', className: 'fa fa-undo', command: 'core:undo', attributes: { title: 'Undo' } },
+          { id: 'redo', className: 'fa fa-repeat', command: 'core:redo', attributes: { title: 'Redo' } },
+          { id: 'clear-canvas', className: 'fa fa-trash', command: 'clear-canvas', attributes: { title: 'Clear Canvas' } },
+          { id: 'save-record-layout', className: 'fa fa-save', command: 'save-record-layout', attributes: { title: 'Save' } }
+        ]);
+        
+        console.log('[PF] Buttons added to options panel');
+        const pnRoot = document.querySelector('.gjs-pn-panels');
+        if (pnRoot) {
+          pnRoot.style.display = 'flex';
+          console.log('[PF] Panel root display set to flex');
+        } else {
+          console.warn('[PF] Could not find panel root');
+        }
+        
+        // Debug: Check what panels exist
+        if (editor.Panels && typeof editor.Panels.getAll === 'function') {
+          const allPanels = editor.Panels.getAll();
+          console.log('[PF] All panels:', allPanels.map(p => ({ id: p.getId(), visible: p.isVisible() })));
+        } else {
+          console.log('[PF] Panels.getAll not available in this GrapesJS version');
+        }
+        
+      } catch(e) { 
+        console.warn('[PF] Error adding toolbar buttons:', e); 
+      }
+
+      // Command to delete a component by id from anywhere
+      try {
+        editor.Commands.add('pf:delete-by-id', (ed, opts = {}) => {
+          try {
+            const id = opts && opts.id;
+            const root = ed.DomComponents.getWrapper();
+            if (!id) { console.warn('[PF] delete-by-id: missing id', opts); return; }
+            const found = root.find(`[data-comp-id="${id}"]`);
+            const comp = found && found[0];
+            console.log('[PF] delete-by-id run', { id, foundCount: (found && found.length) || 0, comp });
+            if (comp) {
+              try { comp.remove(); console.log('[PF] comp.remove() success'); } catch (e) { console.warn('[PF] comp.remove() error', e); }
+            } else {
+              console.warn('[PF] delete-by-id: no component matched', { id });
+            }
+          } catch (e) { console.warn('[PF] delete-by-id outer error', e); }
+        });
+      } catch(e) { console.warn('[PF] add command error', e) }
+
+      // Command to clear the entire canvas
+      try {
+        editor.Commands.add('clear-canvas', {
+          run(ed) {
+            if (confirm('Clear the entire canvas?')) {
+              const root = ed.DomComponents.getWrapper();
+              const components = root.components().models || [];
+              components.forEach(comp => comp.remove());
+            }
+          }
+        });
+      } catch(e) { console.warn('add clear-canvas command error', e) }
+
+      // Listen for component drops to handle tab section drops
+      editor.on('component:dropped', (component) => {
+        try {
+          if (!component || !component.get) return;
+          
+          const attrs = component.getAttributes ? component.getAttributes() : {};
+          const isField = !!attrs['field-api-name'];
+          const isPartial = !!attrs['partial-name'];
+          
+          if (!isField && !isPartial) return;
+          
+          console.log('[PF] Component dropped:', { type: isField ? 'field' : 'partial', attrs });
+          
+          // Check if component was dropped into a tab section
+          const parent = component.parent && component.parent();
+          if (parent) {
+            const parentEl = parent.getEl && parent.getEl();
+            if (parentEl && parentEl.getAttribute('data-role') === 'pf-tab-section') {
+              console.log('[PF] Component dropped into tab section, calling handler');
+              window.TabsComponent.handleTabSectionDrop(component, parent);
+            }
+          }
+          
+        } catch(e) {
+          console.warn('[PF] Component drop handler error:', e);
+        }
+      });
+
+      // Helpers (hoisted so they are available to all inner scopes)
+      const lockInnerComponents = (comp) => {
+        try {
+          const stack = Array.isArray(comp) ? comp.slice() : [comp];
+          while (stack.length) {
+            const node = stack.pop();
+            if (!node || !node.components) continue;
+            const children = node.components().models || [];
+            children.forEach(ch => {
+              // Don't lock components inside tab sections - they need to be interactive
+              const parent = ch.parent && ch.parent();
+              const parentAttrs = parent && parent.getAttributes ? parent.getAttributes() : {};
+              const isInTabSection = parentAttrs && (parentAttrs['data-role'] === 'pf-tab-section');
+              
+              if (!isInTabSection) {
+                ch.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false, badgable: false, layerable: false });
+              }
+              if (ch.components && ch.components().length) stack.push(ch);
+            });
+          }
+        } catch (_) {}
+      };
+
+        const enforceWrapperOnlySelection = () => {
+        try {
+          const root = editor.DomComponents.getWrapper();
+          // First make everything non-interactive
+          const all = root.find('*').slice(0, 4000);
+          all.forEach(c => c.set({ selectable: false, hoverable: false, highlightable: false }));
+        // Only wrappers are interactive (and tab sections draggable/selectable for drop targets)
+          const wrappers = root.find('[field-api-name], [partial-name], [data-comp-kind="record-tabs"], .pf-tab-section, [data-role="pf-tab-section"]').slice(0, 2000);
+          wrappers.forEach(c => c.set({ selectable: true, hoverable: true, highlightable: true, draggable: true }));
+          
+          // Ensure fields and partials inside tab sections are interactive
+          const tabSections = root.find('.pf-tab-section, [data-role="pf-tab-section"]').slice(0, 100);
+          tabSections.forEach(section => {
+            try {
+              const children = section.components().models || [];
+              children.forEach(child => {
+                const attrs = child.getAttributes ? child.getAttributes() : {};
+                if (attrs['field-api-name'] || attrs['partial-name']) {
+                  child.set({ 
+                    selectable: true, 
+                    hoverable: true, 
+                    highlightable: true, 
+                    draggable: true, 
+                    droppable: false, 
+                    copyable: false 
+                  });
+                }
+              });
+            } catch(_) {}
+          });
+          
+          // Ensure the real document body/background is never selectable
+          try {
+            const fdoc = editor.Canvas.getDocument();
+            if (fdoc && fdoc.body) {
+              fdoc.body.style.userSelect = 'none';
+              fdoc.body.style.pointerEvents = 'auto';
+              // Disable GrapesJS default highlighter around entire canvas by faking selection root
+              const frameView = editor.Canvas.getFrameView && editor.Canvas.getFrameView();
+              if (frameView && frameView._highlighter) {
+                try { frameView._highlighter.hide(); } catch(_) {}
+              }
+            }
+          } catch(_) {}
+        } catch (_) {}
+      };
+
+      // Ensure canvas CSS exists (also after a short delay in case frame is late)
+      injectCanvasCss();
+      setTimeout(injectCanvasCss, 150);
+      // Start suppression of overlays
+      observeOverlays();
+      setTimeout(observeOverlays, 200);
+      editor.on('canvas:frame:load', () => { 
+        injectCanvasCss(); 
+        observeOverlays(); 
+        enforceWrapperOnlySelection(); 
+        
+        // Inject additional CSS for tabs functionality
+        try {
+          const frameDoc = editor.Canvas.getDocument();
+          if (frameDoc && frameDoc.head) {
+            const style = frameDoc.createElement('style');
+            style.textContent = `
+              /* Unified delete icon visibility for ALL interactive components */
+              .pf-interactive:hover > .rb-del,
+              .pf-interactive.gjs-selected > .rb-del {
+                display: inline-flex !important;
+              }
+              
+              /* Ensure tab sections are interactive */
+              .pf-tab-section { 
+                pointer-events: auto !important; 
+                position: relative !important;
+              }
+            `;
+            frameDoc.head.appendChild(style);
+          }
+        } catch(_) {}
+      });
+
+      // Build left sidebar
+      const leftbar = document.getElementById('record-leftbar');
+      leftbar.innerHTML = '';
+      const header = document.createElement('div');
+      header.className = 'p-2 border-bottom';
+
+      // Title row
+      const titleRow = document.createElement('div');
+      titleRow.className = 'fw-semibold text-muted builder-title';
+      titleRow.textContent = 'Record Page Builder';
+      header.appendChild(titleRow);
+
+      // Icon buttons row
+      const btnRow = document.createElement('div');
+      btnRow.className = 'd-flex align-items-center mt-1 gap-2 builder-btn-row';
+
+      const backBtn = document.createElement('a');
+      backBtn.className = 'btn btn-lg btn-link text-secondary p-0';
+      backBtn.href = '<%= @return_path || organization_path(@organization) %>';
+      backBtn.title = 'Back';
+      backBtn.innerHTML = '<i class="fas fa-arrow-left"></i>';
+      btnRow.appendChild(backBtn);
+
+      const undoBtn = document.createElement('button');
+      undoBtn.className = 'btn btn-lg btn-link text-secondary p-0';
+      undoBtn.title = 'Undo';
+      undoBtn.innerHTML = '<i class="fas fa-undo"></i>';
+      undoBtn.onclick = () => editor.runCommand('core:undo');
+      btnRow.appendChild(undoBtn);
+
+      const redoBtn = document.createElement('button');
+      redoBtn.className = 'btn btn-lg btn-link text-secondary p-0';
+      redoBtn.title = 'Redo';
+      redoBtn.innerHTML = '<i class="fas fa-redo"></i>';
+      redoBtn.onclick = () => editor.runCommand('core:redo');
+      btnRow.appendChild(redoBtn);
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'btn btn-lg btn-link text-warning p-0';
+      clearBtn.title = 'Clear Canvas';
+      clearBtn.innerHTML = '<i class="fas fa-trash"></i>';
+      clearBtn.onclick = () => {
+        if (confirm('Are you sure you want to clear the entire canvas? This action cannot be undone.')) {
+          try {
+            const root = editor.DomComponents.getWrapper();
+            // Remove all components except the wrapper itself
+            const allComponents = root.components().models || [];
+            allComponents.forEach(comp => {
+              try { comp.remove(); } catch(_) {}
+            });
+            console.log('[PF] Canvas cleared successfully');
+          } catch (e) { 
+            console.warn('[PF] clear-canvas error', e); 
+          }
+        }
+      };
+      btnRow.appendChild(clearBtn);
+
+      const saveBtn = document.createElement('button');
+      saveBtn.id = 'record-layout-save-btn';
+      saveBtn.className = 'btn btn-lg btn-link text-primary p-0';
+      saveBtn.title = 'Save';
+      saveBtn.innerHTML = '<i class="fas fa-save"></i>';
+      saveBtn.onclick = () => editor.runCommand('save-record-layout');
+      btnRow.appendChild(saveBtn);
+
+      header.appendChild(btnRow);
+      leftbar.appendChild(header);
+
+      const listContainer = document.createElement('div');
+      listContainer.className = 'p-2';
+      const componentsTitle = document.createElement('div');
+      componentsTitle.className = 'text-muted small mt-2 mb-1';
+      componentsTitle.textContent = 'Components';
+      listContainer.appendChild(componentsTitle);
+      const componentsList = document.createElement('div');
+      componentsList.id = 'leftbar-components';
+      listContainer.appendChild(componentsList);
+      // Add built-in custom components
+      try {
+        const tabsItem = document.createElement('div');
+        tabsItem.className = 'leftbar-item d-flex align-items-center gap-2 p-2 rounded mb-1';
+        tabsItem.innerHTML = '<i class="fas fa-folder text-muted"></i><span>Tabs</span>';
+        tabsItem.draggable = true;
+        tabsItem.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('component-type', 'tabs');
+          e.dataTransfer.effectAllowed = 'copy';
+          window.rbDragPayload = { type: 'tabs' };
+        });
+        tabsItem.addEventListener('click', () => {
+          try {
+            const root = editor.DomComponents.getWrapper();
+            const comp = editor.DomComponents.addComponent({ type: 'record-tabs' });
+            comp.addAttributes({ 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+            // buildWorkingTabs will be called automatically by the component's onRender method
+          } catch(_) {}
+        });
+        componentsList.appendChild(tabsItem);
+      } catch(_) {}
+      const fieldsTitle = document.createElement('div');
+      fieldsTitle.className = 'text-muted small mt-3 mb-1';
+      fieldsTitle.textContent = 'Fields';
+      listContainer.appendChild(fieldsTitle);
+      const fieldsList = document.createElement('div');
+      fieldsList.id = 'leftbar-fields';
+      listContainer.appendChild(fieldsList);
+      leftbar.appendChild(listContainer);
+
+      // Populate left lists
+      try {
+        const meta = JSON.parse(document.getElementById('record-layout-metadata').textContent);
+        const makeItem = (iconHtml, label) => {
+          const item = document.createElement('div');
+          item.className = 'leftbar-item d-flex align-items-center gap-2 p-2 rounded mb-1';
+          item.innerHTML = `${iconHtml}<span>${label}</span>`;
+          item.style.cursor = 'grab';
+          return item;
+        };
+        (meta.components || []).forEach(c => {
+          const item = makeItem('<i class="fas fa-puzzle-piece text-muted"></i>', c.label);
+          item.draggable = true;
+          item.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('component-type', 'partial');
+            e.dataTransfer.setData('partial-name', c.partial);
+            e.dataTransfer.effectAllowed = 'copy';
+            window.rbDragPayload = { type: 'partial', partial: c.partial };
+          });
+          componentsList.appendChild(item);
+        });
+      (meta.fields || []).forEach(f => {
+          const item = makeItem('<i class="fas fa-tag text-muted"></i>', f.label);
+          item.draggable = true;
+          item.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('component-type', 'field');
+            e.dataTransfer.setData('field-api-name', f.api_name);
+            e.dataTransfer.setData('field-label', f.label);
+          e.dataTransfer.setData('field-type', f.type || 'text');
+            e.dataTransfer.effectAllowed = 'copy';
+          window.rbDragPayload = { type: 'field', api: f.api_name, label: f.label, ftype: f.type || 'text', options: f.options || [] };
+          });
+          fieldsList.appendChild(item);
+        });
+
+        // Robust Canvas DnD + click-to-add
+        let dropLock = false;
+        const handleDrop = (e) => {
+          try { e.preventDefault(); } catch(_) {}
+          if (dropLock) return;
+          dropLock = true;
+          setTimeout(() => { dropLock = false; }, 150);
+          
+          const dt = (e && e.dataTransfer) ? e.dataTransfer : {};
+          let type = (dt && dt.getData && dt.getData('component-type')) || (window.rbDragPayload && window.rbDragPayload.type) || '';
+          if (!type) return;
+          
+          console.log('[PF] Drop detected:', { type, target: e.target });
+          
+          // Determine insertion index based on drop Y relative to existing children
+          const root = editor.DomComponents.getWrapper();
+          let insertAt = root.components().length;
+          
+          // Detect drop target inside a tab section
+          let targetTabSectionComp = null;
+          try {
+            // First try to find the target element
+            let targetEl = e.target;
+            if (!targetEl) return;
+            
+            // Look for tab section in the target's ancestors
+            let tabSectionEl = targetEl.closest('[data-role="pf-tab-section"]');
+            if (tabSectionEl) {
+              console.log('[PF] Found tab section element:', tabSectionEl);
+              
+              // Find the GrapesJS component for this tab section
+              const sections = root.find('[data-role="pf-tab-section"]');
+              targetTabSectionComp = sections.find(s => s.getEl() === tabSectionEl);
+              
+              if (targetTabSectionComp) {
+                console.log('[PF] Found tab section component:', targetTabSectionComp);
+              }
+            }
+          } catch(err) {
+            console.warn('[PF] Error detecting tab section:', err);
+          }
+          
+          // Calculate drop position
+          try {
+            const dropY = e.clientY;
+            const children = root.components().models || [];
+            for (let i = 0; i < children.length; i += 1) {
+              const el = children[i].getEl && children[i].getEl();
+              if (!el) continue;
+              const rect = el.getBoundingClientRect();
+              if (dropY < rect.top + rect.height / 2) { insertAt = i; break; }
+            }
+          } catch(_) {}
+          
+          if (type === 'tabs') {
+            // Add tabs component
+            const comp = editor.DomComponents.addComponent({ type: 'record-tabs' }, { at: insertAt });
+            comp.addAttributes({ 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+            // buildWorkingTabs will be called automatically by the component's onRender method
+            enforceWrapperOnlySelection();
+          } else if (type === 'partial') {
+            const partialName = (dt && dt.getData && dt.getData('partial-name')) || (window.rbDragPayload && window.rbDragPayload.partial) || '';
+            if (!partialName) return;
+            
+            let comp;
+            if (targetTabSectionComp) {
+              console.log('[PF] Adding partial to tab section');
+              const added = targetTabSectionComp.append({ type: 'record-partial' });
+              comp = Array.isArray(added) ? added[0] : added;
+            } else {
+              console.log('[PF] Adding partial to canvas');
+              comp = editor.DomComponents.addComponent({ type: 'record-partial' }, { at: insertAt });
+            }
+            
+            if (!comp || !comp.addAttributes) return;
+            comp.addAttributes({ 'partial-name': partialName, 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+            
+            // Add preview content
+            try {
+              const preview = JSON.parse(document.getElementById('record-layout-preview').textContent);
+              const parts = preview.partials || {};
+              const html = parts[partialName] || '';
+              if (html) {
+                const del = `<span class="rb-del" title="Delete" data-role="rb-del" data-comp-id="${comp.getAttributes()['data-comp-id']}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true">
+                    <path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/>
+                  </svg>
+                </span>`;
+                comp.components(`${del}${html}`);
+              }
+            } catch(_) {}
+            
+            lockInnerComponents(comp);
+            enforceWrapperOnlySelection();
+          } else if (type === 'field') {
+            const api = (dt && dt.getData && dt.getData('field-api-name')) || (window.rbDragPayload && window.rbDragPayload.api) || '';
+            const label = (dt && dt.getData && dt.getData('field-label')) || (window.rbDragPayload && window.rbDragPayload.label) || api;
+            const ftype = (dt && dt.getData && dt.getData('field-type')) || (window.rbDragPayload && window.rbDragPayload.ftype) || 'text';
+            const fopts = (window.rbDragPayload && window.rbDragPayload.options) || [];
+            if (!api) return;
+            
+            let comp;
+            if (targetTabSectionComp) {
+              console.log('[PF] Adding field to tab section');
+              const added = targetTabSectionComp.append({ type: 'record-field' });
+              comp = Array.isArray(added) ? added[0] : added;
+            } else {
+              console.log('[PF] Adding field to canvas');
+              comp = editor.DomComponents.addComponent({ type: 'record-field' }, { at: insertAt });
+            }
+            
+            if (!comp || !comp.addAttributes) return;
+            comp.addAttributes({ 'field-api-name': api, 'field-label': label, 'field-type': ftype, 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+            
+            // Add preview content
+            try {
+              const preview = JSON.parse(document.getElementById('record-layout-preview').textContent);
+              const values = preview.values || {};
+              const val = Object.prototype.hasOwnProperty.call(values, api) ? values[api] : '';
+              const html = `<div class="rf-row d-flex align-items-start justify-content-between">
+                <div class="rf-content flex-grow-1">
+                  <div class="rf-label">${label || ''}</div>
+                  <div class="rf-value">${val == null ? '' : String(val)}</div>
+                </div>
+                <i class="fas fa-pencil-alt" aria-hidden="true" style="color:#000; margin-left:8px;"></i>
+              </div>`;
+              comp.components(html);
+              comp.view && comp.view.render && comp.view.render();
+            } catch(_) {}
+            
+            lockInnerComponents(comp);
+            enforceWrapperOnlySelection();
+          }
+          
+          window.rbDragPayload = null;
+        };
+
+        // Bind to outer canvas container
+        const outerEl = document.getElementById('gjs');
+        if (outerEl) {
+          outerEl.addEventListener('dragover', e => { try { if (window.rbDragPayload) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } } catch(_) {} });
+          outerEl.addEventListener('drop', handleDrop);
+        }
+        // Bind to iframe elements
+        const frameEl = editor.Canvas.getFrameEl();
+        if (frameEl) {
+          const bindFrame = () => {
+            const fdoc = frameEl.contentDocument;
+            if (!fdoc) return;
+            try {
+              fdoc.addEventListener('dragover', e => { try { if (window.rbDragPayload) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } } catch(_) {} });
+              fdoc.addEventListener('drop', handleDrop);
+            } catch(_) {}
+            const fbody = fdoc.body;
+            if (fbody) {
+              try {
+                fbody.addEventListener('dragover', e => { try { if (window.rbDragPayload) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } } catch(_) {} });
+                fbody.addEventListener('drop', handleDrop);
+              } catch(_) {}
+              // Global delete handler for inline trash button
+              try {
+                fbody.addEventListener('mousedown', e => {
+                  const del = e.target.closest && e.target.closest('[data-role="rb-del"]');
+                  if (!del) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  let targetCompId = del.getAttribute('data-comp-id');
+                  console.log('[PF] rb-del mousedown', { target: e.target, compId: targetCompId, time: Date.now() });
+                  // If no comp id on button, resolve by wrapper mapping and attach id
+                  if (!targetCompId) {
+                    try {
+                      const wrapper = del.closest('.record-partial-placeholder, .record-field-placeholder, [partial-name], [field-api-name], .pf-tabs');
+                      const root = editor.DomComponents.getWrapper();
+                      let comp = null;
+                      if (wrapper) {
+                        let comps = root.find('[partial-name]').slice(0, 2000);
+                        comp = comps.find && comps.find(c => c && c.getEl && c.getEl() === wrapper);
+                        if (!comp) {
+                          comps = root.find('[field-api-name]').slice(0, 2000);
+                          comp = comps.find && comps.find(c => c && c.getEl && c.getEl() === wrapper);
+                        }
+                        if (!comp) {
+                          comps = root.find('[data-comp-kind="record-tabs"]').slice(0, 2000);
+                          comp = comps.find && comps.find(c => c && c.getEl && c.getEl() === wrapper);
+                        }
+                      }
+                      const cid = comp && comp.getAttributes && comp.getAttributes()['data-comp-id'];
+                      if (cid) {
+                        del.setAttribute('data-comp-id', cid);
+                        targetCompId = cid;
+                        console.log('[PF] resolved compId from wrapper', cid);
+                      }
+                      if (comp) {
+                        try { comp.remove(); console.log('[PF] fallback comp.remove()'); return; } catch(_) {}
+                      }
+                    } catch (err) { console.warn('[PF] wrapper resolution error', err); }
+                  }
+          try { editor.runCommand('pf:delete-by-id', { id: targetCompId }); } catch (err) { console.warn('[PF] runCommand error', err); }
+                }, true);
+              } catch(_) {}
+              // Edit tabs button handler (inside iframe)
+              try {
+                fbody.addEventListener('mousedown', e => {
+                  const btn = e.target.closest && e.target.closest('[data-role="rb-edit-tabs"]');
+                  if (!btn) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  try {
+                    const wrapper = btn.closest && btn.closest('.pf-tabs');
+                    const root = editor.DomComponents.getWrapper();
+                    const comps = root.find('[data-comp-kind="record-tabs"]').slice(0, 400);
+                    const comp = (comps || []).find(c => c && c.getEl && c.getEl() === wrapper);
+                    if (comp) { openTabsConfigModal(comp); }
+                  } catch(err) { console.warn('[PF] edit tabs error', err); }
+                }, true);
+              } catch(_) {}
+            }
+          };
+          // Bind now and after a short delay to catch when iframe is ready
+          bindFrame();
+          setTimeout(bindFrame, 200);
+        }
+
+        // Also hydrate when any record-field is added (regardless of source)
+        editor.on('component:add', m => {
+          try {
+            if (m && m.get && m.get('type') === 'record-field') {
+              const api = m.getAttributes()['field-api-name'];
+              const label = m.getAttributes()['field-label'] || api;
+              const preview = JSON.parse(document.getElementById('record-layout-preview').textContent);
+              const values = preview.values || {};
+              const val = Object.prototype.hasOwnProperty.call(values, api) ? values[api] : '';
+              const html = `<div class=\"rf-row d-flex align-items-start justify-content-between\"><div class=\"rf-content flex-grow-1\"><div class=\"rf-label\">${label || ''}</div><div class=\"rf-value\">${val == null ? '' : String(val)}</div></div><i class=\"fas fa-pencil-alt\" aria-hidden=\"true\" style=\"color:#000; margin-left:8px;\"></i></div>`;
+              m.components(html);
+              m.view && m.view.render && m.view.render();
+              lockInnerComponents(m);
+            }
+          } catch(_) {}
+          enforceWrapperOnlySelection();
+        });
+
+        // Removed component:drag:end reparenting; rely on component:dropped only to avoid Sorter move issues
+
+        componentsList.addEventListener('click', e => {
+          const item = e.target.closest('.leftbar-item');
+          if (!item) return;
+          const label = item.querySelector('span')?.textContent || '';
+          const metaItem = (meta.components || []).find(c => c.label === label);
+          if (metaItem) {
+            const comp = editor.addComponents({ type: 'record-partial' })[0];
+            comp.addAttributes({ 'partial-name': metaItem.partial, 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+            try {
+              const preview = JSON.parse(document.getElementById('record-layout-preview').textContent);
+              const parts = preview.partials || {};
+              const html = parts[metaItem.partial] || '';
+              if (html) comp.components(`<span class=\"rb-del\" title=\"Delete\" data-role=\"rb-del\" data-comp-id=\"${comp.getAttributes()['data-comp-id']}\">×</span>${html}`);
+              // Ensure the component has the interactive class
+              const el = comp.getEl();
+              if (el && !el.classList.contains('pf-interactive')) {
+                el.classList.add('pf-interactive');
+              }
+              lockInnerComponents(comp);
+            } catch(_) {}
+            enforceWrapperOnlySelection();
+          }
+        });
+        fieldsList.addEventListener('click', e => {
+          const item = e.target.closest('.leftbar-item');
+          if (!item) return;
+          const label = item.querySelector('span')?.textContent || '';
+          const metaItem = (meta.fields || []).find(f => f.label === label);
+          if (metaItem) {
+            const comp = editor.addComponents({ type: 'record-field' })[0];
+            comp.addAttributes({ 'field-api-name': metaItem.api_name, 'field-label': metaItem.label, 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+            // Hydrate immediately on click-add for parity with drop into sections
+            try {
+              const preview = JSON.parse(document.getElementById('record-layout-preview').textContent);
+              const values = preview.values || {};
+              const val = Object.prototype.hasOwnProperty.call(values, metaItem.api_name) ? values[metaItem.api_name] : '';
+              const base = `<span class=\"rb-del\" title=\"Delete\" data-role=\"rb-del\" data-comp-id=\"${comp.getAttributes()['data-comp-id']}\">\n                <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 448 512\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z\"/></svg>\n              </span>\n              <div class=\"rf-row d-flex align-items-start justify-content-between\"><div class=\"rf-content flex-grow-1\"><div class=\"rf-label\">${metaItem.label || ''}</div><div class=\"rf-value\">${val == null ? '' : String(val)}</div></div><i class=\"fas fa-pencil-alt\" aria-hidden=\"true\" style=\"color:#000; margin-left:8px;\"></i></div>`;
+              comp.components(base);
+              // Ensure the component has the interactive class
+              const el = comp.getEl();
+              if (el && !el.classList.contains('pf-interactive')) {
+                el.classList.add('pf-interactive');
+              }
+              lockInnerComponents(comp);
+            } catch(_) {}
+          }
+        });
+      } catch (e) { console.warn('leftbar population error', e); }
+
+      // Live preview hydration (throttled)
+      try {
+        const preview = JSON.parse(document.getElementById('record-layout-preview').textContent);
+        const values = preview.values || {};
+        const partials = preview.partials || {};
+        let scheduled = false;
+        const hydrateAll = () => {
+          scheduled = false;
+          const dc = editor && editor.DomComponents;
+          if (!dc || typeof dc.getWrapper !== 'function') return;
+          const root = dc.getWrapper();
+          const forceSelectWrapper = (comp) => {
+            try {
+              const attrs = comp && comp.getAttributes ? comp.getAttributes() : {};
+              if (!attrs) return;
+              const isWrapper = attrs['field-api-name'] || attrs['partial-name'];
+              if (!isWrapper && comp && comp.parent) {
+                const parent = comp.parent();
+                const pAttrs = parent && parent.getAttributes ? parent.getAttributes() : {};
+                if (pAttrs && (pAttrs['field-api-name'] || pAttrs['partial-name'])) {
+                  editor.select(parent);
+                }
+              }
+            } catch (_) {}
+          };
+          const fieldComps = root.find('[field-api-name]').slice(0, 200);
+          fieldComps.forEach(comp => {
+            try {
+              const api = comp.getAttributes()['field-api-name'];
+              const label = comp.getAttributes()['field-label'] || api;
+              const val = Object.prototype.hasOwnProperty.call(values, api) ? values[api] : '';
+              const el = comp.getEl();
+              if (el) {
+                // Ensure inline delete exists (idempotent)
+                if (!el.querySelector('[data-role="rb-del"]')) {
+                  const del = el.ownerDocument.createElement('span');
+                  del.className = 'rb-del';
+                  del.setAttribute('data-role', 'rb-del');
+                  del.setAttribute('aria-label', 'Delete');
+                  del.title = 'Delete';
+                  del.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+                  // Attach component id to DOM for reliable lookup
+                  const compId = (comp && comp.getAttributes && comp.getAttributes()['data-comp-id']) || '';
+                  if (compId) del.setAttribute('data-comp-id', compId);
+                  el.insertBefore(del, el.firstChild);
+                }
+                const l = el.querySelector('.rf-label');
+                const v = el.querySelector('.rf-value');
+                if (l) l.textContent = (label || '');
+                if (v) v.textContent = (val == null ? '' : String(val));
+                // ensure only one black pencil icon, remove legacy buttons/icons
+                el.querySelectorAll('.rf-icon, .edit-button').forEach(n => n.remove());
+                const row = el.querySelector('.rf-row');
+                if (row && !row.querySelector('.fa-pencil-alt')) {
+                  const pencil = el.ownerDocument.createElement('i');
+                  pencil.className = 'fas fa-pencil-alt';
+                  pencil.setAttribute('aria-hidden', 'true');
+                  pencil.style.color = '#000';
+                  pencil.style.marginLeft = '8px';
+                  row.appendChild(pencil);
+                }
+              }
+              // lock internals
+              try { (comp.components().models || []).forEach(ch => ch.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false, badgable: false, layerable: false })); } catch (_) {}
+            } catch(_) {}
+          });
+          const partialComps = root.find('[partial-name]').slice(0, 100);
+          partialComps.forEach(comp => {
+            try {
+              const name = comp.getAttributes()['partial-name'];
+              const html = name && partials[name] ? partials[name] : '';
+              if (html) {
+                const el = comp.getEl();
+                const currentHtml = (el && el.innerHTML) ? el.innerHTML.trim() : '';
+                if (currentHtml !== html.trim()) {
+                  comp.components(html);
+                  try { (comp.components().models || []).forEach(ch => ch.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false, badgable: false, layerable: false })); } catch (_) {}
+                }
+              }
+              const el2 = comp.getEl();
+              if (el2 && !el2.querySelector('[data-role="rb-del"]')) {
+                const del = el2.ownerDocument.createElement('span');
+                del.className = 'rb-del';
+                del.setAttribute('data-role', 'rb-del');
+                del.setAttribute('aria-label', 'Delete');
+                del.title = 'Delete';
+                del.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+                const compId = (comp && comp.getAttributes && comp.getAttributes()['data-comp-id']) || comp.getAttributes && comp.getAttributes()['data-comp-id'] || '';
+                if (compId) del.setAttribute('data-comp-id', compId);
+                el2.insertBefore(del, el2.firstChild);
+              }
+            } catch(_) {}
+          });
+          // Ensure tabs components have structure and controls (only if they don't already have structure)
+          try {
+            const tabsComps = root.find('[data-comp-kind="record-tabs"]').slice(0, 200);
+            tabsComps.forEach(tc => { 
+              const el = tc.getEl();
+              if (el && !el.querySelector('.pf-tabs')) {
+                console.log('[PF] Hydration: Building tabs for component without structure');
+                window.TabsComponent.buildWorkingTabs(tc);
+              }
+            });
+          } catch(_) {}
+          // Re-apply app CSS into iframe after hydration to ensure partials style correctly
+          try {
+            const fdoc = editor.Canvas.getDocument();
+            if (fdoc && fdoc.head && !fdoc.getElementById('pf-app-css')) {
+              const link = fdoc.createElement('link');
+              link.id = 'pf-app-css';
+              link.rel = 'stylesheet';
+              link.href = '<%= asset_path "application.css" %>';
+              fdoc.head.appendChild(link);
+            }
+          } catch (_) {}
+      // enforce selection on wrappers only
+      editor.on('component:selected', c => { forceSelectWrapper(c); enforceWrapperOnlySelection(); });
+      editor.on('component:hovered', c => { forceSelectWrapper(c); });
+      enforceWrapperOnlySelection();
+          observeOverlays();
+        };
+        const schedule = () => { if (!scheduled) { scheduled = true; setTimeout(hydrateAll, 80); } };
+        editor.on('component:add', schedule);
+        editor.on('component:update', schedule);
+        schedule();
+        // Ensure wrapper itself has no toolbar
+        try { const wrap = editor.DomComponents.getWrapper(); wrap && wrap.set && wrap.set('toolbar', []); } catch (_) {}
+      } catch (e) { console.warn('preview hydration error', e); }
+    });
+
+    // Modal for configuring tabs
+    function ensureTabsModal() {
+      let modal = document.getElementById('pf-tabs-config-modal');
+      if (modal) return modal;
+      modal = document.createElement('div');
+      modal.id = 'pf-tabs-config-modal';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.background = 'rgba(0,0,0,0.4)';
+      modal.style.display = 'none';
+      modal.style.zIndex = '999999';
+      modal.innerHTML = `
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:8px;min-width:420px;max-width:640px;box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+          <div style="padding:12px 16px;border-bottom:1px solid #e9ecef;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-weight:600;">Configure Tabs</div>
+            <button type="button" id="pf-tabs-close" style="border:0;background:transparent;font-size:18px;line-height:1;">×</button>
+          </div>
+          <div style="padding:12px 16px;">
+            <div class="text-muted" style="font-size:12px;margin-bottom:6px;">Drag to reorder. Click a name to edit.</div>
+            <ul id="pf-tabs-list" style="list-style:none;padding:0;margin:0;max-height:300px;overflow:auto;border:1px solid #e9ecef;border-radius:6px;">
+            </ul>
+            <button type="button" id="pf-tabs-add" class="btn btn-sm btn-outline-primary" style="margin-top:10px;">Add tab</button>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid #e9ecef;display:flex;gap:8px;justify-content:flex-end;">
+            <button type="button" id="pf-tabs-cancel" class="btn btn-sm btn-secondary">Cancel</button>
+            <button type="button" id="pf-tabs-save" class="btn btn-sm btn-primary">Save</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      // Wire close buttons
+      modal.querySelector('#pf-tabs-close').onclick = () => { modal.style.display = 'none'; };
+      modal.querySelector('#pf-tabs-cancel').onclick = () => { modal.style.display = 'none'; };
+      return modal;
+    }
+
+    window.openTabsConfigModal = function(comp) {
+      const modal = ensureTabsModal();
+      modal.style.display = 'flex';
+      const list = modal.querySelector('#pf-tabs-list');
+      list.innerHTML = '';
+      const attrs = comp.getAttributes ? comp.getAttributes() : {};
+      let tabs = window.TabsComponent.pfParseTabsJson(attrs['tabs-json']);
+      if (!tabs || tabs.length === 0) tabs = [ { id: window.TabsComponent.pfGenerateId('tab'), title: 'Tab 1' } ];
+      tabs.forEach(t => {
+        const li = document.createElement('li');
+        li.draggable = true;
+        li.dataset.tabId = t.id;
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.gap = '8px';
+        li.style.padding = '8px 10px';
+        li.style.borderBottom = '1px solid #f1f3f5';
+        li.innerHTML = `<span style="cursor:grab;">☰</span><input type="text" value="${t.title.replace(/"/g, '&quot;')}" style="flex:1 1 auto;" />`;
+        list.appendChild(li);
+      });
+      // Simple DnD within modal
+      let dragEl = null;
+      list.addEventListener('dragstart', ev => { const li = ev.target.closest('li'); if (!li) return; dragEl = li; ev.dataTransfer.effectAllowed = 'move'; });
+      list.addEventListener('dragover', ev => { ev.preventDefault(); const li = ev.target.closest('li'); if (!li || !dragEl || li === dragEl) return; const rect = li.getBoundingClientRect(); const after = (ev.clientY - rect.top) > rect.height/2; li.parentNode.insertBefore(dragEl, after ? li.nextSibling : li); });
+      list.addEventListener('dragend', () => { dragEl = null; });
+      // Add new tab
+      modal.querySelector('#pf-tabs-add').onclick = () => {
+        const id = window.TabsComponent.pfGenerateId('tab');
+        const li = document.createElement('li');
+        li.draggable = true; li.dataset.tabId = id; li.style.display = 'flex'; li.style.alignItems = 'center'; li.style.gap = '8px'; li.style.padding = '8px 10px'; li.style.borderBottom = '1px solid #f1f3f5';
+        li.innerHTML = `<span style="cursor:grab;">☰</span><input type="text" value="New Tab" style="flex:1 1 auto;" />`;
+        list.appendChild(li);
+      };
+      // Save handler
+      modal.querySelector('#pf-tabs-save').onclick = () => {
+        try {
+          const items = Array.from(list.querySelectorAll('li'));
+          const newTabs = items.map(li => ({ id: li.dataset.tabId, title: li.querySelector('input').value.trim() || 'Tab' }));
+          applyTabsConfig(comp, newTabs);
+        } catch(e) { console.warn(e); }
+        modal.style.display = 'none';
+      };
+    }
+
+    function applyTabsConfig(comp, newTabs) {
+      try {
+        const attrs = comp.getAttributes ? comp.getAttributes() : {};
+        const prevTabs = window.TabsComponent.pfParseTabsJson(attrs['tabs-json']);
+        const prevMap = {};
+        prevTabs.forEach(t => { prevMap[t.id] = t; });
+        // Update attributes
+        comp.addAttributes({ 'tabs-json': window.TabsComponent.pfStringifyTabsJson(newTabs) });
+        // Ensure DOM structure exists
+        window.TabsComponent.buildWorkingTabs(comp);
+        // Move existing children to their matching sections by id
+        const body = comp.find('.pf-tabs-body')[0];
+        if (!body) return;
+        const secComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+        const secById = {};
+        secComps.forEach(sc => { secById[sc.getAttributes()['data-tab-id']] = sc; });
+        // Nothing to move if there were no sections previously
+        // Activate first tab if needed
+        const firstId = (newTabs[0] && newTabs[0].id) || '';
+        comp.addAttributes({ 'active-tab-id': firstId });
+        // Update headers text
+        try {
+          const header = comp.find('.pf-tabs-header')[0];
+          if (header) {
+            header.components('');
+            newTabs.forEach(t => { header.append(`<span class="pf-tab-btn ${t.id === firstId ? 'active' : ''}" data-role="pf-tab-btn" data-tab-id="${t.id}">${t.title}</span>`); });
+          }
+        } catch(_) {}
+        // Ensure a section exists for each tab
+        try {
+          const bodyComp = comp.find('.pf-tabs-body')[0];
+          if (bodyComp) {
+            // Recreate body sections in order, preserving existing section components and their children
+            const existingSections = {};
+            (comp.find('[data-role="pf-tab-section"]').slice(0, 500) || []).forEach(sc => { existingSections[sc.getAttributes()['data-tab-id']] = sc; });
+            bodyComp.components('');
+            newTabs.forEach(t => {
+              const exist = existingSections[t.id];
+              if (exist) {
+                bodyComp.append(exist);
+                // update classes
+                const el = exist.getEl(); if (el) { if (t.id === firstId) el.classList.add('active'); else el.classList.remove('active'); }
+              } else {
+                bodyComp.append(`<div class="pf-tab-section ${t.id === firstId ? 'active' : ''}" data-role="pf-tab-section" data-tab-id="${t.id}"></div>`);
+              }
+            });
+          }
+        } catch(_) {}
+        // Ensure tab sections have proper component flags
+        try { const secs = comp.find('[data-role="pf-tab-section"]').slice(0, 500); secs.forEach(s => s.set({ droppable: true, selectable: false, hoverable: false, editable: false, copyable: false, highlightable: false, badgable: false, layerable: false })); } catch(_) {}
+      } catch (e) { console.warn('[PF] apply tabs config error', e); }
+    }
+    
+
+      // Sanitize layout HTML before saving so builder-only wrappers don't leak to runtime
+      function sanitizeLayoutHtml(html) {
+        try {
+          const temp = document.createElement('div');
+          temp.innerHTML = html;
+          
+          // Remove all builder-specific elements and attributes
+          temp.querySelectorAll('[data-role="rb-del"], [data-role="rb-edit-tabs"], .rb-del, .rb-edit-tabs').forEach(n => {
+            if (n.parentNode) n.parentNode.removeChild(n);
+          });
+          
+          // Remove builder-specific classes
+          temp.querySelectorAll('.pf-interactive, .gjs-selected, .gjs-hovered').forEach(n => {
+            n.classList.remove('pf-interactive', 'gjs-selected', 'gjs-hovered');
+          });
+          
+          // Remove all data attributes that are builder-specific, but preserve tab-related ones
+          temp.querySelectorAll('[data-comp-id], [data-gjs-type], [data-gjs-toolbar], [data-comp-kind]').forEach(n => {
+            try { n.removeAttribute('data-comp-id'); } catch(_) {}
+            try { n.removeAttribute('data-gjs-type'); } catch(_) {}
+            try { n.removeAttribute('data-gjs-toolbar'); } catch(_) {}
+            try { n.removeAttribute('data-comp-kind'); } catch(_) {}
+          });
+          
+          // Remove builder-specific data-role attributes but preserve tab-related ones
+          temp.querySelectorAll('[data-role]').forEach(n => {
+            const role = n.getAttribute('data-role');
+            if (role && !role.startsWith('pf-tab')) {
+              try { n.removeAttribute('data-role'); } catch(_) {}
+            }
+          });
+          
+          // Remove any remaining builder-specific IDs
+          temp.querySelectorAll('[id]').forEach(n => {
+            try { n.removeAttribute('id'); } catch(_) {}
+          });
+          
+          return temp.innerHTML;
+        } catch(_) {
+          return html;
+        }
+      }
+
+    editor.Commands.add('save-record-layout', {
+      run(ed) {
+                        let html = ed.getHtml();
+        html = sanitizeLayoutHtml(html);
+        let css = ed.getCss();
+        let js = ed.getJs();
+        
+        // Get runtime tabs JavaScript and CSS from the TabsComponent
+        if (window.TabsComponent && window.TabsComponent.getRuntimeCode) {
+          const runtimeCode = window.TabsComponent.getRuntimeCode();
+          console.log('[PF] Got runtime code from TabsComponent, length:', runtimeCode.length);
+          
+          // Split into JS and CSS parts based on the "// Runtime tabs CSS" marker
+          const parts = runtimeCode.split('// Runtime tabs CSS');
+          let jsCode = '';
+          let cssCode = '';
+          
+          if (parts.length > 0) {
+            jsCode = parts[0].replace('// Runtime tabs functionality', '').trim();
+            console.log('[PF] Extracted JS, length:', jsCode.length);
+            js = js + '\n' + jsCode;
+          } else {
+            console.warn('[PF] Could not find JS part in runtime content');
+          }
+          
+          if (parts.length > 1) {
+            cssCode = parts[1].trim();
+            console.log('[PF] Extracted CSS, length:', cssCode.length);
+            css = css + '\n' + cssCode;
+          } else {
+            console.warn('[PF] Could not find CSS part in runtime content');
+          }
+        } else {
+          console.warn('[PF] TabsComponent.getRuntimeCode not available');
+        }
+        
+        fetch('<%= organization_record_layout_path(@organization, table_type: @table_type, table_id: @table_id, format: :json) %>', {
+          method: 'PATCH',
+          headers: {
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ record_layout: { layout_html: html, layout_css: css, layout_js: js } })
+        }).then(r => r.json()).then(data => {
+          if (data.success) { 
+            console.log('[PF] Layout saved successfully');
+            console.log('[PF] Final HTML length:', html.length);
+            console.log('[PF] Final CSS length:', css.length);
+            console.log('[PF] Final JS length:', js.length);
+            alert('Saved'); 
+          } else { 
+            console.error('[PF] Error saving layout:', data);
+            alert('Error saving'); 
+          }
+        });
+      }
+    });
+  } // Close the initRecordPageBuilder function
+
+  document.addEventListener('turbo:before-cache', destroyRecordPageBuilder);
+  document.addEventListener('turbo:load', function() { destroyRecordPageBuilder(); initRecordPageBuilder(); });
+  document.addEventListener('DOMContentLoaded', function() { destroyRecordPageBuilder(); initRecordPageBuilder(); });
+</script>
+
+

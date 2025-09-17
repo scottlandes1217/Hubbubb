@@ -1,0 +1,39 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<div class="container mt-4">
+  <h1>Admin Dashboard</h1>
+
+  <div class="row mt-4">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">User Management</h5>
+          <p class="card-text">Manage users, roles, and permissions.</p>
+          <%= link_to "Manage Users", admin_users_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Organization Management</h5>
+          <p class="card-text">Manage organizations and their settings.</p>
+          <%= link_to "Manage Organizations", organizations_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">System Settings</h5>
+          <p class="card-text">Configure system-wide settings and preferences.</p>
+          <%= link_to "Settings", "#", class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+.container {
+    max-width: 800px;
+  }
+  
+  .field-group {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #f9f9f9;
+  }
+  
+  .field-type-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+  
+  .list-group {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+  
+  .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+  }
+  
+  .add-field-form input {
+    font-size: 1rem;
+    padding: 8px;
+  }
+  
+  .add-field-form button {
+    font-size: 1rem;
+    padding: 10px;
+  }  

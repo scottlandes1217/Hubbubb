@@ -1,0 +1,56 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card border-secondary">
+      <div class="card-header bg-secondary text-white">
+        <h4 class="mb-0">
+          <i class="fas fa-search me-2"></i>
+          Page Not Found
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <i class="fas fa-question-circle fa-3x text-secondary mb-3"></i>
+          <h5 class="text-muted">The page you're looking for doesn't exist</h5>
+        </div>
+        
+        <div class="alert alert-info">
+          <h6><i class="fas fa-info-circle me-2"></i>What might have happened?</h6>
+          <ul class="mb-0">
+            <li>The page may have been moved or deleted</li>
+            <li>You might have typed the wrong URL</li>
+            <li>The link you followed might be outdated</li>
+          </ul>
+        </div>
+
+        <div class="text-center">
+          <a href="/" class="btn btn-primary me-2">
+            <i class="fas fa-home me-1"></i>
+            Go Home
+          </a>
+          <button class="btn btn-outline-secondary" onclick="history.back()">
+            <i class="fas fa-arrow-left me-1"></i>
+            Go Back
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.fa-question-circle {
+  opacity: 0.7;
+}
+
+.alert {
+  border-left: 4px solid;
+}
+
+.alert-info {
+  border-left-color: #17a2b8;
+}
+</style> 

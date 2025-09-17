@@ -1,0 +1,42 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_admin' %>
+<% end %>
+
+<h1>Organizations</h1>
+<%= link_to 'Create Organization', new_organization_path, class: 'btn btn-secondary mb-3' %>
+
+<!-- Search form -->
+<%= form_with url: organizations_path, method: :get, local: true, class: "mb-3" do %>
+  <div class="input-group">
+    <%= text_field_tag :query, params[:query], placeholder: "Search organizations...", class: "form-control" %>
+    <button type="submit" class="btn btn-primary">Search</button>
+  </div>
+<% end %>
+
+<!-- Organizations list -->
+<div id="organizations">
+  <% if @organizations.any? %>
+    <% @organizations.each do |organization| %>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title"><%= organization.name %></h5>
+          <p class="card-text">
+            Address: <%= organization.street_address %>, <%= organization.city %>, <%= organization.state %>, <%= organization.zip %>, <%= organization.country %><br>
+            Phone: <%= organization.phone %><br>
+            Email: <%= organization.email %>
+          </p>
+          <%= link_to "Show", organization_path(organization), class: "btn btn-primary" %>
+          <%= link_to "Edit", edit_organization_path(organization), class: "btn btn-secondary" %>
+          <%= link_to "Delete", organization_path(organization), method: :delete, data: { confirm: "Are you sure?" }, class: "btn btn-danger" %>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Pagination -->
+    <div class="mt-3">
+      <%= paginate @organizations %>
+    </div>
+  <% else %>
+    <p>No organizations found.</p>
+  <% end %>
+</div>

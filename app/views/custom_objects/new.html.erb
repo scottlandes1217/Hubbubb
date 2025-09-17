@@ -1,0 +1,444 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Create New Custom Table</h3>
+        </div>
+        <div class="card-body">
+          <%= form_with model: [@organization, @custom_object], local: true do |form| %>
+                          <% if @custom_object.errors.any? %>
+                <div class="alert alert-danger">
+                  <h5><%= pluralize(@custom_object.errors.count, "error") %> prohibited this custom object from being saved:</h5>
+                  <ul>
+                    <% @custom_object.errors.full_messages.each do |message| %>
+                      <li><%= message %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% end %>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :name, "Table Name", class: "form-label" %>
+                  <%= form.text_field :name, class: "form-control", placeholder: "e.g., Customer, Product, Service" %>
+                  <div class="form-text">A unique name for your table (e.g., "Customer", "Product")</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                              <%= form.label :name, "Name", class: "form-label" %>
+            <%= form.text_field :name, class: "form-control", placeholder: "e.g., Customers, Products" %>
+                  <div class="form-text">The name that will be displayed to users</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :api_name, "API Name", class: "form-label" %>
+              <%= form.text_field :api_name, class: "form-control", placeholder: "Will be auto-generated if left blank" %>
+              <div class="form-text">Technical name used in APIs (auto-generated from table name if left blank)</div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :font_awesome_icon, "Table Icon", class: "form-label" %>
+              <div class="input-group">
+                <%= form.text_field :font_awesome_icon, value: 'fas fa-database', class: "form-control", id: "selected-icon-input", readonly: true %>
+                <button type="button" class="btn btn-outline-secondary" id="icon-picker-btn">
+                  <i class="fas fa-icons"></i> Choose Icon
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="custom-upload-btn">
+                  <i class="fas fa-upload"></i> Custom Upload
+                </button>
+              </div>
+              <div class="form-text">Click "Choose Icon" to browse Font Awesome icons or "Custom Upload" to upload your own image</div>
+            </div>
+
+            <div id="upload-options" class="mb-3" style="display: none;">
+              <%= form.label :icon, "Upload Custom Image", class: "form-label" %>
+              <%= form.file_field :icon, class: "form-control", accept: "image/*" %>
+              <div class="form-text">Upload a custom image for your table (PNG, JPG, GIF recommended)</div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :description, "Description", class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe what this table is used for..." %>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="form-check">
+                    <%= form.check_box :active, class: "form-check-input" %>
+                    <%= form.label :active, "Active", class: "form-check-label" %>
+                    <div class="form-text">Active tables can be used to create records</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="form-check">
+                    <%= form.check_box :add_to_navigation, class: "form-check-input" %>
+                    <%= form.label :add_to_navigation, "Add to Navigation", class: "form-check-label" %>
+                    <div class="form-text">Show this table in the main navigation menu</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to "Cancel", organization_objects_path(@organization), class: "btn btn-secondary" %>
+              <%= form.submit "Create Table", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Icon Picker Modal -->
+<div class="modal fade" id="iconPickerModal" tabindex="-1" aria-labelledby="iconPickerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="iconPickerModalLabel">Choose Font Awesome Icon</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <input type="text" class="form-control" id="iconSearch" placeholder="Search icons...">
+        </div>
+        <div class="row" id="iconGrid">
+          <!-- Icons will be populated by JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="selectIconBtn">Select Icon</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const nameField = document.getElementById('custom_object_name');
+  const apiNameField = document.getElementById('custom_object_api_name');
+  const selectedIconInput = document.getElementById('selected-icon-input');
+  const iconPickerBtn = document.getElementById('icon-picker-btn');
+  const customUploadBtn = document.getElementById('custom-upload-btn');
+  const uploadOptions = document.getElementById('upload-options');
+  const iconPickerModal = document.getElementById('iconPickerModal');
+  const iconSearch = document.getElementById('iconSearch');
+  const iconGrid = document.getElementById('iconGrid');
+  const selectIconBtn = document.getElementById('selectIconBtn');
+
+  // Comprehensive Font Awesome icon list
+  const icons = [
+    // Data & Tables
+    { name: 'Database', class: 'fas fa-database', category: 'Data' },
+    { name: 'Table', class: 'fas fa-table', category: 'Data' },
+    { name: 'List', class: 'fas fa-list', category: 'Data' },
+    { name: 'Chart Bar', class: 'fas fa-chart-bar', category: 'Data' },
+    { name: 'Chart Line', class: 'fas fa-chart-line', category: 'Data' },
+    { name: 'Chart Pie', class: 'fas fa-chart-pie', category: 'Data' },
+    { name: 'File', class: 'fas fa-file', category: 'Data' },
+    { name: 'File Alt', class: 'fas fa-file-alt', category: 'Data' },
+    { name: 'Folder', class: 'fas fa-folder', category: 'Data' },
+    { name: 'Folder Open', class: 'fas fa-folder-open', category: 'Data' },
+    
+    // Users & People
+    { name: 'Users', class: 'fas fa-users', category: 'People' },
+    { name: 'User', class: 'fas fa-user', category: 'People' },
+    { name: 'User Plus', class: 'fas fa-user-plus', category: 'People' },
+    { name: 'User Edit', class: 'fas fa-user-edit', category: 'People' },
+    { name: 'User Friends', class: 'fas fa-user-friends', category: 'People' },
+    { name: 'User Graduate', class: 'fas fa-user-graduate', category: 'People' },
+    { name: 'User Tie', class: 'fas fa-user-tie', category: 'People' },
+    { name: 'User Check', class: 'fas fa-user-check', category: 'People' },
+    { name: 'User Clock', class: 'fas fa-user-clock', category: 'People' },
+    
+    // Buildings & Places
+    { name: 'Building', class: 'fas fa-building', category: 'Places' },
+    { name: 'Home', class: 'fas fa-home', category: 'Places' },
+    { name: 'Map', class: 'fas fa-map', category: 'Places' },
+    { name: 'Map Marker', class: 'fas fa-map-marker-alt', category: 'Places' },
+    { name: 'Globe', class: 'fas fa-globe', category: 'Places' },
+    { name: 'Store', class: 'fas fa-store', category: 'Places' },
+    { name: 'Industry', class: 'fas fa-industry', category: 'Places' },
+    { name: 'Hospital', class: 'fas fa-hospital', category: 'Places' },
+    { name: 'School', class: 'fas fa-school', category: 'Places' },
+    
+    // Settings & Tools
+    { name: 'Cog', class: 'fas fa-cog', category: 'Tools' },
+    { name: 'Cogs', class: 'fas fa-cogs', category: 'Tools' },
+    { name: 'Wrench', class: 'fas fa-wrench', category: 'Tools' },
+    { name: 'Tools', class: 'fas fa-tools', category: 'Tools' },
+    { name: 'Screwdriver', class: 'fas fa-screwdriver', category: 'Tools' },
+    { name: 'Hammer', class: 'fas fa-hammer', category: 'Tools' },
+    { name: 'Cog', class: 'fas fa-cog', category: 'Tools' },
+    
+    // Communication
+    { name: 'Phone', class: 'fas fa-phone', category: 'Communication' },
+    { name: 'Envelope', class: 'fas fa-envelope', category: 'Communication' },
+    { name: 'Comment', class: 'fas fa-comment', category: 'Communication' },
+    { name: 'Comments', class: 'fas fa-comments', category: 'Communication' },
+    { name: 'Bell', class: 'fas fa-bell', category: 'Communication' },
+    { name: 'Link', class: 'fas fa-link', category: 'Communication' },
+    { name: 'Share', class: 'fas fa-share', category: 'Communication' },
+    
+    // Actions
+    { name: 'Plus', class: 'fas fa-plus', category: 'Actions' },
+    { name: 'Edit', class: 'fas fa-edit', category: 'Actions' },
+    { name: 'Trash', class: 'fas fa-trash', category: 'Actions' },
+    { name: 'Check', class: 'fas fa-check', category: 'Actions' },
+    { name: 'Times', class: 'fas fa-times', category: 'Actions' },
+    { name: 'Save', class: 'fas fa-save', category: 'Actions' },
+    { name: 'Download', class: 'fas fa-download', category: 'Actions' },
+    { name: 'Upload', class: 'fas fa-upload', category: 'Actions' },
+    { name: 'Search', class: 'fas fa-search', category: 'Actions' },
+    { name: 'Filter', class: 'fas fa-filter', category: 'Actions' },
+    { name: 'Sort', class: 'fas fa-sort', category: 'Actions' },
+    { name: 'Eye', class: 'fas fa-eye', category: 'Actions' },
+    { name: 'Eye Slash', class: 'fas fa-eye-slash', category: 'Actions' },
+    { name: 'Lock', class: 'fas fa-lock', category: 'Actions' },
+    { name: 'Unlock', class: 'fas fa-unlock', category: 'Actions' },
+    
+    // Status & Feedback
+    { name: 'Info Circle', class: 'fas fa-info-circle', category: 'Status' },
+    { name: 'Question Circle', class: 'fas fa-question-circle', category: 'Status' },
+    { name: 'Exclamation Circle', class: 'fas fa-exclamation-circle', category: 'Status' },
+    { name: 'Exclamation Triangle', class: 'fas fa-exclamation-triangle', category: 'Status' },
+    { name: 'Check Circle', class: 'fas fa-check-circle', category: 'Status' },
+    { name: 'Times Circle', class: 'fas fa-times-circle', category: 'Status' },
+    { name: 'Star', class: 'fas fa-star', category: 'Status' },
+    { name: 'Heart', class: 'fas fa-heart', category: 'Status' },
+    { name: 'Thumbs Up', class: 'fas fa-thumbs-up', category: 'Status' },
+    { name: 'Thumbs Down', class: 'fas fa-thumbs-down', category: 'Status' },
+    
+    // Time & Date
+    { name: 'Calendar', class: 'fas fa-calendar', category: 'Time' },
+    { name: 'Clock', class: 'fas fa-clock', category: 'Time' },
+    { name: 'Calendar Alt', class: 'fas fa-calendar-alt', category: 'Time' },
+    { name: 'Calendar Check', class: 'fas fa-calendar-check', category: 'Time' },
+    { name: 'Calendar Plus', class: 'fas fa-calendar-plus', category: 'Time' },
+    { name: 'Calendar Minus', class: 'fas fa-calendar-minus', category: 'Time' },
+    { name: 'Calendar Times', class: 'fas fa-calendar-times', category: 'Time' },
+    
+    // Objects & Items
+    { name: 'Book', class: 'fas fa-book', category: 'Objects' },
+    { name: 'Book Open', class: 'fas fa-book-open', category: 'Objects' },
+    { name: 'Graduation Cap', class: 'fas fa-graduation-cap', category: 'Objects' },
+    { name: 'Briefcase', class: 'fas fa-briefcase', category: 'Objects' },
+    { name: 'Suitcase', class: 'fas fa-suitcase', category: 'Objects' },
+    { name: 'Car', class: 'fas fa-car', category: 'Objects' },
+    { name: 'Plane', class: 'fas fa-plane', category: 'Objects' },
+    { name: 'Ship', class: 'fas fa-ship', category: 'Objects' },
+    { name: 'Train', class: 'fas fa-train', category: 'Objects' },
+    { name: 'Bicycle', class: 'fas fa-bicycle', category: 'Objects' },
+    { name: 'Motorcycle', class: 'fas fa-motorcycle', category: 'Objects' },
+    
+    // Technology
+    { name: 'Laptop', class: 'fas fa-laptop', category: 'Technology' },
+    { name: 'Desktop', class: 'fas fa-desktop', category: 'Technology' },
+    { name: 'Tablet', class: 'fas fa-tablet-alt', category: 'Technology' },
+    { name: 'Mobile', class: 'fas fa-mobile-alt', category: 'Technology' },
+    { name: 'Server', class: 'fas fa-server', category: 'Technology' },
+    { name: 'Network Wired', class: 'fas fa-network-wired', category: 'Technology' },
+    { name: 'Wifi', class: 'fas fa-wifi', category: 'Technology' },
+    { name: 'Bluetooth', class: 'fas fa-bluetooth', category: 'Technology' },
+    { name: 'Satellite', class: 'fas fa-satellite', category: 'Technology' },
+    
+    // Business & Finance
+    { name: 'Dollar Sign', class: 'fas fa-dollar-sign', category: 'Business' },
+    { name: 'Euro Sign', class: 'fas fa-euro-sign', category: 'Business' },
+    { name: 'Pound Sign', class: 'fas fa-pound-sign', category: 'Business' },
+    { name: 'Credit Card', class: 'fas fa-credit-card', category: 'Business' },
+    { name: 'Receipt', class: 'fas fa-receipt', category: 'Business' },
+    { name: 'Calculator', class: 'fas fa-calculator', category: 'Business' },
+    { name: 'Chart Area', class: 'fas fa-chart-area', category: 'Business' },
+    { name: 'Trending Up', class: 'fas fa-trending-up', category: 'Business' },
+    { name: 'Trending Down', class: 'fas fa-trending-down', category: 'Business' },
+    
+    // Health & Medical
+    { name: 'Stethoscope', class: 'fas fa-stethoscope', category: 'Health' },
+    { name: 'User Md', class: 'fas fa-user-md', category: 'Health' },
+    { name: 'User Nurse', class: 'fas fa-user-nurse', category: 'Health' },
+    { name: 'Pills', class: 'fas fa-pills', category: 'Health' },
+    { name: 'Syringe', class: 'fas fa-syringe', category: 'Health' },
+    { name: 'Thermometer', class: 'fas fa-thermometer-half', category: 'Health' },
+    { name: 'Heartbeat', class: 'fas fa-heartbeat', category: 'Health' },
+    { name: 'Brain', class: 'fas fa-brain', category: 'Health' },
+    { name: 'Tooth', class: 'fas fa-tooth', category: 'Health' },
+    
+    // Food & Dining
+    { name: 'Utensils', class: 'fas fa-utensils', category: 'Food' },
+    { name: 'Coffee', class: 'fas fa-coffee', category: 'Food' },
+    { name: 'Pizza Slice', class: 'fas fa-pizza-slice', category: 'Food' },
+    { name: 'Hamburger', class: 'fas fa-hamburger', category: 'Food' },
+    { name: 'Ice Cream', class: 'fas fa-ice-cream', category: 'Food' },
+    { name: 'Apple Alt', class: 'fas fa-apple-alt', category: 'Food' },
+    { name: 'Carrot', class: 'fas fa-carrot', category: 'Food' },
+    { name: 'Bread Slice', class: 'fas fa-bread-slice', category: 'Food' },
+    { name: 'Cheese', class: 'fas fa-cheese', category: 'Food' },
+    
+    // Sports & Recreation
+    { name: 'Football Ball', class: 'fas fa-football-ball', category: 'Sports' },
+    { name: 'Basketball Ball', class: 'fas fa-basketball-ball', category: 'Sports' },
+    { name: 'Baseball Ball', class: 'fas fa-baseball-ball', category: 'Sports' },
+    { name: 'Volleyball Ball', class: 'fas fa-volleyball-ball', category: 'Sports' },
+    { name: 'Trophy', class: 'fas fa-trophy', category: 'Sports' },
+    { name: 'Medal', class: 'fas fa-medal', category: 'Sports' },
+    { name: 'Running', class: 'fas fa-running', category: 'Sports' },
+    { name: 'Swimmer', class: 'fas fa-swimmer', category: 'Sports' },
+    { name: 'Biking', class: 'fas fa-biking', category: 'Sports' },
+    
+    // Nature & Environment
+    { name: 'Tree', class: 'fas fa-tree', category: 'Nature' },
+    { name: 'Leaf', class: 'fas fa-leaf', category: 'Nature' },
+    { name: 'Seedling', class: 'fas fa-seedling', category: 'Nature' },
+    { name: 'Sun', class: 'fas fa-sun', category: 'Nature' },
+    { name: 'Moon', class: 'fas fa-moon', category: 'Nature' },
+    { name: 'Cloud', class: 'fas fa-cloud', category: 'Nature' },
+    { name: 'Cloud Rain', class: 'fas fa-cloud-rain', category: 'Nature' },
+    { name: 'Snowflake', class: 'fas fa-snowflake', category: 'Nature' },
+    { name: 'Umbrella', class: 'fas fa-umbrella', category: 'Nature' },
+    
+    // Animals
+    { name: 'Dog', class: 'fas fa-dog', category: 'Animals' },
+    { name: 'Cat', class: 'fas fa-cat', category: 'Animals' },
+    { name: 'Horse', class: 'fas fa-horse', category: 'Animals' },
+    { name: 'Fish', class: 'fas fa-fish', category: 'Animals' },
+    { name: 'Bird', class: 'fas fa-dove', category: 'Animals' },
+    { name: 'Paw', class: 'fas fa-paw', category: 'Animals' },
+    { name: 'Spider', class: 'fas fa-spider', category: 'Animals' },
+    { name: 'Bug', class: 'fas fa-bug', category: 'Animals' },
+    { name: 'Dragon', class: 'fas fa-dragon', category: 'Animals' },
+    
+    // Miscellaneous
+    { name: 'Gift', class: 'fas fa-gift', category: 'Misc' },
+    { name: 'Birthday Cake', class: 'fas fa-birthday-cake', category: 'Misc' },
+    { name: 'Gamepad', class: 'fas fa-gamepad', category: 'Misc' },
+    { name: 'Dice', class: 'fas fa-dice', category: 'Misc' },
+    { name: 'Puzzle Piece', class: 'fas fa-puzzle-piece', category: 'Misc' },
+    { name: 'Magic', class: 'fas fa-magic', category: 'Misc' },
+    { name: 'Crown', class: 'fas fa-crown', category: 'Misc' },
+    { name: 'Gem', class: 'fas fa-gem', category: 'Misc' },
+    { name: 'Diamond', class: 'fas fa-diamond', category: 'Misc' }
+  ];
+
+  let selectedIcon = 'fas fa-database';
+  let filteredIcons = [...icons];
+
+  // Auto-generate display name from name
+  nameField.addEventListener('input', function() {
+    if (displayNameField.value === '' || displayNameField.value === nameField.value) {
+      displayNameField.value = nameField.value;
+    }
+  });
+
+  // Auto-generate API name from name
+  nameField.addEventListener('input', function() {
+    if (apiNameField.value === '' || apiNameField.value === nameField.value.toLowerCase().replace(/[^a-z0-9]/g, '_')) {
+      apiNameField.value = nameField.value.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    }
+  });
+
+  // Populate icon grid
+  function populateIconGrid(iconsToShow = icons) {
+    iconGrid.innerHTML = '';
+    iconsToShow.forEach(icon => {
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'col-md-2 col-lg-1 mb-2';
+      iconDiv.innerHTML = `
+        <div class="icon-item text-center p-2 border rounded cursor-pointer" data-icon="${icon.class}">
+          <i class="${icon.class}" style="font-size: 1.5rem; color: #000;"></i>
+          <div class="small mt-1">${icon.name}</div>
+        </div>
+      `;
+      iconGrid.appendChild(iconDiv);
+    });
+  }
+
+  // Search functionality
+  iconSearch.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    filteredIcons = icons.filter(icon => 
+      icon.name.toLowerCase().includes(searchTerm) || 
+      icon.class.toLowerCase().includes(searchTerm) ||
+      icon.category.toLowerCase().includes(searchTerm)
+    );
+    populateIconGrid(filteredIcons);
+  });
+
+  // Icon selection
+  iconGrid.addEventListener('click', function(e) {
+    const iconItem = e.target.closest('.icon-item');
+    if (iconItem) {
+      // Remove previous selection
+      document.querySelectorAll('.icon-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      // Add selection to clicked item
+      iconItem.classList.add('selected');
+      selectedIcon = iconItem.dataset.icon;
+    }
+  });
+
+  // Open icon picker modal
+  iconPickerBtn.addEventListener('click', function() {
+    populateIconGrid();
+    const modal = new bootstrap.Modal(iconPickerModal);
+    modal.show();
+  });
+
+  // Select icon button
+  selectIconBtn.addEventListener('click', function() {
+    selectedIconInput.value = selectedIcon;
+    const modal = bootstrap.Modal.getInstance(iconPickerModal);
+    modal.hide();
+  });
+
+  // Custom upload button
+  customUploadBtn.addEventListener('click', function() {
+    selectedIconInput.value = 'custom';
+    uploadOptions.style.display = 'block';
+  });
+
+  // Initialize
+  populateIconGrid();
+});
+</script>
+
+<style>
+.icon-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-item:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.05);
+}
+
+.icon-item.selected {
+  background-color: #007bff;
+  color: white;
+}
+
+.icon-item.selected i {
+  color: white !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+</style> 

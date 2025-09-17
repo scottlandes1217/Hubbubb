@@ -1,0 +1,285 @@
+// Lazy Loading Styles
+.turbo-frame-loading {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 4px;
+  margin: 1rem 0;
+
+  &::after {
+    content: "Loading...";
+    color: #6c757d;
+    font-size: 1.1rem;
+  }
+}
+
+// Tab Content Styles
+.tab-content {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    margin-bottom: 1.5rem;
+    color: #343a40;
+    font-size: 1.5rem;
+  }
+}
+
+// Feed Tab Styles
+.feed-container {
+  .feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .post-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .post-author {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .author-info {
+        display: flex;
+        flex-direction: column;
+
+        strong {
+          color: #343a40;
+        }
+
+        .post-date {
+          color: #6c757d;
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .post-content {
+      margin: 1rem 0;
+      color: #495057;
+    }
+
+    .post-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+
+      .post-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 4px;
+      }
+    }
+  }
+}
+
+// Gallery Tab Styles
+.gallery-container {
+  .gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+
+    .photo-card {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 4px;
+      overflow: hidden;
+
+      .gallery-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .photo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+
+        .btn-link {
+          color: #fff;
+          font-size: 1.25rem;
+          padding: 0.5rem;
+
+          &:hover {
+            color: #fff;
+            opacity: 0.8;
+          }
+        }
+      }
+
+      &:hover .photo-overlay {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+// Tasks Tab Styles
+.tasks-container {
+  .tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .task-card {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+
+      .task-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        h4 {
+          margin: 0;
+          color: #343a40;
+        }
+
+        .task-status {
+          font-size: 0.875rem;
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+
+          &.badge-scheduled { background: #e9ecef; color: #495057; }
+          &.badge-pending { background: #fff3cd; color: #856404; }
+          &.badge-in-progress { background: #cce5ff; color: #004085; }
+          &.badge-completed { background: #d4edda; color: #155724; }
+          &.badge-overdue { background: #f8d7da; color: #721c24; }
+          &.badge-on-hold { background: #e2e3e5; color: #383d41; }
+        }
+      }
+    }
+
+    .task-details {
+      .task-description {
+        color: #495057;
+        margin-bottom: 0.5rem;
+      }
+
+      .task-meta {
+        display: flex;
+        gap: 1rem;
+        color: #6c757d;
+        font-size: 0.875rem;
+
+        i {
+          margin-right: 0.25rem;
+        }
+      }
+    }
+  }
+}
+
+// Empty State Styles
+.no-posts,
+.no-photos,
+.no-tasks {
+  text-align: center;
+  padding: 3rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  color: #6c757d;
+
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+// Pin button styles
+.pin-pet-btn {
+  transition: all 0.2s ease;
+  
+  &.pinned {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+    
+    i {
+      color: #856404;
+    }
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// Pet header pin button styles
+.pet-header {
+  .pin-button-container {
+    .pin-pet-btn {
+      transition: all 0.2s ease;
+      
+      &.pinned {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+        
+        i {
+          color: #856404;
+        }
+      }
+      
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+} 

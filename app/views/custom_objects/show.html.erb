@@ -1,0 +1,173 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <% if @custom_object.font_awesome_icon? %>
+        <i class="<%= @custom_object.font_awesome_icon %> me-3" style="font-size: 3rem; color: #6c757d;"></i>
+      <% elsif @custom_object.uploaded_icon? && @custom_object.icon.attached? %>
+                        <img src="<%= url_for(@custom_object.icon) %>" alt="<%= @custom_object.name %>" style="max-width: 48px; max-height: 48px;" class="me-3">
+      <% else %>
+        <i class="fas fa-database me-3" style="font-size: 3rem; color: #6c757d;"></i>
+      <% end %>
+      <div>
+                      <h2><%= @custom_object.name %></h2>
+        <p class="text-muted mb-0">
+          API Name: <code><%= @custom_object.api_name %></code>
+          <% if @custom_object.description.present? %>
+            • <%= @custom_object.description %>
+          <% end %>
+          <% if @custom_object.add_to_navigation? %>
+            • <span class="badge bg-primary">In Navigation</span>
+          <% end %>
+        </p>
+      </div>
+    </div>
+    
+    <div class="btn-group">
+              <%= link_to "Edit Object", edit_organization_custom_object_path(@organization, @custom_object), class: "btn btn-outline-secondary" %>
+              <%= link_to "Add Field", new_organization_custom_object_custom_field_path(@organization, @custom_object), class: "btn btn-primary" %>
+        <%= link_to "Add Record", new_organization_custom_object_custom_record_path(@organization, @custom_object), class: "btn btn-success" %>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Fields Section -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Fields (<%= @custom_fields.count %>)</h5>
+          <%= link_to "Manage Fields", organization_organization_object_fields_path(@organization, @custom_object.api_name), class: "btn btn-sm btn-outline-primary" %>
+        </div>
+        <div class="card-body">
+          <% if @custom_fields.any? %>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @custom_fields.each do |field| %>
+                    <tr>
+                      <td>
+                        <strong><%= field.display_name %></strong>
+                        <br><small class="text-muted"><%= field.api_name %></small>
+                      </td>
+                      <td>
+                        <span class="badge bg-info"><%= field.field_type.titleize %></span>
+                      </td>
+                      <td>
+                        <% if field.required? %>
+                          <span class="text-danger">✓</span>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <span class="badge <%= field.active? ? 'bg-success' : 'bg-secondary' %>">
+                          <%= field.active? ? 'Active' : 'Inactive' %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="text-muted text-center py-3">No fields defined yet.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Records Section -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Recent Records (<%= @custom_records.count %>)</h5>
+          <%= link_to "View All Records", organization_custom_object_custom_records_path(@organization, @custom_object), class: "btn btn-sm btn-outline-primary" %>
+        </div>
+        <div class="card-body">
+          <% if @custom_records.any? %>
+            <div class="list-group list-group-flush">
+              <% @custom_records.limit(5).each do |record| %>
+                <%= link_to organization_custom_object_custom_record_path(@organization, @custom_object, record), class: "list-group-item list-group-item-action" do %>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h6 class="mb-1"><%= record.name %></h6>
+                      <small class="text-muted">
+                        ID: <%= record.external_id %>
+                        <% if record.description.present? %>
+                          • <%= truncate(record.description, length: 50) %>
+                        <% end %>
+                      </small>
+                    </div>
+                    <small class="text-muted">
+                      <%= time_ago_in_words(record.created_at) %> ago
+                    </small>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+            
+            <% if @custom_records.count > 5 %>
+              <div class="text-center mt-3">
+                <%= link_to "View all #{@custom_records.count} records", organization_custom_object_custom_records_path(@organization, @custom_object), class: "btn btn-sm btn-outline-secondary" %>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-muted text-center py-3">No records yet.</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Status -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Table Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="text-center">
+                <h4 class="text-primary"><%= @custom_fields.count %></h4>
+                <small class="text-muted">Fields</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <h4 class="text-success"><%= @custom_records.count %></h4>
+                <small class="text-muted">Records</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <h4 class="text-info"><%= @custom_fields.active.count %></h4>
+                <small class="text-muted">Active Fields</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <h4 class="<%= @custom_object.active? ? 'text-success' : 'text-secondary' %>">
+                  <%= @custom_object.active? ? 'Active' : 'Inactive' %>
+                </h4>
+                <small class="text-muted">Status</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

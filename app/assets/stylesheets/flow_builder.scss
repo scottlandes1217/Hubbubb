@@ -1,0 +1,397 @@
+/* Orchestration Builder Styles */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+/* --- Layout --- */
+.flow-builder-container {
+  height: calc(100vh - 91px);
+  display: flex;
+  flex-direction: column;
+}
+
+.builder-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  height: 100%;
+}
+
+.builder-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  z-index: 9;
+}
+
+.builder-canvas {
+  flex: 1;
+  position: relative;
+  background: #f8f9fa;
+  overflow: hidden;
+  min-width: 0;
+  height: 100%;
+}
+
+#canvas-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 9;
+  display: flex;
+  gap: 5px;
+}
+
+.canvas-zoom-btn {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+
+  &.active {
+    background: #007bff;
+    color: white;
+  }
+}
+
+#canvas-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+  background: #f8f9fa;
+  cursor: grab;
+}
+
+#orchestration-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  min-width: 1200px;
+  background: #f8f9fa;
+  outline: none;
+  cursor: grab;
+  overflow: hidden;
+}
+#canvas-inner {
+  position: absolute;
+  top: 0; left: 0;
+  width: 3000px;
+  height: 2000px;
+  /* pointer-events: none; */
+}
+#canvas-inner .flow-block {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 10;
+}
+#canvas-inner svg {
+  position: absolute;
+  top: 0; left: 0; width: 3000px; height: 2000px;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+#selection-box {
+  position: absolute;
+  border: 2px dashed #007bff;
+  background: rgba(0, 123, 255, 0.1);
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+}
+
+/* --- Block Palette --- */
+.block-category {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.category-header {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.block-list {
+  padding: 8px 0;
+}
+
+.block-item {
+  padding: 8px 16px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #e3f2fd;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  i {
+    width: 16px;
+    text-align: center;
+  }
+}
+
+/* --- Block Styles --- */
+  .flow-block {
+  position: absolute;
+  width: 200px;
+  min-height: 80px;
+  background: #fff;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: move;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  z-index: 10;
+  user-select: none;
+  
+  &.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+  }
+}
+.block-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.block-icon {
+  width: 40px;
+  height: 40px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.block-icon i {
+  font-size: 1.2rem;
+  color: #6c757d;
+}
+.block-info {
+  flex: 1;
+  min-width: 0;
+}
+.block-title {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 2px 0;
+  color: #222;
+  line-height: 1.2;
+}
+.block-type {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  display: block;
+}
+.block-content {
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.3;
+}
+
+/* Block type colors - Salesforce Flow style */
+.block-trigger .block-icon {
+  background: #ff6b6b;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-screen .block-icon {
+  background: #4ecdc4;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-decision .block-icon {
+  background: #45b7d1;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-create_record .block-icon {
+  background: #f39c12;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-update_record .block-icon {
+  background: #9b59b6;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-delete_record .block-icon {
+  background: #e74c3c;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-assignment .block-icon {
+  background: #3498db;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-loop .block-icon {
+  background: #1abc9c;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-email .block-icon {
+  background: #34495e;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-notification .block-icon {
+  background: #e67e22;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-api_call .block-icon {
+  background: #9b59b6;
+
+  i {
+    color: #fff;
+  }
+}
+
+.block-wait .block-icon {
+  background: #95a5a6;
+
+  i {
+    color: #fff;
+  }
+}
+
+/* --- Ports --- */
+.block-ports {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #888888;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 20;
+
+  &:hover {
+    background: #007bff;
+  }
+}
+
+.port-output {
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* --- SVG Connections --- */
+#connection-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15; /* Higher than blocks (z-index: 10) */
+}
+
+.connection-path {
+  stroke: #666666;
+  stroke-width: 2;
+  fill: none;
+
+  &.invalid {
+    stroke: #f44336;
+    stroke-dasharray: 5,5;
+  }
+
+  &.preview {
+    stroke: #2196f3;
+    stroke-width: 2;
+    stroke-dasharray: 5,5;
+    opacity: 0.7;
+  }
+
+  &.selected {
+    stroke: #2196f3;
+    stroke-width: 3;
+  }
+}
+
+/* --- Modal --- */
+#block-properties-modal .modal-content {
+  border-radius: 10px;
+}
+
+/* --- Multi-select box --- */
+#selection-box {
+  position: absolute;
+  border: 2px dashed #007bff;
+  background: rgba(0,123,255,0.08);
+  z-index: 100;
+  pointer-events: none;
+  display: none;
+} 
+
+.builder-canvas, #orchestration-canvas {
+  cursor: grab !important;
+  overflow: visible !important;
+}
+#canvas-inner {
+  pointer-events: auto;
+} 

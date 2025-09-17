@@ -1,0 +1,72 @@
+<h1>Edit Pet</h1>
+
+<%= form_with model: @pet, url: organization_pet_path(@organization, @pet), local: true do |f| %>
+  <!-- Pass return_to as a hidden field -->
+  <%= hidden_field_tag :return_to, params[:return_to] %>
+
+  <div class="mb-3">
+    <%= f.label :name, "Name", class: "form-label" %>
+    <%= f.text_field :name, class: "form-control" %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :species, get_custom_field_display_name(@organization, 'pets', 'species'), class: "form-label" %>
+    <%= f.select :species, 
+                 options_for_select(get_custom_field_values(@organization, 'pets', 'species').map { |s| [s.titleize, s] }, @pet.species),
+                 { include_blank: "Select Species" },
+                 { class: "form-control" } %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :breed, get_custom_field_display_name(@organization, 'pets', 'breed'), class: "form-label" %>
+    <%= f.select :breed, 
+                 options_for_select(get_custom_field_values(@organization, 'pets', 'breed').map { |b| [b.titleize, b] }, @pet.breed),
+                 { include_blank: "Select Breed" },
+                 { class: "form-control", multiple: true } %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :color, get_custom_field_display_name(@organization, 'pets', 'color'), class: "form-label" %>
+    <%= f.select :color, 
+                 options_for_select(get_custom_field_values(@organization, 'pets', 'color').map { |c| [c.titleize, c] }, @pet.color),
+                 { include_blank: "Select Color" },
+                 { class: "form-control", multiple: true } %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :flags, get_custom_field_display_name(@organization, 'pets', 'flags'), class: "form-label" %>
+    <%= f.select :flags, 
+                 options_for_select(get_custom_field_values(@organization, 'pets', 'flags').map { |f| [f.titleize, f] }, @pet.flags),
+                 { include_blank: "Select Flags" },
+                 { class: "form-control", multiple: true } %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :location, get_custom_field_display_name(@organization, 'pets', 'location'), class: "form-label" %>
+    <%= f.select :location, 
+                 options_for_select(get_custom_field_values(@organization, 'pets', 'location').map { |l| [l.titleize, l] }, @pet.location),
+                 { include_blank: "Select Location" },
+                 { class: "form-control" } %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :unit, get_custom_field_display_name(@organization, 'tasks', 'unit'), class: "form-label" %>
+    <%= f.select :unit, 
+                 options_for_select(get_custom_field_values(@organization, 'pets', 'unit').map { |u| [u.titleize, u] }, @pet.unit),
+                 { include_blank: "Select Unit" },
+                 { class: "form-control" } %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :age, "Age", class: "form-label" %>
+    <%= f.number_field :age, class: "form-control" %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :description, "Description", class: "form-label" %>
+    <%= f.text_area :description, class: "form-control" %>
+  </div>
+
+  <%= f.submit "Save Changes", class: "btn btn-primary" %>
+  <%= link_to "Cancel", params[:return_to] || organization_pets_path(@organization), class: "btn btn-secondary" %>
+<% end %>

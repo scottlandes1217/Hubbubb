@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>hubbubb</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <!-- Application CSS -->
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
+    <!-- Import Maps for JavaScript -->
+    <%= javascript_importmap_tags %>
+
+    <!-- Bootstrap CSS (via CDN for simplicity) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <!-- Trix CSS -->
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
+
+    <!-- Bootstrap JavaScript (via CDN) - needed for modals -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <%= yield :head if content_for?(:head) %>
+  </head>
+
+  <body>
+    <%= render 'shared/global_alert' %>
+    <%= yield :navbar %>
+    <div class="main-content">
+      <%= yield %> <!-- Main content goes here -->
+    </div>
+    
+    <%= yield :javascript if content_for?(:javascript) %>
+  </body>
+</html>

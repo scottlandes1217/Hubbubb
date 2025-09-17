@@ -1,0 +1,37 @@
+<div class="search-container mx-auto"
+     data-controller="search"
+     data-search-search-url-value="<%= admin_quick_search_path %>">
+  <div class="search-input-wrapper">
+    <div class="search-input-group">
+      <i class="fas fa-search search-icon"></i>
+      <input 
+        type="text" 
+        class="form-control search-input" 
+        placeholder="Search users, organizations, pets..."
+        data-search-target="input"
+        data-action="input->search#performSearch keydown->search#handleKeydown"
+        autocomplete="off"
+        style="width:100%;"
+      >
+      <div class="search-loading" data-search-target="loading" style="display: none;">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+    </div>
+    
+    <!-- Search Results Dropdown -->
+    <div class="search-results-dropdown" data-search-target="results" style="display: none;">
+      <div class="search-results-header">
+        <span class="search-results-title">Search Results</span>
+        <button class="btn btn-sm btn-outline-secondary" data-action="click->search#showFullSearch">
+          <i class="fas fa-external-link-alt"></i> Full Search
+        </button>
+      </div>
+      <div class="search-results-list" data-search-target="resultsList">
+        <!-- Results will be populated here -->
+      </div>
+      <div class="search-results-footer">
+        <small class="text-muted">Press Enter for full search</small>
+      </div>
+    </div>
+  </div>
+</div> 

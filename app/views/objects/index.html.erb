@@ -1,0 +1,135 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Objects</h1>
+        <%= link_to new_organization_custom_object_path(@organization), class: "btn btn-primary" do %>
+          <i class="fas fa-plus me-2"></i>Create Custom Object
+        <% end %>
+      </div>
+
+      <!-- Search form -->
+      <%= form_with url: organization_objects_path(@organization), method: :get, local: true, class: "mb-4" do %>
+        <div class="input-group">
+          <%= text_field_tag :query, params[:query], placeholder: "Search objects by name or description...", class: "form-control" %>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <% if params[:query].present? %>
+            <%= link_to "Clear", organization_objects_path(@organization), class: "btn btn-outline-secondary" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <!-- Objects Table -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-table me-2"></i>All Objects
+            <% if params[:query].present? %>
+              <small class="text-muted">(<%= @all_objects.count %> results)</small>
+            <% end %>
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if @all_objects.any? %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Object</th>
+                    <th>Type</th>
+                    <th>Records</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @all_objects.each do |object| %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <i class="<%= object.icon %> fa-lg text-primary me-3"></i>
+                          <div>
+                            <strong><%= object.name %></strong>
+                            <% if object.respond_to?(:in_navigation) && object.in_navigation %>
+                              <span class="badge bg-success ms-2" title="In Navigation">
+                                <i class="fas fa-link"></i>
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <% if object.type == 'built_in' %>
+                          <span class="badge bg-primary">Built-in</span>
+                        <% else %>
+                          <span class="badge bg-success">Custom</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <span class="text-muted"><%= pluralize(object.record_count, 'record') %></span>
+                      </td>
+                      <td>
+                        <span class="text-muted"><%= truncate(object.description, length: 60) %></span>
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <% if object.type == 'built_in' %>
+                            <%= link_to object.view_path, class: "btn btn-outline-primary btn-sm" do %>
+                              <i class="fas fa-eye me-1"></i>View
+                            <% end %>
+                          <% else %>
+                            <%= link_to object.path, class: "btn btn-outline-primary btn-sm" do %>
+                              <i class="fas fa-eye me-1"></i>View
+                            <% end %>
+                          <% end %>
+                         
+                          <% if object.has_custom_fields %>
+                            <% if object.type == 'custom' %>
+                              <%= link_to organization_organization_object_fields_path(@organization, object.api_name), class: "btn btn-outline-secondary btn-sm" do %>
+                                <i class="fas fa-cog me-1"></i>Fields
+                              <% end %>
+                            <% else %>
+                              <%= link_to organization_organization_object_fields_path(@organization, object.custom_object_id), class: "btn btn-outline-secondary btn-sm" do %>
+                                <i class="fas fa-cog me-1"></i>Fields
+                              <% end %>
+                            <% end %>
+                          <% else %>
+                            <button class="btn btn-outline-secondary btn-sm" disabled title="No custom fields">
+                              <i class="fas fa-cog me-1"></i>Fields
+                            </button>
+                          <% end %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <% if params[:query].present? %>
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No objects found</h5>
+                <p class="text-muted">Try adjusting your search terms.</p>
+                <%= link_to "View all objects", organization_objects_path(@organization), class: "btn btn-primary" %>
+              <% else %>
+                <i class="fas fa-table fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Custom Objects Yet</h5>
+                <p class="text-muted">Create custom objects to organize your data.</p>
+                <%= link_to new_organization_custom_object_path(@organization), class: "btn btn-primary" do %>
+                  <i class="fas fa-plus me-2"></i>Create Your First Object
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

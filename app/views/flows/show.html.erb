@@ -1,0 +1,152 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1><%= @flow.name %></h1>
+          <div class="d-flex align-items-center gap-2">
+                          <span class="badge <%= @flow.active? ? 'bg-success' : 'bg-secondary' %>">
+                <%= @flow.status.titleize %>
+              </span>
+              <span class="text-muted">Created <%= time_ago_in_words(@flow.created_at) %> ago</span>
+          </div>
+        </div>
+        
+        <div class="btn-group" role="group">
+          <%= link_to 'Edit', edit_organization_flow_path(@organization, @flow), 
+                      class: 'btn btn-outline-secondary' %>
+          <%= link_to 'Builder', builder_organization_flow_path(@organization, @flow), 
+                      class: 'btn btn-primary' %>
+          <%= link_to 'Execute', execute_organization_flow_path(@organization, @flow), 
+                      method: :post, class: 'btn btn-success' %>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Flow Overview -->
+        <div class="col-md-8">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Overview</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>Blocks</h6>
+                  <p class="text-muted">
+                    <%= @flow_blocks.count %> blocks configured
+                  </p>
+                  
+
+                </div>
+                <div class="col-md-6">
+                  <h6>Status</h6>
+                  <p class="text-muted">
+                    <%= @flow.status.titleize %>
+                  </p>
+                  
+                  <h6>Last Modified</h6>
+                  <p class="text-muted">
+                    <%= @flow.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Block List -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Blocks</h5>
+            </div>
+            <div class="card-body">
+              <% if @flow_blocks.any? %>
+                <div class="list-group list-group-flush">
+                  <% @flow_blocks.each do |block| %>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <h6 class="mb-1"><%= block.name %></h6>
+                        <small class="text-muted">
+                          <%= block.block_type.titleize %> • 
+                          Position: (<%= block.position_x %>, <%= block.position_y %>)
+                        </small>
+                      </div>
+                      <span class="badge <%= get_block_type_color(block.block_type) %>">
+                        <%= block.block_type.titleize %>
+                      </span>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <div class="text-center py-4">
+                  <i class="fas fa-puzzle-piece fa-2x text-muted mb-3"></i>
+                  <p class="text-muted">No blocks configured yet</p>
+                  <%= link_to 'Add Blocks', builder_organization_flow_path(@organization, @flow), 
+                              class: 'btn btn-primary' %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Executions -->
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Recent Executions</h5>
+            </div>
+            <div class="card-body">
+              <% if @recent_executions.any? %>
+                <div class="list-group list-group-flush">
+                  <% @recent_executions.each do |execution| %>
+                    <div class="list-group-item">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <h6 class="mb-1">
+                            <%= execution.execution_type.titleize %> Execution
+                          </h6>
+                          <small class="text-muted">
+                            <%= time_ago_in_words(execution.created_at) %> ago
+                          </small>
+                        </div>
+                        <span class="badge <%= get_execution_status_color(execution.status) %>">
+                          <%= execution.status.titleize %>
+                        </span>
+                      </div>
+                      <% if execution.duration %>
+                        <small class="text-muted">
+                          Duration: <%= execution.duration.round(2) %>s
+                        </small>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+                
+                <div class="mt-3">
+                  <%= link_to 'View All Executions', '#', class: 'btn btn-outline-primary btn-sm' %>
+                </div>
+              <% else %>
+                <div class="text-center py-4">
+                  <i class="fas fa-play-circle fa-2x text-muted mb-3"></i>
+                  <p class="text-muted">No executions yet</p>
+                  <%= link_to 'Execute Now', execute_organization_flow_path(@organization, @flow), 
+                              method: :post, class: 'btn btn-success btn-sm' %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% content_for :page_scripts do %>
+<script>
+// Add any JavaScript for the show page here
+</script>
+<% end %> 

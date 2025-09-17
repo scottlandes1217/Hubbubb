@@ -1,0 +1,63 @@
+<div class="comment" id="comment_<%= comment.id %>">
+  <div class="comment-header">
+    <strong><%= comment.user.email %>:</strong>
+    <% if comment.user == current_user || current_user.admin? %>
+      <% if comment.post.organization.present? %>
+        <%= link_to 'Delete', organization_post_comment_path(comment.post.organization, comment.post, comment), method: :delete, data: { turbo_confirm: 'Are you sure?' }, class: 'delete-comment' %>
+      <% else %>
+        <%= link_to 'Delete', post_comment_path(comment.post, comment), method: :delete, data: { turbo_confirm: 'Are you sure?' }, class: 'delete-comment' %>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="comment-body">
+    <%= comment.body %>
+  </div>
+  <div class="comment-reactions-bar centered">
+    <% reaction_types = {
+      "Love"            => ["fa-heart",   "#e0245e"],
+      "Laugh"           => ["fa-laugh-squint", "#f7b924"],
+      "Like"            => ["fa-thumbs-up", "#1877f2"],
+      "Congratulations" => ["fa-trophy",  "#ff9800"],
+      "Dislike"         => ["fa-thumbs-down", "#555"],
+      "Angry"           => ["fa-angry",   "#f02849"]
+    } %>
+    <% user_reaction = comment.comment_reactions.find_by(user: current_user) %>
+    <% reaction_types.each do |rtype, (icon_class, color)| %>
+      <% count = comment.comment_reactions.where(reaction_type: rtype).count %>
+      <% is_selected = (user_reaction&.reaction_type == rtype) %>
+      <% icon_style =
+           if ["Laugh", "Angry", "Congratulations"].include?(rtype)
+             "fas"
+           else
+             is_selected ? "fas" : "far"
+           end
+      %>
+      <% icon_class =
+           case rtype
+           when "Laugh" then "fa-laugh-squint"
+           when "Angry" then "fa-angry"
+           else icon_class
+           end
+      %>
+      <% icon_color =
+           case rtype
+           when "Laugh" then is_selected ? "color: #f7b924;" : "color: #bbb;"
+           when "Angry" then is_selected ? "color: #f02849;" : "color: #bbb;"
+           when "Congratulations" then is_selected ? "color: #ff9800;" : "color: #bbb;"
+           else is_selected ? "color: #{color};" : "color: #bbb;"
+           end
+      %>
+      <% if is_selected %>
+        <%= button_to comment_comment_reaction_path(comment, user_reaction), method: :delete, form: { data: { turbo_stream: true } }, class: "reaction-icon-btn selected", title: rtype do %>
+          <i class="<%= icon_style %> <%= icon_class %>" style="<%= icon_color %>"></i>
+          <span class="reaction-count"><%= count %></span>
+        <% end %>
+      <% else %>
+        <%= button_to comment_comment_reactions_path(comment, reaction_type: rtype), method: :post, form: { data: { turbo_stream: true } }, class: "reaction-icon-btn", title: rtype do %>
+          <i class="<%= icon_style %> <%= icon_class %>" style="<%= icon_color %>"></i>
+          <span class="reaction-count"><%= count %></span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div> 

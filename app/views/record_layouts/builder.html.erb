@@ -1,0 +1,40 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="builder-container d-flex" style="height: calc(100vh - 87px);">
+  <div id="record-leftbar" class="border-end" style="width:300px; overflow:auto; background:#fff;"></div>
+  <div id="gjs" style="flex:1 1 auto;">
+    <div style="text-align: center; padding: 20px; color: #666;">Loading record page builder...</div>
+  </div>
+  <script type="application/json" id="record-layout-metadata">
+    <%= record_layout_metadata_json(@organization, @table_type, @table_id, @layout) %>
+  </script>
+  <script type="application/json" id="record-layout-preview">
+    <%= record_layout_preview_json(@organization, @table_type, @table_id) %>
+  </script>
+  <script type="application/json" id="builder-assets">
+    {
+      "application_css": "<%= asset_path 'application.css' %>",
+      "record_builder_css": "<%= asset_path 'record_builder.css' %>"
+    }
+  </script>
+</div>
+
+<!-- External CSS -->
+<link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.7/dist/css/grapes.min.css">
+<link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css">
+<%= stylesheet_link_tag 'record_builder', media: 'all' %>
+
+<!-- Include tabs component partial -->
+<%= render 'tabs_component' %>
+
+       <!-- Builder-specific CSS is now in _record_builder.scss -->
+
+<!-- External JavaScript -->
+<script src="https://unpkg.com/grapesjs@0.21.7/dist/grapes.min.js"></script>
+<script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/index.js"></script>
+
+<!-- Main builder JavaScript is now imported via application.js -->
+
+

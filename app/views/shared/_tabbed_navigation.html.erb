@@ -1,0 +1,32 @@
+<div class="tabbed-navigation" data-controller="tabbed-navigation">
+  <div class="nav-tabs-container">
+    <div class="nav-tabs-scroll">
+      <div class="nav-tabs" data-tabbed-navigation-target="tabsContainer">
+        <% if user_signed_in? && @pinned_tabs.present? %>
+          <% Rails.logger.info 'Pinned tabs array: ' + @pinned_tabs.map { |t| "ID=#{t.id}, Pos=#{t.position}" }.join(', ') %>
+          <% @pinned_tabs.each do |tab| %>
+            <% is_active = current_page?(tab.url) %>
+            <% Rails.logger.info "Rendering tab: ID=#{tab.id}, Title=#{tab.title}, Position=#{tab.position.inspect}" %>
+            <div class="nav-tab" 
+                 data-tab-id="<%= tab.id %>" 
+                 data-tab-type="<%= tab.tab_type %>" 
+                 data-tab-url="<%= tab.url %>" 
+                 data-record-id="<%= tab.tabable_id %>"
+                 data-position="<%= tab.position %>">
+              <div class="nav-tab-content <%= 'active' if is_active %>" data-action="click->tabbed-navigation#switchToTab">
+                <i class="<%= tab.tab_type == 'pet' ? 'fas fa-paw' : 'fas fa-tasks' %> me-2"></i>
+                <span class="nav-tab-title"><%= tab.title %></span>
+                <div class="nav-tab-actions">
+                  <button class="nav-tab-close" data-action="click->tabbed-navigation#unpinAndClose" title="Unpin and close tab">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+        <!-- Unpinned tabs will be dynamically added here by JavaScript -->
+      </div>
+    </div>
+  </div>
+</div> 

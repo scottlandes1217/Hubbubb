@@ -1,0 +1,2 @@
+module ShelterStaff::HomeHelper
+end
