@@ -200,4 +200,13 @@ class Task < ApplicationRecord
         end
       end
     end
+    
+    # Flow triggers
+    after_create :trigger_flows
+    after_update :trigger_flows
+    
+    def trigger_flows
+      org = organization || pet&.organization
+      FlowTriggerService.check_and_trigger(self, org) if org
+    end
 end

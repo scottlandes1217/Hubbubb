@@ -72,7 +72,7 @@
 
   <!-- Block Properties Modal -->
   <div class="modal" id="block-properties-modal" tabindex="-1" aria-hidden="true" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1050;">
-    <div class="modal-dialog" style="position: relative; width: auto; margin: 1.75rem auto; max-width: 500px;">
+    <div class="modal-dialog" style="position: relative; width: auto; margin: 1.75rem auto; max-width: 60%;">
       <div class="modal-content" style="position: relative; display: flex; flex-direction: column; background-color: #fff; border: 1px solid rgba(0,0,0,.2); border-radius: 0.3rem; outline: 0;">
         <div class="modal-header" style="display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: calc(0.3rem - 1px); border-top-right-radius: calc(0.3rem - 1px);">
           <h5 class="modal-title" id="block-modal-title"></h5>
@@ -122,6 +122,8 @@ class FlowBuilder {
     this.connectingPort = null;
     this.blockCounter = 1;
     this.isMultiSelectMode = false; // Added for multi-select mode
+    this.objectsCache = null; // Cache for objects
+    this.fieldsCache = {}; // Cache for fields by object API name
     this.init();
   }
 
@@ -1049,34 +1051,2102 @@ class FlowBuilder {
     this.connectionPreview = null;
     this.connectingPort = null;
   }
+  // Fetch objects from API
+  async fetchObjects() {
+    if (this.objectsCache) return this.objectsCache;
+    
+    try {
+      const response = await fetch(this.config.objectsUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': this.csrfToken
+        }
+      });
+      const data = await response.json();
+      this.objectsCache = data.objects;
+      return this.objectsCache;
+    } catch (error) {
+      console.error('Error fetching objects:', error);
+      this.showNotification('Error loading objects', 'error');
+      return [];
+    }
+  }
+
+  // Fetch fields for an object
+  async fetchFields(objectApiName) {
+    if (this.fieldsCache[objectApiName]) return this.fieldsCache[objectApiName];
+    
+    try {
+      const response = await fetch(`${this.config.fieldsUrl}?object_api_name=${encodeURIComponent(objectApiName)}`, {
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': this.csrfToken
+        }
+      });
+      const data = await response.json();
+      this.fieldsCache[objectApiName] = data.fields;
+      return this.fieldsCache[objectApiName];
+    } catch (error) {
+      console.error('Error fetching fields:', error);
+      this.showNotification('Error loading fields', 'error');
+      return [];
+    }
+  }
+
   openModal(block) {
-    // Populate modal fields
     document.getElementById('block-modal-title').textContent = this.getBlockName(block.type);
-    document.getElementById('block-modal-body').innerHTML = `
-      <div class="mb-3">
-        <label class="form-label">Block Name</label>
-        <input type="text" class="form-control" id="modal-block-name" value="${block.name}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Configuration</label>
-        <textarea class="form-control" id="modal-block-config" rows="3">${block.config.text || ''}</textarea>
-      </div>
-    `;
+    
+    // Initialize config if not present
+    if (!block.config) block.config = {};
+    
+    // Build modal body based on block type
+    const modalBody = document.getElementById('block-modal-body');
+    
+    if (block.type === 'trigger') {
+      this.openTriggerModal(block, modalBody);
+    } else if (block.type === 'decision') {
+      this.openDecisionModal(block, modalBody);
+    } else if (['create_record', 'update_record', 'delete_record'].includes(block.type)) {
+      this.openRecordModal(block, modalBody);
+    } else if (block.type === 'assignment') {
+      this.openAssignmentModal(block, modalBody);
+    } else if (block.type === 'email') {
+      this.openEmailModal(block, modalBody);
+    } else if (block.type === 'notification') {
+      this.openNotificationModal(block, modalBody);
+    } else if (block.type === 'wait') {
+      this.openWaitModal(block, modalBody);
+    } else if (block.type === 'loop') {
+      this.openLoopModal(block, modalBody);
+    } else if (block.type === 'screen') {
+      this.openScreenModal(block, modalBody);
+    } else if (block.type === 'api_call') {
+      this.openApiCallModal(block, modalBody);
+    } else {
+      // Default modal for unknown types
+      this.openDefaultModal(block, modalBody);
+    }
+    
     this.modal.block = block;
     this.modal.style.display = 'block';
     this.modalBackdrop.style.display = 'block';
   }
+
+  // Trigger component modal
+  async openTriggerModal(block, modalBody) {
+    const config = block.config || {};
+    const objects = await this.fetchObjects();
+    
+    let objectOptions = '<option value="">Select an object...</option>';
+    objects.forEach(obj => {
+      const selected = config.object_api_name === obj.api_name ? 'selected' : '';
+      objectOptions += `<option value="${obj.api_name}" ${selected} data-object-id="${obj.id}">${obj.display_name}</option>`;
+    });
+    
+    let conditionsHTML = '';
+    if (config.conditions && config.conditions.length > 0) {
+      config.conditions.forEach((condition, index) => {
+        conditionsHTML += this.renderCondition(condition, index, config.object_api_name);
+      });
+    } else {
+      conditionsHTML = this.renderCondition({ field: '', operator: 'equals', value: '' }, 0, config.object_api_name);
+    }
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'New Trigger'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Object</label>
+        <select class="form-select" id="modal-trigger-object">
+          ${objectOptions}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Trigger Conditions</label>
+        <div id="trigger-conditions">
+          ${conditionsHTML}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-condition">
+          <i class="fas fa-plus"></i> Add Condition
+        </button>
+      </div>
+    `;
+    
+    // Add event listeners
+    document.getElementById('modal-trigger-object').addEventListener('change', async (e) => {
+      const objectApiName = e.target.value;
+      if (objectApiName) {
+        await this.loadFieldsForTrigger(objectApiName);
+      } else {
+        document.querySelectorAll('.trigger-condition-field').forEach(sel => {
+          sel.innerHTML = '<option value="">Select a field...</option>';
+        });
+      }
+    });
+    
+    document.getElementById('add-condition').addEventListener('click', () => {
+      this.addTriggerCondition(config.object_api_name || '');
+    });
+    
+    // Add remove handlers for existing conditions
+    document.querySelectorAll('.remove-condition').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.condition-row').remove();
+      });
+    });
+    
+    // Load fields if object is already selected
+    if (config.object_api_name) {
+      await this.loadFieldsForTrigger(config.object_api_name);
+      
+      // Restore existing condition field values
+      if (config.conditions && config.conditions.length > 0) {
+        config.conditions.forEach((condition, index) => {
+          const row = document.querySelector(`[data-condition-index="${index}"]`);
+          if (row) {
+            const fieldSelect = row.querySelector('.trigger-condition-field');
+            if (fieldSelect && condition.field) {
+              fieldSelect.value = condition.field;
+              // Trigger change to update operators
+              fieldSelect.dispatchEvent(new Event('change'));
+            }
+          }
+        });
+      }
+    }
+  }
+
+  async loadFieldsForTrigger(objectApiName) {
+    const fields = await this.fetchFields(objectApiName);
+    
+    document.querySelectorAll('.trigger-condition-field').forEach(select => {
+      const storedFieldValue = select.dataset.fieldValue || select.value;
+      let options = '<option value="">Select a field...</option>';
+      fields.forEach(field => {
+        const selected = (select.value === field.api_name || storedFieldValue === field.api_name) ? 'selected' : '';
+        options += `<option value="${field.api_name}" ${selected}>${field.name}</option>`;
+      });
+      select.innerHTML = options;
+      if (storedFieldValue) {
+        select.value = storedFieldValue;
+      }
+      
+      // Update operator and value based on field type if field is selected
+      if (select.value) {
+        const field = fields.find(f => f.api_name === select.value);
+        if (field) {
+          this.updateConditionOperators(field, select.closest('.condition-row'));
+        }
+      }
+      
+      // Update operator and value based on field type when changed
+      select.addEventListener('change', (e) => {
+        const fieldApiName = e.target.value;
+        const field = fields.find(f => f.api_name === fieldApiName);
+        if (field) {
+          this.updateConditionOperators(field, select.closest('.condition-row'));
+        }
+      });
+    });
+  }
+
+  renderCondition(condition, index, objectApiName = '') {
+    const fieldValue = condition.field || '';
+    const operatorValue = condition.operator || 'equals';
+    const valueValue = condition.value || '';
+    
+    return `
+      <div class="condition-row border rounded p-2 mb-2" data-condition-index="${index}">
+        <div class="row g-2">
+          <div class="col-md-4">
+            <select class="form-select form-select-sm trigger-condition-field" name="condition_field_${index}" data-field-value="${fieldValue}">
+              <option value="">Select a field...</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select form-select-sm trigger-condition-operator" name="condition_operator_${index}">
+              <option value="equals" ${operatorValue === 'equals' ? 'selected' : ''}>Equals</option>
+              <option value="not_equals" ${operatorValue === 'not_equals' ? 'selected' : ''}>Not Equals</option>
+              <option value="greater_than" ${operatorValue === 'greater_than' ? 'selected' : ''}>Greater Than</option>
+              <option value="less_than" ${operatorValue === 'less_than' ? 'selected' : ''}>Less Than</option>
+              <option value="contains" ${operatorValue === 'contains' ? 'selected' : ''}>Contains</option>
+              <option value="is_null" ${operatorValue === 'is_null' ? 'selected' : ''}>Is Null</option>
+              <option value="is_not_null" ${operatorValue === 'is_not_null' ? 'selected' : ''}>Is Not Null</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control form-control-sm trigger-condition-value" 
+                   name="condition_value_${index}" 
+                   value="${this.escapeHtml(valueValue)}" 
+                   placeholder="Value"
+                   data-original-value="${this.escapeHtml(valueValue)}">
+          </div>
+          <div class="col-md-1">
+            <button type="button" class="btn btn-sm btn-danger remove-condition">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  addTriggerCondition(objectApiName) {
+    const conditionsContainer = document.getElementById('trigger-conditions');
+    const index = conditionsContainer.querySelectorAll('.condition-row').length;
+    const conditionHTML = this.renderCondition({ field: '', operator: 'equals', value: '' }, index, objectApiName);
+    conditionsContainer.insertAdjacentHTML('beforeend', conditionHTML);
+    
+    // Load fields if object is selected
+    if (objectApiName) {
+      this.loadFieldsForTrigger(objectApiName);
+    }
+    
+    // Add remove handler
+    conditionsContainer.querySelectorAll('.remove-condition').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.condition-row').remove();
+      });
+    });
+  }
+
+  updateConditionOperators(field, conditionRow) {
+    const operatorSelect = conditionRow.querySelector('.trigger-condition-operator');
+    const valueInput = conditionRow.querySelector('.trigger-condition-value');
+    
+    // Update operators based on field type
+    let operators = [
+      { value: 'equals', label: 'Equals' },
+      { value: 'not_equals', label: 'Not Equals' }
+    ];
+    
+    if (['number', 'currency', 'percent', 'date', 'datetime'].includes(field.type)) {
+      operators.push(
+        { value: 'greater_than', label: 'Greater Than' },
+        { value: 'less_than', label: 'Less Than' },
+        { value: 'greater_or_equal', label: 'Greater or Equal' },
+        { value: 'less_or_equal', label: 'Less or Equal' }
+      );
+    }
+    
+    if (['text', 'textarea', 'email', 'phone', 'url'].includes(field.type)) {
+      operators.push(
+        { value: 'contains', label: 'Contains' },
+        { value: 'starts_with', label: 'Starts With' },
+        { value: 'ends_with', label: 'Ends With' }
+      );
+    }
+    
+    operators.push(
+      { value: 'is_null', label: 'Is Null' },
+      { value: 'is_not_null', label: 'Is Not Null' }
+    );
+    
+    operatorSelect.innerHTML = operators.map(op => 
+      `<option value="${op.value}">${op.label}</option>`
+    ).join('');
+    
+    // Update value input based on field type
+    if (field.type === 'date') {
+      valueInput.type = 'date';
+    } else if (field.type === 'datetime') {
+      valueInput.type = 'datetime-local';
+    } else if (field.type === 'number' || field.type === 'currency' || field.type === 'percent') {
+      valueInput.type = 'number';
+    } else if (field.type === 'checkbox') {
+      valueInput.type = 'checkbox';
+    } else if (field.type === 'picklist' && field.picklist_values) {
+      // Convert to select
+      const select = document.createElement('select');
+      select.className = 'form-select form-select-sm trigger-condition-value';
+      select.name = valueInput.name;
+      select.innerHTML = '<option value="">Select a value...</option>' +
+        field.picklist_values.map(val => `<option value="${val}">${val}</option>`).join('');
+      valueInput.replaceWith(select);
+    }
+  }
+
+  // Decision component modal
+  async openDecisionModal(block, modalBody) {
+    const config = block.config || {};
+    const objects = await this.fetchObjects();
+    
+    let objectOptions = '<option value="">Select an object (optional)...</option>';
+    objects.forEach(obj => {
+      const selected = config.object_api_name === obj.api_name ? 'selected' : '';
+      objectOptions += `<option value="${obj.api_name}" ${selected} data-object-id="${obj.id}">${obj.display_name}</option>`;
+    });
+    
+    // Decision can have multiple outcomes (paths)
+    let outcomesHTML = '';
+    if (config.outcomes && config.outcomes.length > 0) {
+      config.outcomes.forEach((outcome, index) => {
+        outcomesHTML += this.renderDecisionOutcome(outcome, index, config.object_api_name || '');
+      });
+    } else {
+      // Default outcomes: True and False
+      outcomesHTML = this.renderDecisionOutcome({ label: 'True', condition: null }, 0, config.object_api_name || '');
+      outcomesHTML += this.renderDecisionOutcome({ label: 'False', condition: null }, 1, config.object_api_name || '');
+    }
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'New Decision'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Object (for field-based conditions)</label>
+        <select class="form-select" id="modal-decision-object">
+          ${objectOptions}
+        </select>
+        <small class="text-muted">Optional: Select an object to use its fields in conditions</small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Decision Logic</label>
+        <p class="text-muted small">Define conditions that determine which path the flow takes</p>
+        <div id="decision-outcomes">
+          ${outcomesHTML}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-decision-outcome">
+          <i class="fas fa-plus"></i> Add Outcome
+        </button>
+      </div>
+    `;
+    
+    // Add event listeners
+    document.getElementById('modal-decision-object').addEventListener('change', async (e) => {
+      const objectApiName = e.target.value;
+      if (objectApiName) {
+        await this.loadFieldsForDecision(objectApiName);
+      }
+    });
+    
+    document.getElementById('add-decision-outcome').addEventListener('click', () => {
+      this.addDecisionOutcome(config.object_api_name || '');
+    });
+    
+    // Add remove handlers for existing outcomes
+    document.querySelectorAll('.remove-outcome').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.outcome-row').remove();
+      });
+    });
+    
+    // Setup outcome condition handlers
+    this.setupDecisionOutcomes(config.object_api_name || '');
+    
+    // Load fields if object is already selected
+    if (config.object_api_name) {
+      await this.loadFieldsForDecision(config.object_api_name);
+    }
+  }
+  
+  renderDecisionOutcome(outcome, index, objectApiName = '') {
+    const labelValue = outcome.label || (index === 0 ? 'True' : 'False');
+    const conditionHTML = outcome.condition ? this.renderCondition(outcome.condition, index, objectApiName) : '';
+    
+    return `
+      <div class="outcome-row border rounded p-3 mb-3" data-outcome-index="${index}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <label class="form-label mb-0">Outcome ${index + 1}</label>
+          <button type="button" class="btn btn-sm btn-danger remove-outcome">
+            <i class="fas fa-times"></i> Remove
+          </button>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Label</label>
+          <input type="text" class="form-control form-control-sm outcome-label" 
+                 value="${this.escapeHtml(labelValue)}" 
+                 placeholder="e.g., True, False, Approved">
+        </div>
+        <div class="condition-container">
+          ${conditionHTML || '<p class="text-muted small">No condition - this is the default path</p>'}
+        </div>
+        <div class="mt-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary add-outcome-condition">
+            <i class="fas fa-plus"></i> Add Condition
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  
+  addDecisionOutcome(objectApiName) {
+    const outcomesContainer = document.getElementById('decision-outcomes');
+    const index = outcomesContainer.querySelectorAll('.outcome-row').length;
+    const outcomeHTML = this.renderDecisionOutcome({ label: '', condition: null }, index, objectApiName);
+    outcomesContainer.insertAdjacentHTML('beforeend', outcomeHTML);
+    
+    // Add remove handler
+    const newRow = outcomesContainer.querySelector(`[data-outcome-index="${index}"]`);
+    newRow.querySelector('.remove-outcome').addEventListener('click', (e) => {
+      e.target.closest('.outcome-row').remove();
+    });
+    
+    // Setup condition handlers
+    this.setupDecisionOutcomeConditions(newRow, objectApiName);
+  }
+  
+  setupDecisionOutcomes(objectApiName) {
+    document.querySelectorAll('.outcome-row').forEach(row => {
+      this.setupDecisionOutcomeConditions(row, objectApiName);
+    });
+  }
+  
+  setupDecisionOutcomeConditions(outcomeRow, objectApiName) {
+    const conditionContainer = outcomeRow.querySelector('.condition-container');
+    
+    outcomeRow.querySelector('.add-outcome-condition').addEventListener('click', () => {
+      const index = outcomeRow.dataset.outcomeIndex;
+      const conditionIndex = conditionContainer.querySelectorAll('.condition-row').length;
+      const conditionHTML = this.renderCondition({ field: '', operator: 'equals', value: '' }, conditionIndex, objectApiName);
+      
+      if (conditionContainer.querySelector('p')) {
+        conditionContainer.innerHTML = conditionHTML;
+      } else {
+        conditionContainer.insertAdjacentHTML('beforeend', conditionHTML);
+      }
+      
+      // Load fields if object is selected
+      if (objectApiName) {
+        this.loadFieldsForDecision(objectApiName, outcomeRow);
+      }
+    });
+  }
+  
+  async loadFieldsForDecision(objectApiName, outcomeRow) {
+    const fields = await this.fetchFields(objectApiName);
+    
+    outcomeRow.querySelectorAll('.trigger-condition-field').forEach(select => {
+      const storedFieldValue = select.dataset.fieldValue || select.value;
+      let options = '<option value="">Select a field...</option>';
+      fields.forEach(field => {
+        const selected = (select.value === field.api_name || storedFieldValue === field.api_name) ? 'selected' : '';
+        options += `<option value="${field.api_name}" ${selected}>${field.name}</option>`;
+      });
+      select.innerHTML = options;
+      if (storedFieldValue) {
+        select.value = storedFieldValue;
+      }
+      
+      if (select.value) {
+        const field = fields.find(f => f.api_name === select.value);
+        if (field) {
+          this.updateConditionOperators(field, select.closest('.condition-row'));
+        }
+      }
+      
+      select.addEventListener('change', (e) => {
+        const fieldApiName = e.target.value;
+        const field = fields.find(f => f.api_name === fieldApiName);
+        if (field) {
+          this.updateConditionOperators(field, select.closest('.condition-row'));
+        }
+      });
+    });
+  }
+  
+  // Record components modal (Create/Update/Delete)
+  async openRecordModal(block, modalBody) {
+    const config = block.config || {};
+    const isDelete = block.type === 'delete_record';
+    const isUpdate = block.type === 'update_record';
+    const objects = await this.fetchObjects();
+    
+    let objectOptions = '<option value="">Select an object...</option>';
+    objects.forEach(obj => {
+      const selected = config.object_api_name === obj.api_name ? 'selected' : '';
+      objectOptions += `<option value="${obj.api_name}" ${selected} data-object-id="${obj.id}">${obj.display_name}</option>`;
+    });
+    
+    let recordHTML = '';
+    if (isDelete) {
+      recordHTML = `
+        <div class="mb-3">
+          <label class="form-label">Object</label>
+          <select class="form-select" id="modal-record-object">
+            ${objectOptions}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Record Selection</label>
+          <select class="form-select" id="modal-record-selection">
+            <option value="specific" ${config.selection === 'specific' ? 'selected' : ''}>Specific Record</option>
+            <option value="from_flow" ${config.selection === 'from_flow' ? 'selected' : ''}>From Flow Variable</option>
+          </select>
+        </div>
+        <div class="mb-3" id="record-selection-config">
+          ${config.selection === 'from_flow' ? 
+            '<input type="text" class="form-control" id="modal-record-variable" placeholder="Variable name" value="' + (config.variable || '') + '">' :
+            '<input type="text" class="form-control" id="modal-record-id" placeholder="Record ID" value="' + (config.record_id || '') + '">'
+          }
+        </div>
+      `;
+    } else if (isUpdate) {
+      recordHTML = `
+        <div class="mb-3">
+          <label class="form-label">Object</label>
+          <select class="form-select" id="modal-record-object">
+            ${objectOptions}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Record Selection</label>
+          <select class="form-select" id="modal-record-selection">
+            <option value="specific" ${config.selection === 'specific' ? 'selected' : ''}>Specific Record</option>
+            <option value="from_flow" ${config.selection === 'from_flow' ? 'selected' : ''}>From Flow Variable</option>
+          </select>
+        </div>
+        <div class="mb-3" id="record-selection-config">
+          ${config.selection === 'from_flow' ? 
+            '<input type="text" class="form-control" id="modal-record-variable" placeholder="Variable name" value="' + (config.variable || '') + '">' :
+            '<input type="text" class="form-control" id="modal-record-id" placeholder="Record ID" value="' + (config.record_id || '') + '">'
+          }
+        </div>
+        <div class="mb-3" id="record-fields-config">
+          <label class="form-label">Field Values</label>
+          <p class="text-muted small">Select fields to update and their values</p>
+          <div id="record-fields-list">
+            ${config.fields && config.fields.length > 0 ? 
+              config.fields.map(f => this.renderRecordField(f, config.object_api_name || '')).join('') :
+              '<p class="text-muted small">Select an object first to load fields</p>'
+            }
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-record-field">
+            <i class="fas fa-plus"></i> Add Field
+          </button>
+        </div>
+      `;
+    } else {
+      // Create Record
+      recordHTML = `
+        <div class="mb-3">
+          <label class="form-label">Object</label>
+          <select class="form-select" id="modal-record-object">
+            ${objectOptions}
+          </select>
+        </div>
+        <div class="mb-3" id="record-fields-config">
+          <label class="form-label">Field Values</label>
+          <p class="text-muted small">Select fields and set their values for the new record</p>
+          <div id="record-fields-list">
+            ${config.fields && config.fields.length > 0 ? 
+              config.fields.map(f => this.renderRecordField(f, config.object_api_name || '')).join('') :
+              '<p class="text-muted small">Select an object first to load fields</p>'
+            }
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-record-field">
+            <i class="fas fa-plus"></i> Add Field
+          </button>
+        </div>
+      `;
+    }
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || this.getBlockName(block.type)}">
+      </div>
+      ${recordHTML}
+    `;
+    
+    // Add event listeners
+    const objectSelect = document.getElementById('modal-record-object');
+    if (objectSelect) {
+      objectSelect.addEventListener('change', async (e) => {
+        const objectApiName = e.target.value;
+        if (objectApiName && !isDelete) {
+          await this.loadFieldsForRecord(objectApiName);
+        }
+      });
+    }
+    
+    const selectionSelect = document.getElementById('modal-record-selection');
+    if (selectionSelect) {
+      selectionSelect.addEventListener('change', (e) => {
+        const selection = e.target.value;
+        const configDiv = document.getElementById('record-selection-config');
+        if (selection === 'from_flow') {
+          configDiv.innerHTML = '<input type="text" class="form-control" id="modal-record-variable" placeholder="Variable name" value="' + (config.variable || '') + '">';
+        } else {
+          configDiv.innerHTML = '<input type="text" class="form-control" id="modal-record-id" placeholder="Record ID" value="' + (config.record_id || '') + '">';
+        }
+      });
+    }
+    
+    const addFieldBtn = document.getElementById('add-record-field');
+    if (addFieldBtn) {
+      addFieldBtn.addEventListener('click', () => {
+        this.addRecordField(config.object_api_name || '');
+      });
+    }
+    
+    // Load fields if object is already selected
+    if (config.object_api_name && !isDelete) {
+      await this.loadFieldsForRecord(config.object_api_name);
+    }
+  }
+
+  renderRecordField(fieldConfig, objectApiName) {
+    const fieldValue = fieldConfig.field || '';
+    const valueValue = fieldConfig.value || '';
+    
+    return `
+      <div class="record-field-row border rounded p-2 mb-2">
+        <div class="row g-2">
+          <div class="col-md-5">
+            <select class="form-select form-select-sm record-field-name">
+              <option value="">Select a field...</option>
+            </select>
+          </div>
+          <div class="col-md-5">
+            <input type="text" class="form-control form-select-sm record-field-value" 
+                   value="${this.escapeHtml(valueValue)}" 
+                   placeholder="Value or variable">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-sm btn-danger remove-record-field">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async loadFieldsForRecord(objectApiName) {
+    const fields = await this.fetchFields(objectApiName);
+    
+    document.querySelectorAll('.record-field-name').forEach(select => {
+      let options = '<option value="">Select a field...</option>';
+      fields.forEach(field => {
+        options += `<option value="${field.api_name}">${field.name}</option>`;
+      });
+      select.innerHTML = options;
+    });
+    
+    // Add remove handlers
+    document.querySelectorAll('.remove-record-field').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.record-field-row').remove();
+      });
+    });
+  }
+
+  addRecordField(objectApiName) {
+    const fieldsList = document.getElementById('record-fields-list');
+    const fieldHTML = this.renderRecordField({ field: '', value: '' }, objectApiName);
+    
+    // Remove placeholder message if present
+    const placeholder = fieldsList.querySelector('p');
+    if (placeholder) placeholder.remove();
+    
+    fieldsList.insertAdjacentHTML('beforeend', fieldHTML);
+    
+    // Load fields
+    if (objectApiName) {
+      this.loadFieldsForRecord(objectApiName);
+    }
+    
+    // Add remove handler
+    fieldsList.querySelectorAll('.remove-record-field').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.record-field-row').remove();
+      });
+    });
+  }
+
+  saveRecordConfig(block) {
+    const isDelete = block.type === 'delete_record';
+    const isUpdate = block.type === 'update_record';
+    
+    const objectApiName = document.getElementById('modal-record-object')?.value || '';
+    let config = { object_api_name: objectApiName };
+    
+    if (isDelete || isUpdate) {
+      const selection = document.getElementById('modal-record-selection')?.value || 'specific';
+      config.selection = selection;
+      
+      if (selection === 'from_flow') {
+        config.variable = document.getElementById('modal-record-variable')?.value || '';
+      } else {
+        config.record_id = document.getElementById('modal-record-id')?.value || '';
+      }
+    }
+    
+    if (!isDelete) {
+      // Save field values for Create/Update
+      const fields = [];
+      document.querySelectorAll('.record-field-row').forEach(row => {
+        const field = row.querySelector('.record-field-name')?.value || '';
+        const value = row.querySelector('.record-field-value')?.value || '';
+        
+        if (field) {
+          fields.push({ field, value });
+        }
+      });
+      config.fields = fields;
+    }
+    
+    block.config = config;
+    
+    // Update block description
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      if (objectApiName) {
+        if (isDelete) {
+          contentEl.textContent = `Delete ${objectApiName} record`;
+        } else if (isUpdate) {
+          contentEl.textContent = `Update ${objectApiName} record`;
+        } else {
+          contentEl.textContent = `Create ${objectApiName} record`;
+        }
+      } else {
+        contentEl.textContent = this.getBlockDescription(block.type);
+      }
+    }
+  }
+  
+  // Assignment component modal
+  async openAssignmentModal(block, modalBody) {
+    const config = block.config || {};
+    
+    let assignmentsHTML = '';
+    if (config.assignments && config.assignments.length > 0) {
+      config.assignments.forEach((assignment, index) => {
+        assignmentsHTML += this.renderAssignment(assignment, index);
+      });
+    } else {
+      assignmentsHTML = this.renderAssignment({ variable: '', value: '' }, 0);
+    }
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'New Assignment'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Variable Assignments</label>
+        <p class="text-muted small">Set variable values that can be used later in the flow</p>
+        <div id="assignment-list">
+          ${assignmentsHTML}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-assignment">
+          <i class="fas fa-plus"></i> Add Assignment
+        </button>
+      </div>
+    `;
+    
+    // Add event listeners
+    document.getElementById('add-assignment').addEventListener('click', () => {
+      this.addAssignment();
+    });
+    
+    // Add remove handlers
+    document.querySelectorAll('.remove-assignment').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.assignment-row').remove();
+      });
+    });
+  }
+
+  renderAssignment(assignment, index) {
+    return `
+      <div class="assignment-row border rounded p-2 mb-2" data-assignment-index="${index}">
+        <div class="row g-2">
+          <div class="col-md-5">
+            <label class="form-label small">Variable Name</label>
+            <input type="text" class="form-control form-control-sm assignment-variable" 
+                   value="${this.escapeHtml(assignment.variable || '')}" 
+                   placeholder="e.g., result, count">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small">Value</label>
+            <input type="text" class="form-control form-control-sm assignment-value" 
+                   value="${this.escapeHtml(assignment.value || '')}" 
+                   placeholder="Value or expression">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">&nbsp;</label>
+            <button type="button" class="btn btn-sm btn-danger remove-assignment d-block">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  addAssignment() {
+    const assignmentList = document.getElementById('assignment-list');
+    const index = assignmentList.querySelectorAll('.assignment-row').length;
+    const assignmentHTML = this.renderAssignment({ variable: '', value: '' }, index);
+    assignmentList.insertAdjacentHTML('beforeend', assignmentHTML);
+    
+    // Add remove handler
+    assignmentList.querySelector(`[data-assignment-index="${index}"] .remove-assignment`)
+      .addEventListener('click', (e) => {
+        e.target.closest('.assignment-row').remove();
+      });
+  }
+
+  saveAssignmentConfig(block) {
+    const assignments = [];
+    
+    document.querySelectorAll('.assignment-row').forEach(row => {
+      const variable = row.querySelector('.assignment-variable')?.value || '';
+      const value = row.querySelector('.assignment-value')?.value || '';
+      
+      if (variable) {
+        assignments.push({ variable, value });
+      }
+    });
+    
+    block.config = {
+      assignments: assignments
+    };
+    
+    // Update block description
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      if (assignments.length > 0) {
+        contentEl.textContent = `Set ${assignments.length} variable(s)`;
+      } else {
+        contentEl.textContent = 'Set variable values';
+      }
+    }
+  }
+  
+  // Email component modal
+  async openEmailModal(block, modalBody) {
+    const config = block.config || {};
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'Send Email'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">To</label>
+        <input type="email" class="form-control" id="modal-email-to" 
+               value="${this.escapeHtml(config.to || '')}" 
+               placeholder="email@example.com or variable name">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Subject</label>
+        <input type="text" class="form-control" id="modal-email-subject" 
+               value="${this.escapeHtml(config.subject || '')}" 
+               placeholder="Email subject">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Body</label>
+        <textarea class="form-control" id="modal-email-body" rows="5" 
+                  placeholder="Email body content">${this.escapeHtml(config.body || '')}</textarea>
+      </div>
+    `;
+  }
+
+  saveEmailConfig(block) {
+    block.config = {
+      to: document.getElementById('modal-email-to')?.value || '',
+      subject: document.getElementById('modal-email-subject')?.value || '',
+      body: document.getElementById('modal-email-body')?.value || ''
+    };
+    
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      const to = block.config.to || 'recipient';
+      contentEl.textContent = `Send email to ${to}`;
+    }
+  }
+
+  // Notification component modal
+  async openNotificationModal(block, modalBody) {
+    const config = block.config || {};
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'Send Notification'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Recipient</label>
+        <select class="form-select" id="modal-notification-recipient">
+          <option value="user" ${config.recipient === 'user' ? 'selected' : ''}>Current User</option>
+          <option value="specific_user" ${config.recipient === 'specific_user' ? 'selected' : ''}>Specific User</option>
+          <option value="variable" ${config.recipient === 'variable' ? 'selected' : ''}>From Variable</option>
+        </select>
+      </div>
+      <div class="mb-3" id="notification-recipient-config">
+        ${config.recipient === 'specific_user' ? 
+          '<input type="text" class="form-control" id="modal-notification-user-id" placeholder="User ID" value="' + (config.user_id || '') + '">' :
+          config.recipient === 'variable' ?
+          '<input type="text" class="form-control" id="modal-notification-variable" placeholder="Variable name" value="' + (config.variable || '') + '">' :
+          ''
+        }
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-control" id="modal-notification-title" 
+               value="${this.escapeHtml(config.title || '')}" 
+               placeholder="Notification title">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Message</label>
+        <textarea class="form-control" id="modal-notification-message" rows="3" 
+                  placeholder="Notification message">${this.escapeHtml(config.message || '')}</textarea>
+      </div>
+    `;
+    
+    // Add event listener for recipient type change
+    const recipientSelect = document.getElementById('modal-notification-recipient');
+    if (recipientSelect) {
+      recipientSelect.addEventListener('change', (e) => {
+        const recipient = e.target.value;
+        const configDiv = document.getElementById('notification-recipient-config');
+        if (recipient === 'specific_user') {
+          configDiv.innerHTML = '<input type="text" class="form-control" id="modal-notification-user-id" placeholder="User ID" value="' + (config.user_id || '') + '">';
+        } else if (recipient === 'variable') {
+          configDiv.innerHTML = '<input type="text" class="form-control" id="modal-notification-variable" placeholder="Variable name" value="' + (config.variable || '') + '">';
+        } else {
+          configDiv.innerHTML = '';
+        }
+      });
+    }
+  }
+
+  saveNotificationConfig(block) {
+    const recipient = document.getElementById('modal-notification-recipient')?.value || 'user';
+    const config = {
+      recipient: recipient,
+      title: document.getElementById('modal-notification-title')?.value || '',
+      message: document.getElementById('modal-notification-message')?.value || ''
+    };
+    
+    if (recipient === 'specific_user') {
+      config.user_id = document.getElementById('modal-notification-user-id')?.value || '';
+    } else if (recipient === 'variable') {
+      config.variable = document.getElementById('modal-notification-variable')?.value || '';
+    }
+    
+    block.config = config;
+    
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      contentEl.textContent = `Send notification${config.title ? ': ' + config.title : ''}`;
+    }
+  }
+
+  // Wait component modal
+  async openWaitModal(block, modalBody) {
+    const config = block.config || {};
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'Wait'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Wait Type</label>
+        <select class="form-select" id="modal-wait-type">
+          <option value="duration" ${config.wait_type === 'duration' ? 'selected' : ''}>Duration</option>
+          <option value="date" ${config.wait_type === 'date' ? 'selected' : ''}>Until Date</option>
+          <option value="condition" ${config.wait_type === 'condition' ? 'selected' : ''}>Until Condition Met</option>
+        </select>
+      </div>
+      <div class="mb-3" id="wait-config">
+        ${config.wait_type === 'duration' ? 
+          `<div class="row g-2">
+            <div class="col-md-6">
+              <input type="number" class="form-control" id="modal-wait-amount" 
+                     value="${config.amount || ''}" placeholder="Amount">
+            </div>
+            <div class="col-md-6">
+              <select class="form-select" id="modal-wait-unit">
+                <option value="seconds" ${config.unit === 'seconds' ? 'selected' : ''}>Seconds</option>
+                <option value="minutes" ${config.unit === 'minutes' ? 'selected' : ''}>Minutes</option>
+                <option value="hours" ${config.unit === 'hours' ? 'selected' : ''}>Hours</option>
+                <option value="days" ${config.unit === 'days' ? 'selected' : ''}>Days</option>
+              </select>
+            </div>
+          </div>` :
+          config.wait_type === 'date' ?
+          `<input type="datetime-local" class="form-control" id="modal-wait-date" 
+                  value="${config.date || ''}">` :
+          '<p class="text-muted small">Condition-based wait - coming soon</p>'
+        }
+      </div>
+    `;
+    
+    // Add event listener for wait type change
+    document.getElementById('modal-wait-type').addEventListener('change', (e) => {
+      const waitType = e.target.value;
+      const configDiv = document.getElementById('wait-config');
+      if (waitType === 'duration') {
+        configDiv.innerHTML = `
+          <div class="row g-2">
+            <div class="col-md-6">
+              <input type="number" class="form-control" id="modal-wait-amount" placeholder="Amount">
+            </div>
+            <div class="col-md-6">
+              <select class="form-select" id="modal-wait-unit">
+                <option value="seconds">Seconds</option>
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+          </div>
+        `;
+      } else if (waitType === 'date') {
+        configDiv.innerHTML = '<input type="datetime-local" class="form-control" id="modal-wait-date">';
+      } else {
+        configDiv.innerHTML = '<p class="text-muted small">Condition-based wait - coming soon</p>';
+      }
+    });
+  }
+
+  saveWaitConfig(block) {
+    const waitType = document.getElementById('modal-wait-type')?.value || 'duration';
+    const config = { wait_type: waitType };
+    
+    if (waitType === 'duration') {
+      config.amount = parseInt(document.getElementById('modal-wait-amount')?.value || '0');
+      config.unit = document.getElementById('modal-wait-unit')?.value || 'minutes';
+    } else if (waitType === 'date') {
+      config.date = document.getElementById('modal-wait-date')?.value || '';
+    }
+    
+    block.config = config;
+    
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      if (waitType === 'duration' && config.amount) {
+        contentEl.textContent = `Wait ${config.amount} ${config.unit}`;
+      } else if (waitType === 'date' && config.date) {
+        contentEl.textContent = `Wait until ${config.date}`;
+      } else {
+        contentEl.textContent = 'Pause execution';
+      }
+    }
+  }
+
+  // Loop component modal
+  async openLoopModal(block, modalBody) {
+    const config = block.config || {};
+    const objects = await this.fetchObjects();
+    
+    let objectOptions = '<option value="">Select a collection...</option>';
+    objects.forEach(obj => {
+      const selected = config.object_api_name === obj.api_name ? 'selected' : '';
+      objectOptions += `<option value="${obj.api_name}" ${selected}>${obj.display_name}</option>`;
+    });
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'New Loop'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Loop Over</label>
+        <select class="form-select" id="modal-loop-collection">
+          ${objectOptions}
+        </select>
+        <small class="text-muted">Select a collection variable to loop through</small>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Current Item Variable</label>
+        <input type="text" class="form-control" id="modal-loop-item-variable" 
+               value="${this.escapeHtml(config.item_variable || 'currentItem')}" 
+               placeholder="Variable name for current item">
+        <small class="text-muted">Variable name to store the current item in each iteration</small>
+      </div>
+    `;
+  }
+
+  saveLoopConfig(block) {
+    block.config = {
+      collection: document.getElementById('modal-loop-collection')?.value || '',
+      item_variable: document.getElementById('modal-loop-item-variable')?.value || 'currentItem'
+    };
+    
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      if (block.config.collection) {
+        contentEl.textContent = `Loop through ${block.config.collection}`;
+      } else {
+        contentEl.textContent = 'Repeat actions';
+      }
+    }
+  }
+
+  // Screen component modal - Salesforce-style drag and drop builder
+  async openScreenModal(block, modalBody) {
+    const config = block.config || {};
+    block.screenComponents = block.screenComponents || config.components || [];
+    
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'New Screen'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Screen Title</label>
+        <input type="text" class="form-control" id="modal-screen-title" 
+               value="${this.escapeHtml(config.title || '')}" 
+               placeholder="Screen title">
+      </div>
+      
+      <div class="row">
+        <!-- Screen Component Palette -->
+        <div class="col-md-3 border-end">
+          <h6 class="mb-3">Screen Components</h6>
+          <div class="screen-component-palette">
+            <div class="screen-palette-item" draggable="true" data-component-type="input">
+              <i class="fas fa-keyboard"></i>
+              <span>Input</span>
+            </div>
+            <div class="screen-palette-item" draggable="true" data-component-type="output">
+              <i class="fas fa-arrow-right"></i>
+              <span>Output</span>
+            </div>
+            <div class="screen-palette-item" draggable="true" data-component-type="choice">
+              <i class="fas fa-list"></i>
+              <span>Choice</span>
+            </div>
+            <div class="screen-palette-item" draggable="true" data-component-type="display_text">
+              <i class="fas fa-font"></i>
+              <span>Display Text</span>
+            </div>
+            <div class="screen-palette-item" draggable="true" data-component-type="button">
+              <i class="fas fa-hand-pointer"></i>
+              <span>Button</span>
+            </div>
+            <div class="screen-palette-item" draggable="true" data-component-type="section">
+              <i class="fas fa-square"></i>
+              <span>Section</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Screen Builder Canvas -->
+        <div class="col-md-9">
+          <h6 class="mb-3">Screen Layout</h6>
+          <div id="screen-builder-canvas" class="screen-builder-canvas border rounded p-3 min-h-300">
+            ${this.renderScreenComponents(block.screenComponents)}
+            <div class="screen-empty-state ${block.screenComponents.length > 0 ? 'd-none' : ''}">
+              <p class="text-muted text-center py-5">
+                <i class="fas fa-mouse-pointer fa-2x mb-2 d-block"></i>
+                Drag components from the left to build your screen
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Setup drag and drop for palette items
+    this.setupScreenPaletteDrag();
+    
+    // Setup drop zone for canvas
+    this.setupScreenCanvasDrop(block);
+    
+    // Setup existing component interactions
+    this.setupScreenComponents(block);
+  }
+
+  setupScreenPaletteDrag() {
+    const paletteItems = document.querySelectorAll('.screen-palette-item');
+    paletteItems.forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('component-type', item.dataset.componentType);
+        e.dataTransfer.effectAllowed = 'copy';
+        item.style.opacity = '0.5';
+      });
+      
+      item.addEventListener('dragend', (e) => {
+        item.style.opacity = '1';
+      });
+    });
+  }
+
+  setupScreenCanvasDrop(block) {
+    const canvas = document.getElementById('screen-builder-canvas');
+    if (!canvas) return;
+    
+    // Remove old listener if exists by using a flag
+    if (canvas._dropHandler) {
+      canvas.removeEventListener('dragover', canvas._dropHandler.dragover);
+      canvas.removeEventListener('dragleave', canvas._dropHandler.dragleave);
+      canvas.removeEventListener('drop', canvas._dropHandler.drop);
+    }
+    
+    // Setup main canvas drop zone
+    const dragoverHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only handle if not over a section
+      if (!e.target.closest('.section-children')) {
+        e.dataTransfer.dropEffect = 'copy';
+        canvas.classList.add('drag-over');
+      }
+    };
+    
+    const dragleaveHandler = (e) => {
+      if (!canvas.contains(e.relatedTarget)) {
+        canvas.classList.remove('drag-over');
+      }
+    };
+    
+    const dropHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      canvas.classList.remove('drag-over');
+      
+      const componentType = e.dataTransfer.getData('component-type');
+      if (componentType) {
+        // Check if dropped on a section
+        const sectionElement = e.target.closest('.section-children');
+        if (sectionElement) {
+          const sectionId = sectionElement.dataset.sectionId;
+          this.addScreenComponent(block, componentType, sectionId);
+        } else if (!e.target.closest('.screen-component-item')) {
+          // Only add if not dropped on another component
+          this.addScreenComponent(block, componentType);
+        }
+      }
+    };
+    
+    canvas._dropHandler = { dragover: dragoverHandler, dragleave: dragleaveHandler, drop: dropHandler };
+    canvas.addEventListener('dragover', dragoverHandler);
+    canvas.addEventListener('dragleave', dragleaveHandler);
+    canvas.addEventListener('drop', dropHandler);
+    
+    // Setup section drop zones - remove old listeners first
+    document.querySelectorAll('.section-children').forEach(sectionZone => {
+      if (sectionZone._sectionHandlers) {
+        sectionZone.removeEventListener('dragover', sectionZone._sectionHandlers.dragover);
+        sectionZone.removeEventListener('dragleave', sectionZone._sectionHandlers.dragleave);
+        sectionZone.removeEventListener('drop', sectionZone._sectionHandlers.drop);
+      }
+      
+      const sectionDragover = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+        sectionZone.classList.add('drag-over');
+      };
+      
+      const sectionDragleave = (e) => {
+        if (!sectionZone.contains(e.relatedTarget)) {
+          sectionZone.classList.remove('drag-over');
+        }
+      };
+      
+      const sectionDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        sectionZone.classList.remove('drag-over');
+        
+        const componentType = e.dataTransfer.getData('component-type');
+        if (componentType) {
+          const sectionId = sectionZone.dataset.sectionId;
+          this.addScreenComponent(block, componentType, sectionId);
+        }
+      };
+      
+      sectionZone._sectionHandlers = { dragover: sectionDragover, dragleave: sectionDragleave, drop: sectionDrop };
+      sectionZone.addEventListener('dragover', sectionDragover);
+      sectionZone.addEventListener('dragleave', sectionDragleave);
+      sectionZone.addEventListener('drop', sectionDrop);
+    });
+  }
+
+  addScreenComponent(block, componentType, parentSectionId = null) {
+    const component = {
+      id: `screen_comp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: componentType,
+      label: this.getDefaultComponentLabel(componentType),
+      required: false,
+      helpText: '',
+      apiName: '',
+      defaultValue: '',
+      choices: componentType === 'choice' ? [] : undefined,
+      buttonLabel: componentType === 'button' ? 'Submit' : undefined,
+      buttonType: componentType === 'button' ? 'next' : undefined,
+      parentSectionId: parentSectionId
+    };
+    
+    block.screenComponents = block.screenComponents || [];
+    block.screenComponents.push(component);
+    
+    this.refreshScreenCanvas(block);
+  }
+
+  getDefaultComponentLabel(componentType) {
+    const labels = {
+      'input': 'Input Field',
+      'output': 'Output Field',
+      'choice': 'Choice',
+      'display_text': 'Display Text',
+      'button': 'Button',
+      'section': 'Section'
+    };
+    return labels[componentType] || 'Component';
+  }
+
+  refreshScreenCanvas(block) {
+    const canvas = document.getElementById('screen-builder-canvas');
+    if (!canvas) return;
+    
+    const componentsHTML = this.renderScreenComponents(block.screenComponents || [], block);
+    
+    if (block.screenComponents && block.screenComponents.length > 0) {
+      canvas.innerHTML = componentsHTML;
+    } else {
+      canvas.innerHTML = `
+        <div class="screen-empty-state">
+          <p class="text-muted text-center py-5">
+            <i class="fas fa-mouse-pointer fa-2x mb-2 d-block"></i>
+            Drag components from the left to build your screen
+          </p>
+        </div>
+      `;
+    }
+    
+    // Re-setup drop zone and components
+    this.setupScreenCanvasDrop(block);
+    this.setupScreenComponents(block);
+  }
+
+  renderScreenComponents(components, block, parentSectionId = null) {
+    if (!components || components.length === 0) {
+      return '';
+    }
+    
+    return components
+      .filter(comp => (parentSectionId === null && !comp.parentSectionId) || comp.parentSectionId === parentSectionId)
+      .map((comp, index) => {
+        return this.renderScreenComponent(comp, index, block);
+      }).join('');
+  }
+
+  renderScreenComponent(component, index, block) {
+    // Render actual form preview based on component type
+    let previewHTML = '';
+    const componentClass = 'screen-component-item mb-3';
+    const isSection = component.type === 'section';
+    
+    if (component.type === 'input') {
+      const inputType = component.inputType || 'text';
+      previewHTML = `
+        <div class="${componentClass}" data-component-id="${component.id}" draggable="true">
+          <div class="screen-preview-wrapper">
+            <label class="form-label">
+              ${this.escapeHtml(component.label || 'Input Field')}
+              ${component.required ? '<span class="text-danger">*</span>' : ''}
+            </label>
+            ${inputType === 'textarea' ? 
+              `<textarea class="form-control" placeholder="${this.escapeHtml(component.defaultValue || '')}" disabled></textarea>` :
+              `<input type="${inputType}" class="form-control" value="${this.escapeHtml(component.defaultValue || '')}" placeholder="${this.escapeHtml(component.defaultValue || '')}" disabled>`
+            }
+            ${component.helpText ? `<small class="form-text text-muted">${this.escapeHtml(component.helpText)}</small>` : ''}
+          </div>
+          <div class="screen-component-controls">
+            <button type="button" class="btn btn-sm btn-outline-primary edit-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (component.type === 'output') {
+      previewHTML = `
+        <div class="${componentClass}" data-component-id="${component.id}" draggable="true">
+          <div class="screen-preview-wrapper">
+            ${component.label ? `<label class="form-label">${this.escapeHtml(component.label)}</label>` : ''}
+            <div class="form-control-plaintext border rounded p-2 bg-light">
+              ${this.escapeHtml(component.variable || '{!variable}')}
+            </div>
+            ${component.helpText ? `<small class="form-text text-muted">${this.escapeHtml(component.helpText)}</small>` : ''}
+          </div>
+          <div class="screen-component-controls">
+            <button type="button" class="btn btn-sm btn-outline-primary edit-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (component.type === 'choice') {
+      const choiceType = component.choiceType || 'radio';
+      const choices = component.choices || [];
+      let choicesHTML = '';
+      
+      if (choiceType === 'dropdown') {
+        choicesHTML = `<select class="form-select" disabled><option>${choices.length > 0 ? choices.map(c => this.escapeHtml(c.label)).join('</option><option>') : 'Select...'}</option></select>`;
+      } else if (choiceType === 'checkbox') {
+        choicesHTML = choices.map(choice => `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" disabled>
+            <label class="form-check-label">${this.escapeHtml(choice.label || choice.value)}</label>
+          </div>
+        `).join('');
+      } else {
+        choicesHTML = choices.map(choice => `
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="choice_${component.id}" disabled>
+            <label class="form-check-label">${this.escapeHtml(choice.label || choice.value)}</label>
+          </div>
+        `).join('');
+      }
+      
+      previewHTML = `
+        <div class="${componentClass}" data-component-id="${component.id}" draggable="true">
+          <div class="screen-preview-wrapper">
+            <label class="form-label">
+              ${this.escapeHtml(component.label || 'Choice')}
+              ${component.required ? '<span class="text-danger">*</span>' : ''}
+            </label>
+            ${choicesHTML || '<div class="text-muted small">No choices configured</div>'}
+            ${component.helpText ? `<small class="form-text text-muted">${this.escapeHtml(component.helpText)}</small>` : ''}
+          </div>
+          <div class="screen-component-controls">
+            <button type="button" class="btn btn-sm btn-outline-primary edit-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (component.type === 'display_text') {
+      previewHTML = `
+        <div class="${componentClass}" data-component-id="${component.id}" draggable="true">
+          <div class="screen-preview-wrapper">
+            <div class="border rounded p-3 bg-light">
+              ${this.escapeHtml(component.text || 'Display text').replace(/\n/g, '<br>')}
+            </div>
+          </div>
+          <div class="screen-component-controls">
+            <button type="button" class="btn btn-sm btn-outline-primary edit-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (component.type === 'button') {
+      const buttonClass = component.buttonType === 'finish' ? 'btn-success' : component.buttonType === 'previous' ? 'btn-secondary' : 'btn-primary';
+      previewHTML = `
+        <div class="${componentClass}" data-component-id="${component.id}" draggable="true">
+          <div class="screen-preview-wrapper">
+            <button type="button" class="btn ${buttonClass}" disabled>
+              ${this.escapeHtml(component.buttonLabel || 'Submit')}
+            </button>
+          </div>
+          <div class="screen-component-controls">
+            <button type="button" class="btn btn-sm btn-outline-primary edit-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-screen-component" data-component-id="${component.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (component.type === 'section') {
+      // Render section with nested components
+      const sectionComponents = block.screenComponents.filter(c => c.parentSectionId === component.id);
+      previewHTML = `
+        <div class="${componentClass} section-component" data-component-id="${component.id}" draggable="true">
+          <div class="screen-preview-wrapper">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">${this.escapeHtml(component.label || 'Section')}</h6>
+                <div class="screen-component-controls">
+                  <button type="button" class="btn btn-sm btn-outline-primary edit-screen-component" data-component-id="${component.id}">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger remove-screen-component" data-component-id="${component.id}">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              ${component.helpText ? `<div class="card-body pt-2 pb-2"><small class="text-muted">${this.escapeHtml(component.helpText)}</small></div>` : ''}
+              <div class="card-body section-children" data-section-id="${component.id}">
+                ${this.renderScreenComponents(sectionComponents, block, component.id)}
+                ${sectionComponents.length === 0 ? '<div class="section-drop-zone text-center py-3 border-dashed"><small class="text-muted">Drop components here</small></div>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    return previewHTML;
+  }
+
+  setupScreenComponents(block) {
+    // Edit handlers
+    document.querySelectorAll('.edit-screen-component').forEach(btn => {
+      // Remove existing listeners
+      btn.replaceWith(btn.cloneNode(true));
+    });
+    
+    document.querySelectorAll('.edit-screen-component').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const componentId = btn.dataset.componentId;
+        const component = block.screenComponents.find(c => c.id === componentId);
+        if (component) {
+          this.editScreenComponent(block, component);
+        }
+      });
+    });
+    
+    // Remove handlers
+    document.querySelectorAll('.remove-screen-component').forEach(btn => {
+      // Remove existing listeners
+      btn.replaceWith(btn.cloneNode(true));
+    });
+    
+    document.querySelectorAll('.remove-screen-component').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const componentId = btn.dataset.componentId;
+        
+        // Remove component and any children (for sections)
+        const removeComponentAndChildren = (id) => {
+          block.screenComponents = block.screenComponents.filter(c => c.id !== id && c.parentSectionId !== id);
+        };
+        
+        removeComponentAndChildren(componentId);
+        this.refreshScreenCanvas(block);
+      });
+    });
+    
+    // Drag handlers for reordering (only for non-section children)
+    document.querySelectorAll('.screen-component-item:not(.section-component .screen-component-item)').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('component-id', item.dataset.componentId);
+        e.dataTransfer.effectAllowed = 'move';
+        item.style.opacity = '0.5';
+        item.classList.add('dragging');
+      });
+      
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!item.classList.contains('dragging')) {
+          e.dataTransfer.dropEffect = 'move';
+          const afterElement = this.getDragAfterElement(item.parentElement, e.clientY);
+          const draggingElement = document.querySelector('.screen-component-item.dragging');
+          if (draggingElement && draggingElement !== item) {
+            if (afterElement == null) {
+              item.parentElement.appendChild(draggingElement);
+            } else {
+              item.parentElement.insertBefore(draggingElement, afterElement);
+            }
+          }
+        }
+      });
+      
+      item.addEventListener('dragend', (e) => {
+        item.style.opacity = '1';
+        item.classList.remove('dragging');
+        
+        // Reorder components array based on DOM order
+        const parent = item.parentElement;
+        const isSection = parent.classList.contains('section-children');
+        const parentSectionId = isSection ? parent.dataset.sectionId : null;
+        
+        const items = Array.from(parent.querySelectorAll('.screen-component-item:not(.section-component)'));
+        const reorderedIds = items.map(item => item.dataset.componentId);
+        
+        // Update parentSectionId and reorder
+        const rootComponents = block.screenComponents.filter(c => 
+          (parentSectionId === null && !c.parentSectionId) || c.parentSectionId === parentSectionId
+        );
+        
+        const reorderedComponents = reorderedIds.map(id => rootComponents.find(c => c.id === id)).filter(c => c);
+        reorderedComponents.forEach(comp => {
+          comp.parentSectionId = parentSectionId;
+        });
+        
+        // Remove old positions and insert in new order
+        block.screenComponents = block.screenComponents.filter(c => 
+          c.parentSectionId !== parentSectionId && (parentSectionId !== null || c.parentSectionId)
+        );
+        
+        // Find insertion point
+        const insertIndex = block.screenComponents.findIndex(c => 
+          isSection ? c.id === parent.closest('.section-component').dataset.componentId : !c.parentSectionId
+        );
+        
+        if (insertIndex >= 0) {
+          block.screenComponents.splice(insertIndex + 1, 0, ...reorderedComponents);
+        } else {
+          block.screenComponents.push(...reorderedComponents);
+        }
+      });
+    });
+  }
+
+  getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.screen-component-item:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  editScreenComponent(block, component) {
+    const modalBody = document.getElementById('block-modal-body');
+    const originalHTML = modalBody.innerHTML;
+    
+    let configHTML = '';
+    if (component.type === 'input') {
+      configHTML = this.getInputComponentConfigHTML(component);
+    } else if (component.type === 'output') {
+      configHTML = this.getOutputComponentConfigHTML(component);
+    } else if (component.type === 'choice') {
+      configHTML = this.getChoiceComponentConfigHTML(component);
+    } else if (component.type === 'display_text') {
+      configHTML = this.getDisplayTextComponentConfigHTML(component);
+    } else if (component.type === 'button') {
+      configHTML = this.getButtonComponentConfigHTML(component);
+    } else if (component.type === 'section') {
+      configHTML = this.getSectionComponentConfigHTML(component);
+    }
+    
+    modalBody.innerHTML = `
+      <h6 class="mb-3">Edit ${this.getDefaultComponentLabel(component.type)}</h6>
+      ${configHTML}
+      <div class="mt-3">
+        <button type="button" class="btn btn-secondary" id="cancel-component-edit">Cancel</button>
+        <button type="button" class="btn btn-primary ms-2" id="save-component-edit">Save</button>
+      </div>
+    `;
+    
+    document.getElementById('cancel-component-edit').addEventListener('click', () => {
+      modalBody.innerHTML = originalHTML;
+      this.setupScreenPaletteDrag();
+      this.setupScreenCanvasDrop(block);
+      this.setupScreenComponents(block);
+    });
+    
+    const saveBtn = document.getElementById('save-component-edit');
+    if (saveBtn) {
+      // Remove existing listeners
+      const newSaveBtn = saveBtn.cloneNode(true);
+      saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+      
+      newSaveBtn.addEventListener('click', () => {
+        this.saveScreenComponentConfig(block, component);
+        modalBody.innerHTML = originalHTML;
+        this.setupScreenPaletteDrag();
+        this.setupScreenCanvasDrop(block);
+        this.refreshScreenCanvas(block);
+      });
+    }
+    
+    // Setup choice management for choice components
+    if (component.type === 'choice') {
+      const addChoiceBtn = document.getElementById('add-choice');
+      if (addChoiceBtn) {
+        addChoiceBtn.addEventListener('click', () => {
+          const choicesList = document.getElementById('choices-list');
+          const choiceHTML = `
+            <div class="choice-item mb-2 d-flex align-items-center">
+              <input type="text" class="form-control form-control-sm choice-label me-2" placeholder="Label">
+              <input type="text" class="form-control form-control-sm choice-value" placeholder="Value">
+              <button type="button" class="btn btn-sm btn-danger ms-2 remove-choice"><i class="fas fa-times"></i></button>
+            </div>
+          `;
+          choicesList.insertAdjacentHTML('beforeend', choiceHTML);
+          
+          // Remove the "No choices yet" message if present
+          const noChoicesMsg = choicesList.querySelector('.text-muted');
+          if (noChoicesMsg) noChoicesMsg.remove();
+          
+          // Add remove handler
+          choicesList.querySelectorAll('.remove-choice').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.target.closest('.choice-item').remove();
+              if (choicesList.querySelectorAll('.choice-item').length === 0) {
+                choicesList.innerHTML = '<div class="text-muted small mb-2">No choices yet. Click "Add Choice" below.</div>';
+              }
+            });
+          });
+        });
+        
+        // Setup remove handlers for existing choices
+        document.querySelectorAll('.remove-choice').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.target.closest('.choice-item').remove();
+            const choicesList = document.getElementById('choices-list');
+            if (choicesList && choicesList.querySelectorAll('.choice-item').length === 0) {
+              choicesList.innerHTML = '<div class="text-muted small mb-2">No choices yet. Click "Add Choice" below.</div>';
+            }
+          });
+        });
+      }
+    }
+  }
+
+  getInputComponentConfigHTML(component) {
+    return `
+      <div class="mb-3">
+        <label class="form-label">Label</label>
+        <input type="text" class="form-control" id="comp-label" value="${this.escapeHtml(component.label || '')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">API Name / Variable</label>
+        <input type="text" class="form-control" id="comp-api-name" value="${this.escapeHtml(component.apiName || component.variable || '')}" placeholder="e.g., user_name">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Input Type</label>
+        <select class="form-select" id="comp-input-type">
+          <option value="text" ${component.inputType === 'text' ? 'selected' : ''}>Text</option>
+          <option value="textarea" ${component.inputType === 'textarea' ? 'selected' : ''}>Text Area</option>
+          <option value="number" ${component.inputType === 'number' ? 'selected' : ''}>Number</option>
+          <option value="email" ${component.inputType === 'email' ? 'selected' : ''}>Email</option>
+          <option value="date" ${component.inputType === 'date' ? 'selected' : ''}>Date</option>
+          <option value="datetime" ${component.inputType === 'datetime' ? 'selected' : ''}>Date/Time</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Default Value</label>
+        <input type="text" class="form-control" id="comp-default-value" value="${this.escapeHtml(component.defaultValue || '')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Help Text</label>
+        <textarea class="form-control" id="comp-help-text" rows="2">${this.escapeHtml(component.helpText || '')}</textarea>
+      </div>
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="comp-required" ${component.required ? 'checked' : ''}>
+          <label class="form-check-label" for="comp-required">Required</label>
+        </div>
+      </div>
+    `;
+  }
+
+  getOutputComponentConfigHTML(component) {
+    return `
+      <div class="mb-3">
+        <label class="form-label">Label</label>
+        <input type="text" class="form-control" id="comp-label" value="${this.escapeHtml(component.label || '')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Variable to Display</label>
+        <input type="text" class="form-control" id="comp-variable" value="${this.escapeHtml(component.variable || '')}" placeholder="e.g., {!user_name}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Help Text</label>
+        <textarea class="form-control" id="comp-help-text" rows="2">${this.escapeHtml(component.helpText || '')}</textarea>
+      </div>
+    `;
+  }
+
+  getChoiceComponentConfigHTML(component) {
+    const choicesHTML = (component.choices || []).map((choice, idx) => `
+      <div class="choice-item mb-2 d-flex align-items-center">
+        <input type="text" class="form-control form-control-sm choice-label me-2" value="${this.escapeHtml(choice.label || '')}" placeholder="Label">
+        <input type="text" class="form-control form-control-sm choice-value" value="${this.escapeHtml(choice.value || '')}" placeholder="Value">
+        <button type="button" class="btn btn-sm btn-danger ms-2 remove-choice"><i class="fas fa-times"></i></button>
+      </div>
+    `).join('');
+    
+    return `
+      <div class="mb-3">
+        <label class="form-label">Label</label>
+        <input type="text" class="form-control" id="comp-label" value="${this.escapeHtml(component.label || '')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">API Name / Variable</label>
+        <input type="text" class="form-control" id="comp-api-name" value="${this.escapeHtml(component.apiName || component.variable || '')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Choice Type</label>
+        <select class="form-select" id="comp-choice-type">
+          <option value="radio" ${component.choiceType === 'radio' ? 'selected' : ''}>Radio Buttons</option>
+          <option value="dropdown" ${component.choiceType === 'dropdown' ? 'selected' : ''}>Dropdown</option>
+          <option value="checkbox" ${component.choiceType === 'checkbox' ? 'selected' : ''}>Checkboxes</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Choices</label>
+        <div id="choices-list">
+          ${choicesHTML || '<div class="text-muted small mb-2">No choices yet. Click "Add Choice" below.</div>'}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="add-choice">
+          <i class="fas fa-plus"></i> Add Choice
+        </button>
+      </div>
+      <div class="mb-3">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="comp-required" ${component.required ? 'checked' : ''}>
+          <label class="form-check-label" for="comp-required">Required</label>
+        </div>
+      </div>
+    `;
+  }
+
+  getDisplayTextComponentConfigHTML(component) {
+    return `
+      <div class="mb-3">
+        <label class="form-label">Text to Display</label>
+        <textarea class="form-control" id="comp-text" rows="4">${this.escapeHtml(component.text || '')}</textarea>
+        <small class="text-muted">You can use variables like {!variable_name}</small>
+      </div>
+    `;
+  }
+
+  getButtonComponentConfigHTML(component) {
+    return `
+      <div class="mb-3">
+        <label class="form-label">Button Label</label>
+        <input type="text" class="form-control" id="comp-button-label" value="${this.escapeHtml(component.buttonLabel || 'Submit')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Button Type</label>
+        <select class="form-select" id="comp-button-type">
+          <option value="next" ${component.buttonType === 'next' ? 'selected' : ''}>Next</option>
+          <option value="finish" ${component.buttonType === 'finish' ? 'selected' : ''}>Finish</option>
+          <option value="previous" ${component.buttonType === 'previous' ? 'selected' : ''}>Previous</option>
+        </select>
+      </div>
+    `;
+  }
+
+  getSectionComponentConfigHTML(component) {
+    return `
+      <div class="mb-3">
+        <label class="form-label">Section Title</label>
+        <input type="text" class="form-control" id="comp-label" value="${this.escapeHtml(component.label || '')}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Help Text</label>
+        <textarea class="form-control" id="comp-help-text" rows="2">${this.escapeHtml(component.helpText || '')}</textarea>
+      </div>
+    `;
+  }
+
+  saveScreenComponentConfig(block, component) {
+    if (component.type === 'input') {
+      component.label = document.getElementById('comp-label')?.value || '';
+      component.apiName = component.variable = document.getElementById('comp-api-name')?.value || '';
+      component.inputType = document.getElementById('comp-input-type')?.value || 'text';
+      component.defaultValue = document.getElementById('comp-default-value')?.value || '';
+      component.helpText = document.getElementById('comp-help-text')?.value || '';
+      component.required = document.getElementById('comp-required')?.checked || false;
+    } else if (component.type === 'output') {
+      component.label = document.getElementById('comp-label')?.value || '';
+      component.variable = document.getElementById('comp-variable')?.value || '';
+      component.helpText = document.getElementById('comp-help-text')?.value || '';
+    } else if (component.type === 'choice') {
+      component.label = document.getElementById('comp-label')?.value || '';
+      component.apiName = component.variable = document.getElementById('comp-api-name')?.value || '';
+      component.choiceType = document.getElementById('comp-choice-type')?.value || 'radio';
+      component.required = document.getElementById('comp-required')?.checked || false;
+      
+      // Collect choices
+      component.choices = [];
+      document.querySelectorAll('.choice-item').forEach(item => {
+        const label = item.querySelector('.choice-label')?.value || '';
+        const value = item.querySelector('.choice-value')?.value || '';
+        if (label || value) {
+          component.choices.push({ label, value: value || label });
+        }
+      });
+    } else if (component.type === 'display_text') {
+      component.text = document.getElementById('comp-text')?.value || '';
+    } else if (component.type === 'button') {
+      component.buttonLabel = document.getElementById('comp-button-label')?.value || 'Submit';
+      component.buttonType = document.getElementById('comp-button-type')?.value || 'next';
+    } else if (component.type === 'section') {
+      component.label = document.getElementById('comp-label')?.value || '';
+      component.helpText = document.getElementById('comp-help-text')?.value || '';
+    }
+  }
+
+  saveScreenConfig(block) {
+    block.config = {
+      title: document.getElementById('modal-screen-title')?.value || '',
+      components: block.screenComponents || []
+    };
+    
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      const componentCount = block.screenComponents ? block.screenComponents.length : 0;
+      if (block.config.title) {
+        contentEl.textContent = block.config.title;
+      } else {
+        contentEl.textContent = `Screen with ${componentCount} component(s)`;
+      }
+    }
+  }
+  
+  async openApiCallModal(block, modalBody) {
+    modalBody.innerHTML = `<div class="mb-3"><label class="form-label">Block Name</label><input type="text" class="form-control" id="modal-block-name" value="${block.name || 'API Call'}"></div><div class="alert alert-info">API Call component configuration - Coming soon</div>`;
+  }
+
+  openDefaultModal(block, modalBody) {
+    modalBody.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Block Name</label>
+        <input type="text" class="form-control" id="modal-block-name" value="${block.name || 'New Block'}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Configuration</label>
+        <textarea class="form-control" id="modal-block-config" rows="3">${JSON.stringify(block.config || {}, null, 2)}</textarea>
+      </div>
+    `;
+  }
+
   hideModal() {
     this.modal.style.display = 'none';
     this.modalBackdrop.style.display = 'none';
+    
     if (this.modal.block) {
-      const name = document.getElementById('modal-block-name').value;
-      const config = document.getElementById('modal-block-config').value;
-      this.modal.block.name = name;
-      this.modal.block.config.text = config;
-      this.modal.block.el.querySelector('.block-title').textContent = name;
+      const block = this.modal.block;
+      const nameEl = document.getElementById('modal-block-name');
+      const name = nameEl ? nameEl.value : block.name;
+      
+      // Update block name
+      block.name = name;
+      const titleEl = block.el.querySelector('.block-title');
+      if (titleEl) titleEl.textContent = name;
+      
+      // Save configuration based on block type
+      if (block.type === 'trigger') {
+        this.saveTriggerConfig(block);
+      } else if (block.type === 'decision') {
+        this.saveDecisionConfig(block);
+      } else if (['create_record', 'update_record', 'delete_record'].includes(block.type)) {
+        this.saveRecordConfig(block);
+      } else if (block.type === 'assignment') {
+        this.saveAssignmentConfig(block);
+      } else if (block.type === 'email') {
+        this.saveEmailConfig(block);
+      } else if (block.type === 'notification') {
+        this.saveNotificationConfig(block);
+      } else if (block.type === 'wait') {
+        this.saveWaitConfig(block);
+      } else if (block.type === 'loop') {
+        this.saveLoopConfig(block);
+      } else if (block.type === 'screen') {
+        this.saveScreenConfig(block);
+      } else {
+        // For other types, save any generic config
+        const configEl = document.getElementById('modal-block-config');
+        if (configEl) {
+          try {
+            block.config = JSON.parse(configEl.value);
+          } catch (e) {
+            block.config = { text: configEl.value };
+          }
+        }
+      }
     }
+    
     this.modal.block = null;
+  }
+
+  saveTriggerConfig(block) {
+    const objectApiName = document.getElementById('modal-trigger-object')?.value || '';
+    const conditions = [];
+    
+    document.querySelectorAll('.condition-row').forEach(row => {
+      const field = row.querySelector('.trigger-condition-field')?.value || '';
+      const operator = row.querySelector('.trigger-condition-operator')?.value || '';
+      const valueEl = row.querySelector('.trigger-condition-value');
+      const value = valueEl?.type === 'checkbox' ? valueEl.checked : (valueEl?.value || '');
+      
+      if (field && operator) {
+        conditions.push({ field, operator, value });
+      }
+    });
+    
+    block.config = {
+      object_api_name: objectApiName,
+      conditions: conditions
+    };
+    
+    // Update block description
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      if (objectApiName && conditions.length > 0) {
+        contentEl.textContent = `Triggers when ${conditions.length} condition(s) are met`;
+      } else {
+        contentEl.textContent = 'Starts the flow';
+      }
+    }
+  }
+
+  saveDecisionConfig(block) {
+    const objectApiName = document.getElementById('modal-decision-object')?.value || '';
+    const outcomes = [];
+    
+    document.querySelectorAll('.outcome-row').forEach((outcomeRow, index) => {
+      const label = outcomeRow.querySelector('.outcome-label')?.value || (index === 0 ? 'True' : 'False');
+      const conditionRow = outcomeRow.querySelector('.condition-row');
+      
+      let condition = null;
+      if (conditionRow) {
+        const field = conditionRow.querySelector('.trigger-condition-field')?.value || '';
+        const operator = conditionRow.querySelector('.trigger-condition-operator')?.value || '';
+        const valueEl = conditionRow.querySelector('.trigger-condition-value');
+        const value = valueEl?.type === 'checkbox' ? valueEl.checked : (valueEl?.value || '');
+        
+        if (field && operator) {
+          condition = { field, operator, value };
+        }
+      }
+      
+      outcomes.push({
+        label: label,
+        condition: condition
+      });
+    });
+    
+    block.config = {
+      object_api_name: objectApiName,
+      outcomes: outcomes
+    };
+    
+    // Update block description
+    const contentEl = block.el.querySelector('.block-content');
+    if (contentEl) {
+      if (outcomes.length > 0) {
+        contentEl.textContent = `${outcomes.length} outcome path(s)`;
+      } else {
+        contentEl.textContent = 'Conditional logic branching';
+      }
+    }
   }
   showNotification(message, type) {
     const notification = document.createElement('div');
@@ -1180,7 +3250,9 @@ function initFlowBuilder() {
     flowData: <%= raw (@flow.layout_data || []).to_json %>,
     connectionData: <%= raw (@flow.connections_data || []).to_json %>,
     saveUrl: '<%= organization_flow_path(@organization, @flow) %>',
-    csrfToken: document.querySelector('meta[name="csrf-token"]').content
+    csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+    objectsUrl: '<%= objects_organization_flow_path(@organization, @flow) %>',
+    fieldsUrl: '<%= fields_organization_flow_path(@organization, @flow) %>'
   });
 }
 

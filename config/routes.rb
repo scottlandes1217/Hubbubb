@@ -137,6 +137,8 @@ resources :organizations do
     member do
       get :builder
       post :execute
+      get :objects, to: 'api/flow_builder#objects'
+      get :fields, to: 'api/flow_builder#fields'
     end
     resources :flow_blocks, only: [:index, :show, :create, :update, :destroy], controller: 'api/flow_blocks' do
       collection do
@@ -144,6 +146,9 @@ resources :organizations do
       end
     end
   end
+  
+  # Flow Jobs
+  resources :flow_jobs, only: [:index, :show]
   
   # Search routes
   get 'search', to: 'search#index'

@@ -1,0 +1,191 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Flow Job Details</h1>
+        <div>
+          <%= link_to 'Back to Jobs', organization_flow_jobs_path(@organization), 
+                      class: 'btn btn-secondary' %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <!-- Job Details -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Job Information</h5>
+            </div>
+            <div class="card-body">
+              <dl class="row">
+                <dt class="col-sm-3">Flow:</dt>
+                <dd class="col-sm-9">
+                  <%= link_to @flow_job.flow.name, 
+                              organization_flow_path(@organization, @flow_job.flow),
+                              class: 'text-decoration-none' %>
+                </dd>
+
+                <dt class="col-sm-3">Status:</dt>
+                <dd class="col-sm-9">
+                  <% status_class = case @flow_job.status
+                                     when 'completed' then 'success'
+                                     when 'failed' then 'danger'
+                                     when 'running' then 'info'
+                                     when 'queued' then 'warning'
+                                     else 'secondary'
+                                     end %>
+                  <span class="badge bg-<%= status_class %>">
+                    <%= @flow_job.status.titleize %>
+                  </span>
+                </dd>
+
+                <dt class="col-sm-3">Job ID:</dt>
+                <dd class="col-sm-9">
+                  <code><%= @flow_job.job_id || 'N/A' %></code>
+                </dd>
+
+                <dt class="col-sm-3">Trigger Record:</dt>
+                <dd class="col-sm-9">
+                  <% if @flow_job.trigger_record %>
+                    <% case @flow_job.trigger_record_type %>
+                    <% when 'Pet' %>
+                      <%= link_to @flow_job.trigger_record.name, 
+                                  organization_pet_path(@organization, @flow_job.trigger_record),
+                                  class: 'text-decoration-none' %>
+                    <% when 'Task' %>
+                      <%= link_to @flow_job.trigger_record.subject, 
+                                  organization_task_path(@organization, @flow_job.trigger_record),
+                                  class: 'text-decoration-none' %>
+                    <% when 'Event' %>
+                      <%= link_to @flow_job.trigger_record.title, 
+                                  organization_event_path(@organization, @flow_job.trigger_record),
+                                  class: 'text-decoration-none' %>
+                    <% when 'CustomRecord' %>
+                      <%= link_to @flow_job.trigger_record.name, 
+                                  organization_custom_object_custom_record_path(@organization, @flow_job.trigger_record.custom_object, @flow_job.trigger_record),
+                                  class: 'text-decoration-none' %>
+                    <% else %>
+                      <%= @flow_job.trigger_record_type %> #<%= @flow_job.trigger_record_id %>
+                    <% end %>
+                  <% else %>
+                    <span class="text-muted">Record deleted</span>
+                  <% end %>
+                  <small class="text-muted d-block">
+                    (<%= @flow_job.trigger_record_type %> #<%= @flow_job.trigger_record_id %>)
+                  </small>
+                </dd>
+
+                <dt class="col-sm-3">Created:</dt>
+                <dd class="col-sm-9">
+                  <%= @flow_job.created_at.strftime('%B %d, %Y at %I:%M %p') %>
+                </dd>
+
+                <dt class="col-sm-3">Started:</dt>
+                <dd class="col-sm-9">
+                  <% if @flow_job.started_at %>
+                    <%= @flow_job.started_at.strftime('%B %d, %Y at %I:%M %p') %>
+                  <% else %>
+                    <span class="text-muted">Not started</span>
+                  <% end %>
+                </dd>
+
+                <dt class="col-sm-3">Completed:</dt>
+                <dd class="col-sm-9">
+                  <% if @flow_job.completed_at %>
+                    <%= @flow_job.completed_at.strftime('%B %d, %Y at %I:%M %p') %>
+                  <% else %>
+                    <span class="text-muted">Not completed</span>
+                  <% end %>
+                </dd>
+
+                <dt class="col-sm-3">Duration:</dt>
+                <dd class="col-sm-9">
+                  <% if @flow_job.duration %>
+                    <%= distance_of_time_in_words(@flow_job.duration) %>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </dd>
+
+                <dt class="col-sm-3">Retry Count:</dt>
+                <dd class="col-sm-9">
+                  <%= @flow_job.retry_count %>
+                </dd>
+              </dl>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <% if @flow_job.failed? && @flow_job.error_message.present? %>
+            <div class="card mb-4 border-danger">
+              <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Error Message</h5>
+              </div>
+              <div class="card-body">
+                <pre class="mb-0 text-danger"><%= @flow_job.error_message %></pre>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Trigger Data -->
+          <% if @flow_job.trigger_data.present? %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Trigger Data</h5>
+              </div>
+              <div class="card-body">
+                <pre class="mb-0"><%= JSON.pretty_generate(@flow_job.trigger_data) %></pre>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="col-md-4">
+          <!-- Flow Execution Info -->
+          <% if @flow_execution %>
+            <div class="card mb-4">
+              <div class="card-header">
+                <h5 class="mb-0">Flow Execution</h5>
+              </div>
+              <div class="card-body">
+                <dl class="mb-0">
+                  <dt>Status:</dt>
+                  <dd>
+                    <% status_class = case @flow_execution.status
+                                       when 'completed' then 'success'
+                                       when 'failed' then 'danger'
+                                       when 'running' then 'info'
+                                       else 'secondary'
+                                       end %>
+                    <span class="badge bg-<%= status_class %>">
+                      <%= @flow_execution.status.titleize %>
+                    </span>
+                  </dd>
+
+                  <% if @flow_execution.output_data.present? %>
+                    <dt>Output:</dt>
+                    <dd>
+                      <pre class="small"><%= JSON.pretty_generate(@flow_execution.output_data) %></pre>
+                    </dd>
+                  <% end %>
+
+                  <% if @flow_execution.error_data.present? %>
+                    <dt>Error:</dt>
+                    <dd>
+                      <pre class="small text-danger"><%= JSON.pretty_generate(@flow_execution.error_data) %></pre>
+                    </dd>
+                  <% end %>
+                </dl>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

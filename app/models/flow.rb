@@ -2,6 +2,7 @@ class Flow < ApplicationRecord
   belongs_to :organization
   has_many :flow_blocks, dependent: :destroy
   has_many :flow_executions, dependent: :destroy
+  has_many :flow_jobs, dependent: :destroy
   
   validates :name, presence: true
   # Store the visual layout and connections as JSON

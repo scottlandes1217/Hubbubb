@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_11_080000) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_15_003131) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -298,6 +298,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_11_080000) do
     t.index ["flow_id"], name: "index_flow_executions_on_flow_id"
     t.index ["user_id", "created_at"], name: "index_flow_executions_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_flow_executions_on_user_id"
+  end
+
+  create_table "flow_jobs", force: :cascade do |t|
+    t.bigint "flow_id", null: false
+    t.bigint "organization_id", null: false
+    t.string "status", default: "pending", null: false
+    t.string "job_id"
+    t.text "error_message"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.integer "retry_count", default: 0
+    t.string "trigger_record_type"
+    t.bigint "trigger_record_id"
+    t.text "trigger_data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["flow_id", "status"], name: "index_flow_jobs_on_flow_id_and_status"
+    t.index ["job_id"], name: "index_flow_jobs_on_job_id"
+    t.index ["organization_id", "created_at"], name: "index_flow_jobs_on_organization_id_and_created_at"
+    t.index ["organization_id"], name: "index_flow_jobs_on_organization_id"
+    t.index ["trigger_record_type", "trigger_record_id"], name: "index_flow_jobs_on_trigger_record_type_and_trigger_record_id"
   end
 
   create_table "flows", force: :cascade do |t|
@@ -593,6 +614,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_11_080000) do
   add_foreign_key "flow_blocks", "flows"
   add_foreign_key "flow_executions", "flows"
   add_foreign_key "flow_executions", "users"
+  add_foreign_key "flow_jobs", "organizations"
   add_foreign_key "flows", "organizations"
   add_foreign_key "organization_assets", "organizations"
   add_foreign_key "organization_users", "organizations"

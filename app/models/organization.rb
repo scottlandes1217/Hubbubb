@@ -10,6 +10,7 @@ class Organization < ApplicationRecord
     has_many :events, dependent: :destroy
     has_many :organization_assets, dependent: :destroy
     has_many :flows, dependent: :destroy
+    has_many :flow_jobs, dependent: :destroy
     has_many :tasks, dependent: :destroy
   
     validates :name, :street_address, :city, :state, :zip, :country, presence: true

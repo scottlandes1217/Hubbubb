@@ -82,4 +82,14 @@ class Pet < ApplicationRecord
   def total_weight_in_lbs
     (weight_lbs || 0) + (weight_oz.to_f / 16)
   end
+  
+  # Flow triggers
+  after_create :trigger_flows
+  after_update :trigger_flows
+  
+  private
+  
+  def trigger_flows
+    FlowTriggerService.check_and_trigger(self, organization)
+  end
 end

@@ -155,4 +155,14 @@ class Event < ApplicationRecord
       task.update(status: 'Completed', completed_at: Time.current)
     end
   end
+  
+  # Flow triggers
+  after_create :trigger_flows
+  after_update :trigger_flows
+  
+  private
+  
+  def trigger_flows
+    FlowTriggerService.check_and_trigger(self, organization)
+  end
 end 

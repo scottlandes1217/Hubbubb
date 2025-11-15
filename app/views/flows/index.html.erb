@@ -8,7 +8,9 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Flows</h1>
         <div>
-                      <%= link_to 'New Flow', new_organization_flow_path(@organization),  
+          <%= link_to 'Flow Jobs', organization_flow_jobs_path(@organization), 
+                      class: 'btn btn-outline-secondary me-2' %>
+          <%= link_to 'New Flow', new_organization_flow_path(@organization),  
                       class: 'btn btn-primary' %>
         </div>
       </div>

@@ -60,4 +60,12 @@ class CustomRecord < ApplicationRecord
     
     self.external_id = generated_id
   end
+  
+  # Flow triggers
+  after_create :trigger_flows
+  after_update :trigger_flows
+  
+  def trigger_flows
+    FlowTriggerService.check_and_trigger(self, custom_object.organization)
+  end
 end 

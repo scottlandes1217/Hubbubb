@@ -394,4 +394,142 @@ html, body {
 }
 #canvas-inner {
   pointer-events: auto;
+}
+
+// Screen Builder Styles
+.screen-component-palette {
+  .screen-palette-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: grab;
+    background: #f8f9fa;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    &:hover {
+      background: #e9ecef;
+      border-color: #adb5bd;
+    }
+    
+    &:active {
+      cursor: grabbing;
+    }
+    
+    i {
+      color: #6c757d;
+    }
+    
+    span {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+  }
+}
+
+.screen-builder-canvas {
+  min-height: 300px;
+  background: #f8f9fa;
+  position: relative;
+  
+  &.drag-over {
+    background: #e7f3ff;
+    border-color: #0d6efd !important;
+  }
+  
+  .screen-component-item {
+    position: relative;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 12px;
+    cursor: move;
+    transition: all 0.2s;
+    
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-color: #adb5bd;
+      
+      .screen-component-controls {
+        opacity: 1;
+      }
+    }
+    
+    &.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+    
+    .screen-preview-wrapper {
+      pointer-events: none;
+      
+      .form-control,
+      .form-select,
+      .btn,
+      .form-check-input {
+        pointer-events: none;
+      }
+    }
+    
+    .screen-component-controls {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+      
+      button {
+        pointer-events: auto;
+        cursor: pointer;
+        padding: 4px 8px;
+        font-size: 12px;
+        margin-left: 4px;
+      }
+    }
+    
+    &.section-component {
+      .section-children {
+        min-height: 100px;
+        position: relative;
+        
+        &.drag-over {
+          background: #e7f3ff;
+          border: 2px dashed #0d6efd;
+        }
+        
+        .section-drop-zone {
+          border: 2px dashed #dee2e6;
+          border-radius: 4px;
+          color: #6c757d;
+          pointer-events: none;
+          
+          &.drag-over {
+            border-color: #0d6efd;
+            background: #e7f3ff;
+          }
+        }
+      }
+    }
+  }
+  
+  .screen-empty-state {
+    text-align: center;
+    color: #6c757d;
+    
+    i {
+      color: #adb5bd;
+    }
+  }
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+.min-h-300 {
+  min-height: 300px;
 } 

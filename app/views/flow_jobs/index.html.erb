@@ -1,0 +1,184 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Flow Jobs</h1>
+        <div>
+          <%= link_to 'Back to Flows', organization_flows_path(@organization), 
+                      class: 'btn btn-secondary' %>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <%= form_with url: organization_flow_jobs_path(@organization), method: :get, local: true, class: 'row g-3' do |f| %>
+            <div class="col-md-3">
+              <%= f.label :status, "Status", class: 'form-label' %>
+              <%= f.select :status, 
+                           options_for_select([
+                             ['All', ''],
+                             ['Pending', 'pending'],
+                             ['Queued', 'queued'],
+                             ['Running', 'running'],
+                             ['Completed', 'completed'],
+                             ['Failed', 'failed']
+                           ], params[:status]),
+                           {},
+                           { class: 'form-select' } %>
+            </div>
+            <div class="col-md-5">
+              <%= f.label :flow_id, "Flow", class: 'form-label' %>
+              <%= f.select :flow_id,
+                           options_for_select(
+                             [['All Flows', '']] + @organization.flows.order(:name).map { |f| [f.name, f.id] },
+                             params[:flow_id]
+                           ),
+                           {},
+                           { class: 'form-select' } %>
+            </div>
+            <div class="col-md-2">
+              <%= f.label :submit, "&nbsp;".html_safe, class: 'form-label' %>
+              <%= f.submit 'Filter', class: 'btn btn-primary form-control' %>
+            </div>
+            <div class="col-md-2">
+              <%= f.label :clear, "&nbsp;".html_safe, class: 'form-label' %>
+              <%= link_to 'Clear', organization_flow_jobs_path(@organization), 
+                          class: 'btn btn-outline-secondary form-control' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @flow_jobs.any? %>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Flow</th>
+                    <th>Trigger Record</th>
+                    <th>Status</th>
+                    <th>Started</th>
+                    <th>Completed</th>
+                    <th>Duration</th>
+                    <th>Error</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @flow_jobs.each do |job| %>
+                    <tr>
+                      <td>
+                        <%= link_to job.flow.name, 
+                                    organization_flow_path(@organization, job.flow),
+                                    class: 'text-decoration-none' %>
+                      </td>
+                      <td>
+                        <% if job.trigger_record %>
+                          <% case job.trigger_record_type %>
+                          <% when 'Pet' %>
+                            <%= link_to job.trigger_record.name, 
+                                        organization_pet_path(@organization, job.trigger_record),
+                                        class: 'text-decoration-none' %>
+                          <% when 'Task' %>
+                            <%= link_to job.trigger_record.subject, 
+                                        organization_task_path(@organization, job.trigger_record),
+                                        class: 'text-decoration-none' %>
+                          <% when 'Event' %>
+                            <%= link_to job.trigger_record.title, 
+                                        organization_event_path(@organization, job.trigger_record),
+                                        class: 'text-decoration-none' %>
+                          <% when 'CustomRecord' %>
+                            <%= link_to job.trigger_record.name, 
+                                        organization_custom_object_custom_record_path(@organization, job.trigger_record.custom_object, job.trigger_record),
+                                        class: 'text-decoration-none' %>
+                          <% else %>
+                            <%= job.trigger_record_type %> #<%= job.trigger_record_id %>
+                          <% end %>
+                        <% else %>
+                          <span class="text-muted">Record deleted</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% status_class = case job.status
+                                           when 'completed' then 'success'
+                                           when 'failed' then 'danger'
+                                           when 'running' then 'info'
+                                           when 'queued' then 'warning'
+                                           else 'secondary'
+                                           end %>
+                        <span class="badge bg-<%= status_class %>">
+                          <%= job.status.titleize %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if job.started_at %>
+                          <%= job.started_at.strftime('%m/%d/%Y %I:%M %p') %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if job.completed_at %>
+                          <%= job.completed_at.strftime('%m/%d/%Y %I:%M %p') %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if job.duration %>
+                          <%= distance_of_time_in_words(job.duration) %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if job.failed? && job.error_message.present? %>
+                          <span class="text-danger" title="<%= job.error_message %>">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <%= truncate(job.error_message, length: 50) %>
+                          </span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= link_to 'View', 
+                                    organization_flow_job_path(@organization, job),
+                                    class: 'btn btn-sm btn-outline-primary' %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+              <%= paginate @flow_jobs %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="card">
+          <div class="card-body text-center py-5">
+            <div class="mb-4">
+              <i class="fas fa-tasks fa-3x text-muted"></i>
+            </div>
+            <h3 class="text-muted">No Flow Jobs Yet</h3>
+            <p class="text-muted">Flow jobs will appear here when flows are triggered.</p>
+            <div class="mt-3">
+              <%= link_to 'View Flows', organization_flows_path(@organization), 
+                          class: 'btn btn-primary' %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
