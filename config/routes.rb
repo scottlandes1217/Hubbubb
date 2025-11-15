@@ -173,6 +173,10 @@ end
     get 'home', to: 'home#index' # Normal user home page
   end
 
+  # User profile route
+  get 'profile', to: 'profiles#show', as: :profile
+  patch 'profile', to: 'profiles#update'
+
   # Posts namespace for feed and reactions
   resources :posts do
     resources :reactions, only: [:create, :destroy]

@@ -281,17 +281,34 @@ export default class extends Controller {
       }
     });
 
-    // Ensure required fields are present
-    const requiredFields = {
-      name: data.name || this.currentValues.get('name'),
-      species_id: data.species_id || this.currentValues.get('species_id'),
-      breed: data.breed || this.currentValues.get('breed') || [],
-      description: data.description || this.currentValues.get('description'),
-      status: data.status || this.currentValues.get('status') || 'available'
-    };
+    // Determine model type from URL or data attribute
+    const isUserProfile = this.url && this.url.includes('/profile');
+    const modelType = isUserProfile ? 'user' : 'pet';
 
-    // Merge required fields with any changed fields
-    const finalData = { ...requiredFields, ...data };
+    // Build final data based on model type
+    let finalData = {};
+    if (isUserProfile) {
+      // For user profile, include all fields that are present
+      finalData = { ...data };
+      // Don't include password fields if they're empty
+      if (!data.password) {
+        delete finalData.password;
+        delete finalData.password_confirmation;
+      }
+      if (!data.current_password && !data.password) {
+        delete finalData.current_password;
+      }
+    } else {
+      // For pet, ensure required fields are present
+      const requiredFields = {
+        name: data.name || this.currentValues.get('name'),
+        species_id: data.species_id || this.currentValues.get('species_id'),
+        breed: data.breed || this.currentValues.get('breed') || [],
+        description: data.description || this.currentValues.get('description'),
+        status: data.status || this.currentValues.get('status') || 'available'
+      };
+      finalData = { ...requiredFields, ...data };
+    }
 
     console.log("Sending data to server:", finalData);
 
@@ -303,7 +320,7 @@ export default class extends Controller {
         "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')
           .content,
       },
-      body: JSON.stringify({ pet: finalData }),
+      body: JSON.stringify({ [modelType]: finalData }),
     })
       .then((response) => {
         console.log("Fetch response. Status:", response.status);
@@ -315,9 +332,9 @@ export default class extends Controller {
         return response.json();
       })
       .then((json) => {
-        console.log("Pet updated successfully:", json);
-        // If a name was updated, reflect immediately in visible header name
-        if (json && json.pet && json.pet.name) {
+        console.log(`${modelType} updated successfully:`, json);
+        // If a name was updated for pet, reflect immediately in visible header name
+        if (!isUserProfile && json && json.pet && json.pet.name) {
           try {
             const headerName = document.querySelector('.name-field-header .value, .pet-header .value');
             if (headerName) headerName.textContent = json.pet.name;
@@ -326,8 +343,30 @@ export default class extends Controller {
             if (petContainer) petContainer.dataset.petName = json.pet.name;
           } catch(_) {}
         }
+        // For user profile, update UI with new values from response
+        if (isUserProfile && json && json.user) {
+          const user = json.user;
+          // Update email if changed
+          if (user.email && this.currentValues.has('email')) {
+            this.currentValues.set('email', user.email);
+          }
+          // Update first_name if changed
+          if (user.first_name !== undefined && this.currentValues.has('first_name')) {
+            this.currentValues.set('first_name', user.first_name || '');
+          }
+          // Update last_name if changed
+          if (user.last_name !== undefined && this.currentValues.has('last_name')) {
+            this.currentValues.set('last_name', user.last_name || '');
+          }
+          // Update other fields similarly
+          ['birthdate', 'gender', 'city', 'state', 'county', 'zip_code'].forEach(field => {
+            if (user[field] !== undefined && this.currentValues.has(field)) {
+              this.currentValues.set(field, user[field] || '');
+            }
+          });
+        }
         this.showSuccessMessage(
-          json.success_message || "Pet details updated successfully!"
+          json.success_message || `${modelType === 'user' ? 'User' : 'Pet'} details updated successfully!`
         );
 
         // Update currentValues
@@ -349,7 +388,7 @@ export default class extends Controller {
         this.updateUI();
       })
       .catch((err) => {
-        console.error("Error updating pet:", err);
+        console.error(`Error updating ${modelType}:`, err);
         this.showErrorMessage(err.message || "Failed to update. Please try again.");
       })
       .finally(() => {
@@ -403,6 +442,24 @@ export default class extends Controller {
           const wLbs = this.currentValues.get("weight_lbs") || "0";
           const wOz = this.currentValues.get("weight_oz") || "0";
           displayVal = `${wLbs} lbs ${wOz} oz`;
+        }
+
+        // Special case: Password group (always show masked)
+        else if (group === "password") {
+          displayVal = "••••••••";
+        }
+
+        // Special case: Birthdate (single field, not grouped)
+        else if (field === "birthdate" && !group) {
+          const birthdateValue = this.currentValues.get("birthdate");
+          if (birthdateValue) {
+            const [yyyy, mm, dd] = birthdateValue.split("-");
+            const dt = new Date(yyyy, mm - 1, dd);
+            const options = { year: "numeric", month: "long", day: "numeric" };
+            const formattedDate = dt.toLocaleDateString("en-US", options);
+            const years = this.calculateAge(dt);
+            displayVal = `${formattedDate} (${years} years)`;
+          }
         }
 
         // Special case: Location & Unit group

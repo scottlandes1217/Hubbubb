@@ -1,0 +1,291 @@
+<% content_for :navbar do %>
+  <% if current_user.admin? %>
+    <%= render 'shared/navbar_admin' %>
+  <% elsif current_user.shelter_staff? && defined?(@organization) && @organization.present? %>
+    <%= render 'shared/navbar_org', organization: @organization %>
+  <% else %>
+    <%= render 'shared/navbar_admin' %>
+  <% end %>
+<% end %>
+
+<div class="container mt-4" 
+     data-controller="edit-field"
+     data-url="<%= profile_path %>">
+
+  <div class="row">
+    <!-- Left Sidebar with Sections -->
+    <div class="col-md-3">
+      <div class="profile-sidebar">
+        <div class="sidebar-section active" data-section="user_details">
+          <i class="fas fa-user me-2"></i>
+          <span>User Details</span>
+        </div>
+        <!-- Add more sections here in the future -->
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+
+      <!-- User Details Section -->
+      <div class="profile-section" id="user_details">
+        <h2>User Details</h2>
+        
+        <div class="row">
+          <!-- Left Column -->
+          <div class="col-md-6">
+            
+            <!-- Email -->
+            <div class="field-container">
+              <strong>Email:</strong>
+              <span class="value" data-field="email" data-edit-field-target="value">
+                <%= @user.email %>
+              </span>
+              <button class="edit-button" 
+                      data-field="email" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="email" 
+                     class="edit-input" 
+                     data-field="email" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.email %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- First Name -->
+            <div class="field-container">
+              <strong>First Name:</strong>
+              <span class="value" data-field="first_name" data-edit-field-target="value">
+                <%= @user.first_name.present? ? @user.first_name : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="first_name" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="text" 
+                     class="edit-input" 
+                     data-field="first_name" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.first_name %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- Last Name -->
+            <div class="field-container">
+              <strong>Last Name:</strong>
+              <span class="value" data-field="last_name" data-edit-field-target="value">
+                <%= @user.last_name.present? ? @user.last_name : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="last_name" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="text" 
+                     class="edit-input" 
+                     data-field="last_name" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.last_name %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- Birthdate -->
+            <div class="field-container">
+              <strong>Birthdate:</strong>
+              <span class="value" data-field="birthdate" data-edit-field-target="value">
+                <% if @user.birthdate.present? %>
+                  <%= @user.birthdate.strftime("%B %d, %Y") %> 
+                  <% if @user.age.present? %>
+                    (<%= @user.age %> years)
+                  <% end %>
+                <% else %>
+                  Not Set
+                <% end %>
+              </span>
+              <button class="edit-button" 
+                      data-field="birthdate" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="date" 
+                     class="edit-input" 
+                     data-field="birthdate" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.birthdate %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- Gender -->
+            <div class="field-container">
+              <strong>Gender:</strong>
+              <span class="value" data-field="gender" data-edit-field-target="value">
+                <%= @user.gender.present? ? @user.gender.humanize : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="gender" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <select class="edit-input" 
+                      data-field="gender" 
+                      data-edit-field-target="input" 
+                      style="display: none;">
+                <option value="">Not Set</option>
+                <% User.genders.keys.each do |gender| %>
+                  <option value="<%= gender %>" <%= "selected" if @user.gender == gender %>>
+                    <%= gender.humanize %>
+                  </option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="col-md-6">
+            <!-- City -->
+            <div class="field-container">
+              <strong>City:</strong>
+              <span class="value" data-field="city" data-edit-field-target="value">
+                <%= @user.city.present? ? @user.city : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="city" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="text" 
+                     class="edit-input" 
+                     data-field="city" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.city %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- State -->
+            <div class="field-container">
+              <strong>State:</strong>
+              <span class="value" data-field="state" data-edit-field-target="value">
+                <%= @user.state.present? ? @user.state : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="state" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="text" 
+                     class="edit-input" 
+                     data-field="state" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.state %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- County -->
+            <div class="field-container">
+              <strong>County:</strong>
+              <span class="value" data-field="county" data-edit-field-target="value">
+                <%= @user.county.present? ? @user.county : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="county" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="text" 
+                     class="edit-input" 
+                     data-field="county" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.county %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- Zip Code -->
+            <div class="field-container">
+              <strong>Zip Code:</strong>
+              <span class="value" data-field="zip_code" data-edit-field-target="value">
+                <%= @user.zip_code.present? ? @user.zip_code : "Not Set" %>
+              </span>
+              <button class="edit-button" 
+                      data-field="zip_code" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <input type="text" 
+                     class="edit-input" 
+                     data-field="zip_code" 
+                     data-edit-field-target="input" 
+                     value="<%= @user.zip_code %>" 
+                     style="display: none;" />
+            </div>
+
+            <!-- Password Change (Grouped) -->
+            <div class="field-container">
+              <strong>Password:</strong>
+              <span class="value" data-field="password" data-edit-field-target="value">
+                ••••••••
+              </span>
+              <button class="edit-button" 
+                      data-field="password" 
+                      data-group="password" 
+                      data-edit-field-target="editButton" 
+                      data-action="click->edit-field#edit">
+                <i class="fas fa-pencil-alt"></i>
+              </button>
+              <div class="edit-input-group" data-group="password" style="display: none;">
+                <input type="password" 
+                       class="edit-input" 
+                       data-field="current_password" 
+                       data-group="password" 
+                       data-edit-field-target="input" 
+                       placeholder="Current Password" />
+                <input type="password" 
+                       class="edit-input" 
+                       data-field="password" 
+                       data-group="password" 
+                       data-edit-field-target="input" 
+                       placeholder="New Password" />
+                <input type="password" 
+                       class="edit-input" 
+                       data-field="password_confirmation" 
+                       data-group="password" 
+                       data-edit-field-target="input" 
+                       placeholder="Confirm New Password" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Save/Cancel Buttons -->
+  <div class="button-container" style="display:none">
+    <button id="save-button" 
+            class="btn btn-primary" 
+            data-edit-field-target="saveButton" 
+            data-action="click->edit-field#save" 
+            style="display: none;">
+      Save Changes
+    </button>
+    <button id="cancel-button" 
+            class="btn btn-secondary" 
+            data-edit-field-target="cancelButton" 
+            data-action="click->edit-field#cancel" 
+            style="display: none;">
+      Cancel
+    </button>
+  </div>
+</div>
+
