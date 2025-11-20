@@ -65,6 +65,7 @@ export class RecordLayoutBuilder {
       this.addSaveCommand();
       this.setupComponentTypes();
       this.setupTabsComponent();
+      this.setupTabsConfigModal();
       this.loadInitialContent();
       this.buildLeftSidebar();
       this.setupCanvasDragAndDrop();
@@ -91,7 +92,15 @@ export class RecordLayoutBuilder {
         // Lock tabs inner components (but allow tab buttons to be draggable for reordering)
         setTimeout(() => {
           this.lockTabsInnerComponents(component);
-        }, 50);
+          // Ensure buildWorkingTabs is called to add buttons
+          if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+            try {
+              window.TabsComponent.buildWorkingTabs(component);
+            } catch(e) {
+              console.warn('[PF] Error building tabs on add:', e);
+            }
+          }
+        }, 100);
       }
     });
 
@@ -107,7 +116,15 @@ export class RecordLayoutBuilder {
         // Lock tabs inner components
         setTimeout(() => {
           this.lockTabsInnerComponents(component);
-        }, 50);
+          // Ensure buildWorkingTabs is called to add buttons
+          if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+            try {
+              window.TabsComponent.buildWorkingTabs(component);
+            } catch(e) {
+              console.warn('[PF] Error building tabs on update:', e);
+            }
+          }
+        }, 100);
       }
     });
   }
@@ -1560,6 +1577,382 @@ export class RecordLayoutBuilder {
         alertDiv.parentNode.removeChild(alertDiv);
       }
     }, 5000);
+  }
+
+  setupTabsConfigModal() {
+    // Modal for configuring tabs
+    const ensureTabsModal = () => {
+      let modal = document.getElementById('pf-tabs-config-modal');
+      if (modal) return modal;
+      modal = document.createElement('div');
+      modal.id = 'pf-tabs-config-modal';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.background = 'rgba(0,0,0,0.4)';
+      modal.style.display = 'none';
+      modal.style.zIndex = '999999';
+      modal.innerHTML = `
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:8px;min-width:420px;max-width:640px;box-shadow:0 10px 30px rgba(0,0,0,0.25);">
+          <div style="padding:12px 16px;border-bottom:1px solid #e9ecef;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-weight:600;">Configure Tabs</div>
+            <button type="button" id="pf-tabs-close" style="border:0;background:transparent;font-size:18px;line-height:1;cursor:pointer;">×</button>
+          </div>
+          <div style="padding:12px 16px;">
+            <div class="text-muted" style="font-size:12px;margin-bottom:6px;">Drag to reorder. Click a name to edit.</div>
+            <ul id="pf-tabs-list" style="list-style:none;padding:0;margin:0;max-height:300px;overflow:auto;border:1px solid #e9ecef;border-radius:6px;">
+            </ul>
+            <button type="button" id="pf-tabs-add" class="btn btn-sm btn-outline-primary" style="margin-top:10px;">Add tab</button>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid #e9ecef;display:flex;gap:8px;justify-content:flex-end;">
+            <button type="button" id="pf-tabs-cancel" class="btn btn-sm btn-secondary">Cancel</button>
+            <button type="button" id="pf-tabs-save" class="btn btn-sm btn-primary">Save</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      // Wire close buttons
+      modal.querySelector('#pf-tabs-close').onclick = () => { modal.style.display = 'none'; };
+      modal.querySelector('#pf-tabs-cancel').onclick = () => { modal.style.display = 'none'; };
+      return modal;
+    };
+
+    window.openTabsConfigModal = (comp) => {
+      const modal = ensureTabsModal();
+      modal.style.display = 'flex';
+      const list = modal.querySelector('#pf-tabs-list');
+      list.innerHTML = '';
+      
+      // Get current tabs
+      const attrs = comp.getAttributes ? comp.getAttributes() : {};
+      let tabs = [];
+      if (window.TabsComponent && window.TabsComponent.pfParseTabsJson) {
+        tabs = window.TabsComponent.pfParseTabsJson(attrs['tabs-json']);
+      } else {
+        try {
+          tabs = JSON.parse(attrs['tabs-json'] || '[]');
+        } catch(e) {
+          tabs = [];
+        }
+      }
+      
+      if (!tabs || tabs.length === 0) {
+        const id = window.TabsComponent && window.TabsComponent.pfGenerateId ? 
+                   window.TabsComponent.pfGenerateId('tab') : 
+                   `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+        tabs = [{ id: id, title: 'Tab 1' }];
+      }
+      
+      // Populate list
+      tabs.forEach(t => {
+        const li = document.createElement('li');
+        li.draggable = true;
+        li.dataset.tabId = t.id;
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.gap = '8px';
+        li.style.padding = '8px 10px';
+        li.style.borderBottom = '1px solid #f1f3f5';
+        li.innerHTML = `
+          <span style="cursor:grab;">☰</span>
+          <input type="text" value="${(t.title || 'Tab').replace(/"/g, '&quot;')}" style="flex:1 1 auto;border:1px solid #ddd;padding:4px 8px;border-radius:4px;" />
+          <button type="button" class="pf-tab-delete-btn" style="border:0;background:transparent;color:#dc3545;cursor:pointer;padding:2px 6px;font-size:14px;" title="Delete tab">×</button>
+        `;
+        // Add delete handler
+        const deleteBtn = li.querySelector('.pf-tab-delete-btn');
+        deleteBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (list.children.length > 1) {
+            li.remove();
+          } else {
+            alert('You must have at least one tab.');
+          }
+        };
+        list.appendChild(li);
+      });
+      
+      // Simple DnD within modal
+      let dragEl = null;
+      list.addEventListener('dragstart', ev => { 
+        const li = ev.target.closest('li'); 
+        if (!li) return; 
+        dragEl = li; 
+        ev.dataTransfer.effectAllowed = 'move'; 
+      });
+      list.addEventListener('dragover', ev => { 
+        ev.preventDefault(); 
+        const li = ev.target.closest('li'); 
+        if (!li || !dragEl || li === dragEl) return; 
+        const rect = li.getBoundingClientRect(); 
+        const after = (ev.clientY - rect.top) > rect.height/2; 
+        li.parentNode.insertBefore(dragEl, after ? li.nextSibling : li); 
+      });
+      list.addEventListener('dragend', () => { dragEl = null; });
+      
+      // Add new tab
+      modal.querySelector('#pf-tabs-add').onclick = () => {
+        const id = window.TabsComponent && window.TabsComponent.pfGenerateId ? 
+                   window.TabsComponent.pfGenerateId('tab') : 
+                   `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+        const li = document.createElement('li');
+        li.draggable = true;
+        li.dataset.tabId = id;
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
+        li.style.gap = '8px';
+        li.style.padding = '8px 10px';
+        li.style.borderBottom = '1px solid #f1f3f5';
+        li.innerHTML = `
+          <span style="cursor:grab;">☰</span>
+          <input type="text" value="New Tab" style="flex:1 1 auto;border:1px solid #ddd;padding:4px 8px;border-radius:4px;" />
+          <button type="button" class="pf-tab-delete-btn" style="border:0;background:transparent;color:#dc3545;cursor:pointer;padding:2px 6px;font-size:14px;" title="Delete tab">×</button>
+        `;
+        // Add delete handler
+        const deleteBtn = li.querySelector('.pf-tab-delete-btn');
+        deleteBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (list.children.length > 1) {
+            li.remove();
+          } else {
+            alert('You must have at least one tab.');
+          }
+        };
+        list.appendChild(li);
+      };
+      
+      // Save handler
+      modal.querySelector('#pf-tabs-save').onclick = () => {
+        try {
+          const items = Array.from(list.querySelectorAll('li'));
+          if (items.length === 0) {
+            alert('You must have at least one tab.');
+            return;
+          }
+          
+          const newTabs = items.map(li => ({ 
+            id: li.dataset.tabId, 
+            title: li.querySelector('input').value.trim() || 'Tab' 
+          }));
+          
+          console.log('[PF] Saving tabs config:', newTabs);
+          
+          // Store existing section content before rebuilding
+          const existingSections = {};
+          try {
+            const bodyComp = comp.find('.pf-tabs-body')[0];
+            if (bodyComp) {
+              const secComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+              secComps.forEach(sc => {
+                const tabId = sc.getAttributes()['data-tab-id'];
+                if (tabId) {
+                  // Store the section component itself (GrapesJS will preserve its children)
+                  existingSections[tabId] = sc;
+                }
+              });
+            }
+          } catch(e) {
+            console.warn('[PF] Error storing existing sections:', e);
+          }
+          
+          // Update component attributes
+          const tabsJson = window.TabsComponent && window.TabsComponent.pfStringifyTabsJson ? 
+                          window.TabsComponent.pfStringifyTabsJson(newTabs) : 
+                          JSON.stringify(newTabs);
+          
+          // Get the active tab ID (preserve current or use first)
+          const currentActive = comp.getAttributes ? comp.getAttributes()['active-tab-id'] : '';
+          const activeTabId = newTabs.find(t => t.id === currentActive) ? currentActive : (newTabs[0]?.id || '');
+          
+          // Update attributes
+          comp.addAttributes({ 
+            'tabs-json': tabsJson,
+            'active-tab-id': activeTabId
+          });
+          
+          console.log('[PF] Attributes updated, rebuilding tabs...');
+          
+          // Update tabs with new configuration
+          // We need to completely rebuild to handle adds/removes/renames properly
+          if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+            // Store existing section content before rebuilding
+            const sectionsToPreserve = {};
+            try {
+              const bodyComp = comp.find('.pf-tabs-body')[0];
+              if (bodyComp) {
+                const secComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+                secComps.forEach(sc => {
+                  const tabId = sc.getAttributes()['data-tab-id'];
+                  if (tabId) {
+                    // Store the children components
+                    sectionsToPreserve[tabId] = sc.components().slice();
+                  }
+                });
+              }
+            } catch(e) {
+              console.warn('[PF] Error storing sections:', e);
+            }
+            
+            // Temporarily mark that we're updating so buildWorkingTabs doesn't skip
+            comp.addAttributes({ '_updating-tabs': 'true' });
+            
+            // Instead of removing the structure, update it in place
+            // This is safer and won't cause the component to disappear
+            const headerComp = comp.find('.pf-tabs-header')[0];
+            const bodyComp = comp.find('.pf-tabs-body')[0];
+            
+            if (headerComp && bodyComp) {
+              // Get existing sections to preserve their content
+              const existingSections = {};
+              const secComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+              secComps.forEach(sc => {
+                const tabId = sc.getAttributes()['data-tab-id'];
+                if (tabId) {
+                  existingSections[tabId] = sc;
+                }
+              });
+              
+              // Clear and rebuild
+              headerComp.components('');
+              bodyComp.components('');
+              
+              // Rebuild buttons and sections in new order
+              newTabs.forEach(tab => {
+                // Create button
+                const btnHtml = `<span class="pf-tab-btn ${tab.id === activeTabId ? 'active' : ''}" data-role="pf-tab-btn" data-tab-id="${tab.id}">${tab.title}</span>`;
+                const btn = headerComp.append(btnHtml)[0];
+                btn.set({
+                  selectable: false,
+                  hoverable: true,
+                  draggable: false,
+                  droppable: false,
+                  editable: false,
+                  copyable: false,
+                  highlightable: false
+                });
+                
+                // Get or create section
+                let section = existingSections[tab.id];
+                if (!section) {
+                  const sectionHtml = `<div class="pf-tab-section ${tab.id === activeTabId ? 'active' : ''}" data-role="pf-tab-section" data-tab-id="${tab.id}"></div>`;
+                  section = bodyComp.append(sectionHtml)[0];
+                  section.set({
+                    droppable: true,
+                    selectable: false,
+                    hoverable: false,
+                    highlightable: false,
+                    draggable: false
+                  });
+                } else {
+                  // Re-add existing section
+                  bodyComp.append(section);
+                  const sectionEl = section.getEl();
+                  if (sectionEl) {
+                    sectionEl.setAttribute('data-tab-id', tab.id);
+                    if (tab.id === activeTabId) {
+                      sectionEl.classList.add('active');
+                    } else {
+                      sectionEl.classList.remove('active');
+                    }
+                  }
+                }
+              });
+              
+              // Remove sections for deleted tabs
+              Object.keys(existingSections).forEach(tabId => {
+                if (!newTabs.find(t => t.id === tabId)) {
+                  try {
+                    existingSections[tabId].remove();
+                  } catch(e) {
+                    console.warn('[PF] Error removing deleted section:', e);
+                  }
+                }
+              });
+            }
+            
+            // Rebuild to attach handlers
+            setTimeout(() => {
+              if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+                window.TabsComponent.buildWorkingTabs(comp);
+              }
+              comp.addAttributes({ '_updating-tabs': '' });
+            }, 50);
+            
+            // Restore preserved content after rebuild completes
+            setTimeout(() => {
+              try {
+                const bodyComp = comp.find('.pf-tabs-body')[0];
+                if (bodyComp) {
+                  const newSecComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+                  newSecComps.forEach(newSec => {
+                    const tabId = newSec.getAttributes()['data-tab-id'];
+                    const preservedChildren = sectionsToPreserve[tabId];
+                    if (preservedChildren && preservedChildren.length > 0) {
+                      // Clear the new section and add preserved children
+                      newSec.components('');
+                      preservedChildren.forEach(child => {
+                        try {
+                          newSec.append(child);
+                        } catch(e) {
+                          console.warn('[PF] Error restoring child:', e);
+                        }
+                      });
+                    }
+                  });
+                }
+                
+                // Restore active tab state
+                if (activeTabId) {
+                  try {
+                    const headerComp = comp.find('.pf-tabs-header')[0];
+                    const bodyComp = comp.find('.pf-tabs-body')[0];
+                    if (headerComp && bodyComp) {
+                      headerComp.components().forEach(btn => {
+                        const btnEl = btn.getEl();
+                        if (btnEl) {
+                          if (btn.getAttributes()['data-tab-id'] === activeTabId) {
+                            btnEl.classList.add('active');
+                          } else {
+                            btnEl.classList.remove('active');
+                          }
+                        }
+                      });
+                      
+                      bodyComp.components().forEach(section => {
+                        const sectionEl = section.getEl();
+                        if (sectionEl) {
+                          if (section.getAttributes()['data-tab-id'] === activeTabId) {
+                            sectionEl.classList.add('active');
+                          } else {
+                            sectionEl.classList.remove('active');
+                          }
+                        }
+                      });
+                    }
+                  } catch(e) {
+                    console.warn('[PF] Error restoring active tab:', e);
+                  }
+                }
+                
+                // Remove the update flag
+                comp.addAttributes({ '_updating-tabs': '' });
+                
+                console.log('[PF] Tabs config saved and rebuilt with preserved content');
+              } catch(e) {
+                console.error('[PF] Error restoring content:', e);
+                comp.addAttributes({ '_updating-tabs': '' });
+              }
+            }, 150);
+          }
+          
+          console.log('[PF] Tabs config saved');
+        } catch(e) { 
+          console.error('[PF] Error saving tabs config:', e); 
+          console.error('[PF] Error stack:', e.stack);
+          alert('Error saving tabs: ' + (e.message || String(e)));
+        }
+        modal.style.display = 'none';
+      };
+    };
   }
 
   destroy() {

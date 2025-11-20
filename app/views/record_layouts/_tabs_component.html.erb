@@ -7,7 +7,9 @@
     console.log('[PF] Building tabs for component:', comp);
     
     // Check if tabs are already built with proper structure
-    if (comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
+    // Skip early return if we're updating tabs (from modal save)
+    const isUpdating = comp.getAttributes() && comp.getAttributes()['_updating-tabs'] === 'true';
+    if (!isUpdating && comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
         comp.getEl().querySelector('.pf-tabs-header') && 
         comp.getEl().querySelector('.pf-tabs-body')) {
       console.log('[PF] Tabs structure exists, ensuring delete button and restoring state');
@@ -62,6 +64,34 @@
           compEl.style.position = 'relative';
         }
       }
+      
+      // Also check for edit button
+      if (compEl) {
+        const existingEdit = compEl.querySelector(':scope > .rb-edit-tabs');
+        if (!existingEdit) {
+          const editBtn = document.createElement('span');
+          editBtn.className = 'rb-edit-tabs';
+          editBtn.setAttribute('data-role', 'rb-edit-tabs');
+          editBtn.title = 'Edit Tabs';
+          editBtn.textContent = '✎';
+          editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+          
+          editBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.openTabsConfigModal) {
+              window.openTabsConfigModal(comp);
+            }
+          });
+          
+          if (compEl.firstChild) {
+            compEl.insertBefore(editBtn, compEl.firstChild);
+          } else {
+            compEl.appendChild(editBtn);
+          }
+        }
+      }
+      
       // Restore state
       addMissingIcons(comp);
       attachTabClickHandlers(comp);
@@ -562,6 +592,7 @@
     // Add delete button as a direct child of the main component (not tabsWrapper)
     // This ensures it shows on hover of the main component
     const compEl = comp.getEl();
+    let deleteBtn = null;
     if (compEl) {
       // Remove any existing tabs delete button first (only direct children, not field buttons)
       // Find the tabs container's delete button (direct child, not nested)
@@ -582,7 +613,7 @@
       }
       
       // Create delete button in the main component's DOM
-      const deleteBtn = document.createElement('span');
+      deleteBtn = document.createElement('span');
       deleteBtn.className = 'rb-del';
       deleteBtn.setAttribute('data-role', 'rb-del');
       deleteBtn.setAttribute('aria-label', 'Delete');
@@ -618,11 +649,22 @@
       if (window.getComputedStyle(compEl).position === 'static') {
         compEl.style.position = 'relative';
       }
+      
+      // Ensure component has pf-interactive class for CSS hover rules
+      if (!compEl.classList.contains('pf-interactive')) {
+        compEl.classList.add('pf-interactive');
+      }
     }
     
     // Add edit button as a direct child of the main component
     if (compEl) {
-      const existingEdit = compEl.querySelector('.rb-edit-tabs');
+      // Check for existing edit button as direct child only
+      let existingEdit = null;
+      Array.from(compEl.children).forEach(child => {
+        if (child.classList.contains('rb-edit-tabs') && !existingEdit) {
+          existingEdit = child;
+        }
+      });
       if (existingEdit) {
         existingEdit.remove();
       }
@@ -632,7 +674,7 @@
       editBtn.setAttribute('data-role', 'rb-edit-tabs');
       editBtn.title = 'Edit Tabs';
       editBtn.textContent = '✎';
-      editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+      editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
       
       editBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -668,8 +710,9 @@
     console.log('[PF] Tabs component built successfully');
     console.log('[PF] Tabs wrapper element:', tabsWrapper.getEl());
     console.log('[PF] Tabs wrapper classes:', tabsWrapper.getEl()?.className);
-    console.log('[PF] Delete button element:', deleteBtn.getEl());
-    console.log('[PF] Edit button element:', tabsWrapper.find('[data-role="rb-edit-tabs"]')[0]?.getEl());
+    console.log('[PF] Delete button element:', deleteBtn);
+    const editBtnComp = tabsWrapper.find('[data-role="rb-edit-tabs"]')[0];
+    console.log('[PF] Edit button element:', editBtnComp ? editBtnComp.getEl() : null);
     
     // CRITICAL: After building, ensure all functionality is properly attached
     // This ensures that restored tabs work exactly like new tabs
@@ -900,8 +943,14 @@
         }
       }
       
-      // Add edit button if missing
-      if (!compEl.querySelector('.rb-edit-tabs')) {
+      // Add edit button if missing - check for direct child only
+      let tabsEditBtn = null;
+      Array.from(compEl.children).forEach(child => {
+        if (child.classList.contains('rb-edit-tabs') && !tabsEditBtn) {
+          tabsEditBtn = child;
+        }
+      });
+      if (!tabsEditBtn) {
         const editBtn = document.createElement('span');
         editBtn.className = 'rb-edit-tabs';
         editBtn.setAttribute('data-role', 'rb-edit-tabs');
