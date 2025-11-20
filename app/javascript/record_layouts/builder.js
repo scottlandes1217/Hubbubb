@@ -114,10 +114,27 @@ export class RecordLayoutBuilder {
         }, 10);
       } else if (attrs['data-comp-kind'] === 'record-tabs' || component.get('type') === 'record-tabs') {
         // Lock tabs inner components
+        // Skip if we're in the middle of updating tabs (from modal save)
+        const isUpdating = component.getAttributes() && component.getAttributes()['_updating-tabs'] === 'true';
+        if (isUpdating) {
+          console.log('[PF] Skipping buildWorkingTabs on component:update because _updating-tabs is set');
+          return;
+        }
+        // Skip if component is currently being built (prevents infinite loops)
+        const compEl = component.getEl();
+        if (compEl && compEl.__pf_building_tabs) {
+          console.log('[PF] Skipping buildWorkingTabs on component:update because component is already being built');
+          return;
+        }
         setTimeout(() => {
           this.lockTabsInnerComponents(component);
-          // Ensure buildWorkingTabs is called to add buttons
-          if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+          // Only call buildWorkingTabs if structure doesn't exist or needs update
+          // Don't call it on every update to prevent loops
+          const el = component.getEl();
+          const hasStructure = el && el.querySelector('.pf-tabs') && 
+                               el.querySelector('.pf-tabs-header') && 
+                               el.querySelector('.pf-tabs-body');
+          if (!hasStructure && window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
             try {
               window.TabsComponent.buildWorkingTabs(component);
             } catch(e) {
@@ -294,6 +311,54 @@ export class RecordLayoutBuilder {
   addSaveCommand() {
     this.editor.Commands.add('save-record-layout', {
       run: (editor, sender, options) => {
+        // Before getting HTML, verify tabs components are recognized and fix their type
+        const root = editor.DomComponents.getWrapper();
+        const tabsComponents = root.find('[data-comp-kind="record-tabs"]');
+        console.log('[PF] Found', tabsComponents.length, 'tabs components before serialization');
+        tabsComponents.forEach((tab, idx) => {
+          // CRITICAL: Ensure type is set so toHTML is called
+          const currentType = tab.get('type');
+          if (currentType !== 'record-tabs') {
+            console.log(`[PF] Tab ${idx}: Setting type from "${currentType}" to "record-tabs"`);
+            tab.set('type', 'record-tabs');
+          }
+          
+          const type = tab.get('type');
+          const hasToHTML = typeof tab.toHTML === 'function';
+          console.log(`[PF] Tab ${idx}: type=${type}, hasToHTML=${hasToHTML}, components=${tab.components().length}`);
+          
+          // Check if tabsWrapper is a child component
+          const tabsWrapper = tab.components().find(c => {
+            const el = c.getEl();
+            return el && el.classList && el.classList.contains('pf-tabs');
+          });
+          console.log(`[PF] Tab ${idx}: tabsWrapper found=${!!tabsWrapper}, tabsWrapper.components=${tabsWrapper ? tabsWrapper.components().length : 0}`);
+          
+          if (!tabsWrapper) {
+            // tabsWrapper not found in component tree - need to rebuild structure
+            console.warn(`[PF] Tab ${idx}: tabsWrapper not in component tree! Rebuilding...`);
+            if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+              // Mark as updating to force rebuild
+              tab.addAttributes({ '_updating-tabs': 'true' });
+              window.TabsComponent.buildWorkingTabs(tab);
+              tab.addAttributes({ '_updating-tabs': '' });
+            }
+          } else {
+            const bodyComp = tabsWrapper.components().find(c => {
+              const el = c.getEl();
+              return el && el.classList && el.classList.contains('pf-tabs-body');
+            });
+            if (bodyComp) {
+              const sections = bodyComp.components();
+              console.log(`[PF] Tab ${idx}: body has ${sections.length} sections`);
+              sections.forEach((section, secIdx) => {
+                const sectionChildren = section.components();
+                console.log(`[PF] Tab ${idx}, Section ${secIdx}: has ${sectionChildren.length} children`);
+              });
+            }
+          }
+        });
+        
         // Get HTML with all components properly serialized
         let html = editor.getHtml();
         let css = editor.getCss();
@@ -306,7 +371,22 @@ export class RecordLayoutBuilder {
         if (html.includes('pf-tabs')) {
           console.log('[PF] Tabs component found in HTML');
           
-          // Check for tab sections
+          // Extract the tabs component HTML to inspect it
+          const tabsMatch = html.match(/<div[^>]*class="[^"]*pf-tabs-container[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+          if (tabsMatch) {
+            const tabsHtml = tabsMatch[1];
+            console.log('[PF] Tabs component inner HTML length:', tabsHtml.length);
+            console.log('[PF] Tabs component inner HTML preview:', tabsHtml.substring(0, 500));
+            
+            // Check for tab sections in the inner HTML
+            if (tabsHtml.includes('pf-tab-section')) {
+              console.log('[PF] Tab sections found in tabs component HTML');
+            } else {
+              console.warn('[PF] Tab sections NOT found in tabs component HTML!');
+            }
+          }
+          
+          // Check for tab sections in full HTML
           if (html.includes('pf-tab-section')) {
             console.log('[PF] Tab sections found in HTML');
           } else {
@@ -320,6 +400,19 @@ export class RecordLayoutBuilder {
         const fieldCount = (html.match(/record-field/g) || []).length;
         const partialCount = (html.match(/record-partial/g) || []).length;
         console.log('[PF] Component counts:', { fields: fieldCount, partials: partialCount });
+        
+        // Check for fields inside tab sections specifically
+        if (html.includes('pf-tab-section')) {
+          const tabSectionMatches = html.match(/<div[^>]*class="[^"]*pf-tab-section[^"]*"[^>]*>([\s\S]*?)<\/div>/g);
+          if (tabSectionMatches) {
+            console.log('[PF] Found', tabSectionMatches.length, 'tab sections in HTML');
+            tabSectionMatches.forEach((match, idx) => {
+              const hasField = match.includes('record-field') || match.includes('field-api-name');
+              const hasPartial = match.includes('record-partial') || match.includes('partial-name');
+              console.log(`[PF] Tab section ${idx}: hasField=${hasField}, hasPartial=${hasPartial}, length=${match.length}`);
+            });
+          }
+        }
         
         // Get runtime tabs JavaScript and CSS from the TabsComponent
         if (window.TabsComponent && window.TabsComponent.getRuntimeCode) {
@@ -616,8 +709,40 @@ export class RecordLayoutBuilder {
   }
 
   setupTabsComponent() {
-    if (window.TabsComponent && window.TabsComponent.defineTabsComponent) {
+    console.log('[PF] setupTabsComponent called');
+    console.log('[PF] Editor available?', !!this.editor);
+    console.log('[PF] window.TabsComponent available?', !!window.TabsComponent);
+    
+    if (!this.editor) {
+      console.error('[PF] Editor not ready!');
+      return;
+    }
+    
+    if (!window.TabsComponent) {
+      console.error('[PF] window.TabsComponent not available! Check console for JavaScript errors in tabs partial.');
+      return;
+    }
+    
+    if (!window.TabsComponent.defineTabsComponent) {
+      console.error('[PF] defineTabsComponent function not found on TabsComponent!');
+      console.log('[PF] TabsComponent keys:', Object.keys(window.TabsComponent));
+      return;
+    }
+    
+    try {
+      console.log('[PF] Calling defineTabsComponent...');
       window.TabsComponent.defineTabsComponent(this.editor);
+      console.log('[PF] Tabs component type registered successfully');
+      
+      // Verify it was registered
+      const types = this.editor.DomComponents.getTypes();
+      console.log('[PF] record-tabs registered?', !!types['record-tabs']);
+      if (!types['record-tabs']) {
+        console.error('[PF] Component type was not registered! Types available:', Object.keys(types));
+      }
+    } catch(e) {
+      console.error('[PF] Error registering tabs component:', e);
+      console.error('[PF] Error stack:', e.stack);
     }
   }
 
@@ -702,10 +827,87 @@ export class RecordLayoutBuilder {
               });
             }, 100);
             
+            // CRITICAL: Extract attributes from HTML FIRST, before any rendering
+            // This must happen before buildWorkingTabs is called (which might happen via onRender)
+            tabs.forEach(tab => {
+              const tabEl = tab.getEl();
+              if (tabEl) {
+                // Extract tabs-json from HTML and set as attribute immediately
+                const tabsJsonFromHtml = tabEl.getAttribute('tabs-json');
+                if (tabsJsonFromHtml) {
+                  const currentTabsJson = tab.getAttributes()['tabs-json'];
+                  if (tabsJsonFromHtml !== currentTabsJson) {
+                    console.log('[PF] Extracting tabs-json from HTML to attributes:', tabsJsonFromHtml);
+                    tab.addAttributes({ 'tabs-json': tabsJsonFromHtml });
+                  }
+                }
+                // Also extract active-tab-id
+                const activeTabIdFromHtml = tabEl.getAttribute('active-tab-id');
+                if (activeTabIdFromHtml) {
+                  tab.addAttributes({ 'active-tab-id': activeTabIdFromHtml });
+                }
+              }
+              
+              // CRITICAL: Ensure the component has the correct type set
+              const currentType = tab.get('type');
+              if (currentType !== 'record-tabs') {
+                console.log(`[PF] Setting component type from "${currentType}" to "record-tabs"`);
+                tab.set('type', 'record-tabs');
+              }
+            });
+            
             // Rebuild tabs AFTER fields/partials are processed
             // This ensures tabs are rebuilt with delete buttons after all content is loaded
             tabs.forEach(tab => {
               console.log('[PF] Rebuilding loaded tabs component:', tab);
+              
+              // CRITICAL: Before rebuilding, ensure fields inside sections are parsed as components
+              // When HTML is loaded, GrapesJS might not have parsed nested components yet
+              const bodyComp = tab.find('.pf-tabs-body')[0];
+              if (bodyComp) {
+                const sections = tab.find('[data-role="pf-tab-section"]').slice(0, 500);
+                sections.forEach(section => {
+                  const sectionEl = section.getEl();
+                  if (sectionEl) {
+                    // Check if section has HTML content but no components
+                    const hasHtml = sectionEl.innerHTML.trim().length > 0;
+                    const hasComponents = section.components().length > 0;
+                    
+                    console.log(`[PF] Section ${section.getAttributes()['data-tab-id']}: hasHtml=${hasHtml}, hasComponents=${hasComponents}`);
+                    
+                    if (hasHtml && !hasComponents) {
+                      // Section has HTML but no components - need to parse it
+                      console.log(`[PF] Parsing HTML in section ${section.getAttributes()['data-tab-id']}`);
+                      try {
+                        // Get the HTML and re-parse it as components
+                        const html = sectionEl.innerHTML;
+                        // Clear and re-add to force parsing
+                        section.components(html);
+                        const parsedComponents = section.components();
+                        console.log(`[PF] Parsed ${parsedComponents.length} components from HTML`);
+                        
+                        // Lock inner components after parsing
+                        parsedComponents.forEach(child => {
+                          if (child.get && child.get('type') === 'record-field' || child.get('type') === 'record-partial') {
+                            this.lockInnerComponents(child);
+                            this.addDeleteButton(child);
+                          }
+                        });
+                      } catch(e) {
+                        console.error('[PF] Error parsing section HTML:', e);
+                      }
+                    } else if (hasComponents) {
+                      // Components exist, just lock them
+                      section.components().forEach(child => {
+                        if (child.get && (child.get('type') === 'record-field' || child.get('type') === 'record-partial')) {
+                          this.lockInnerComponents(child);
+                          this.addDeleteButton(child);
+                        }
+                      });
+                    }
+                  }
+                });
+              }
               
               // Force a re-render first to ensure DOM is ready
               if (tab.view && tab.view.render) {
@@ -719,6 +921,12 @@ export class RecordLayoutBuilder {
                 if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
                   console.log('[PF] Calling buildWorkingTabs for loaded tab');
                   window.TabsComponent.buildWorkingTabs(tab);
+                  
+                  // After buildWorkingTabs, ensure type is still set
+                  if (tab.get('type') !== 'record-tabs') {
+                    console.log('[PF] Re-setting component type after buildWorkingTabs');
+                    tab.set('type', 'record-tabs');
+                  }
                 } else if (typeof buildWorkingTabs === 'function') {
                   buildWorkingTabs(tab);
                 } else if (window.buildWorkingTabs) {
@@ -1621,24 +1829,40 @@ export class RecordLayoutBuilder {
       const list = modal.querySelector('#pf-tabs-list');
       list.innerHTML = '';
       
-      // Get current tabs
+      // Get current tabs from component attributes
       const attrs = comp.getAttributes ? comp.getAttributes() : {};
-      let tabs = [];
-      if (window.TabsComponent && window.TabsComponent.pfParseTabsJson) {
-        tabs = window.TabsComponent.pfParseTabsJson(attrs['tabs-json']);
-      } else {
-        try {
-          tabs = JSON.parse(attrs['tabs-json'] || '[]');
-        } catch(e) {
-          tabs = [];
+      let tabsJson = attrs['tabs-json'];
+      
+      // If not in attributes, try reading from HTML element and set it
+      if (!tabsJson) {
+        const compEl = comp.getEl();
+        if (compEl) {
+          tabsJson = compEl.getAttribute('tabs-json');
+          if (tabsJson) {
+            comp.addAttributes({ 'tabs-json': tabsJson });
+          }
         }
       }
       
+      let tabs = [];
+      if (tabsJson) {
+        if (window.TabsComponent && window.TabsComponent.pfParseTabsJson) {
+          tabs = window.TabsComponent.pfParseTabsJson(tabsJson);
+        } else {
+          try {
+            tabs = JSON.parse(tabsJson);
+          } catch(e) {
+            console.warn('[PF] Modal: Error parsing tabs-json:', e);
+          }
+        }
+      }
+      
+      // If still no tabs, something is wrong - but don't use a default
       if (!tabs || tabs.length === 0) {
-        const id = window.TabsComponent && window.TabsComponent.pfGenerateId ? 
-                   window.TabsComponent.pfGenerateId('tab') : 
-                   `tab_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
-        tabs = [{ id: id, title: 'Tab 1' }];
+        console.error('[PF] Modal: No tabs found in component! tabs-json:', tabsJson, 'attributes:', attrs);
+        alert('Error: Could not load tabs configuration. Please refresh the page.');
+        modal.style.display = 'none';
+        return;
       }
       
       // Populate list
@@ -1769,180 +1993,196 @@ export class RecordLayoutBuilder {
             'active-tab-id': activeTabId
           });
           
-          console.log('[PF] Attributes updated, rebuilding tabs...');
+          console.log('[PF] Attributes updated, storing children and rebuilding tabs...');
           
-          // Update tabs with new configuration
-          // We need to completely rebuild to handle adds/removes/renames properly
-          if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
-            // Store existing section content before rebuilding
-            const sectionsToPreserve = {};
-            try {
-              const bodyComp = comp.find('.pf-tabs-body')[0];
-              if (bodyComp) {
-                const secComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
-                secComps.forEach(sc => {
-                  const tabId = sc.getAttributes()['data-tab-id'];
-                  if (tabId) {
-                    // Store the children components
-                    sectionsToPreserve[tabId] = sc.components().slice();
-                  }
-                });
-              }
-            } catch(e) {
-              console.warn('[PF] Error storing sections:', e);
-            }
-            
-            // Temporarily mark that we're updating so buildWorkingTabs doesn't skip
-            comp.addAttributes({ '_updating-tabs': 'true' });
-            
-            // Instead of removing the structure, update it in place
-            // This is safer and won't cause the component to disappear
-            const headerComp = comp.find('.pf-tabs-header')[0];
-            const bodyComp = comp.find('.pf-tabs-body')[0];
-            
-            if (headerComp && bodyComp) {
-              // Get existing sections to preserve their content
-              const existingSections = {};
-              const secComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
-              secComps.forEach(sc => {
-                const tabId = sc.getAttributes()['data-tab-id'];
-                if (tabId) {
-                  existingSections[tabId] = sc;
-                }
-              });
-              
-              // Clear and rebuild
-              headerComp.components('');
-              bodyComp.components('');
-              
-              // Rebuild buttons and sections in new order
-              newTabs.forEach(tab => {
-                // Create button
-                const btnHtml = `<span class="pf-tab-btn ${tab.id === activeTabId ? 'active' : ''}" data-role="pf-tab-btn" data-tab-id="${tab.id}">${tab.title}</span>`;
-                const btn = headerComp.append(btnHtml)[0];
-                btn.set({
-                  selectable: false,
-                  hoverable: true,
-                  draggable: false,
-                  droppable: false,
-                  editable: false,
-                  copyable: false,
-                  highlightable: false
-                });
-                
-                // Get or create section
-                let section = existingSections[tab.id];
-                if (!section) {
-                  const sectionHtml = `<div class="pf-tab-section ${tab.id === activeTabId ? 'active' : ''}" data-role="pf-tab-section" data-tab-id="${tab.id}"></div>`;
-                  section = bodyComp.append(sectionHtml)[0];
-                  section.set({
-                    droppable: true,
-                    selectable: false,
-                    hoverable: false,
-                    highlightable: false,
-                    draggable: false
-                  });
-                } else {
-                  // Re-add existing section
-                  bodyComp.append(section);
-                  const sectionEl = section.getEl();
-                  if (sectionEl) {
-                    sectionEl.setAttribute('data-tab-id', tab.id);
-                    if (tab.id === activeTabId) {
-                      sectionEl.classList.add('active');
-                    } else {
-                      sectionEl.classList.remove('active');
-                    }
-                  }
-                }
-              });
-              
-              // Remove sections for deleted tabs
-              Object.keys(existingSections).forEach(tabId => {
-                if (!newTabs.find(t => t.id === tabId)) {
-                  try {
-                    existingSections[tabId].remove();
-                  } catch(e) {
-                    console.warn('[PF] Error removing deleted section:', e);
-                  }
-                }
-              });
-            }
-            
-            // Rebuild to attach handlers
-            setTimeout(() => {
-              if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
-                window.TabsComponent.buildWorkingTabs(comp);
-              }
-              comp.addAttributes({ '_updating-tabs': '' });
-            }, 50);
-            
-            // Restore preserved content after rebuild completes
-            setTimeout(() => {
+          // CRITICAL: Store children BEFORE rebuilding, then rebuild and restore
+          // This ensures the component tree is correct for serialization
+          setTimeout(() => {
               try {
+                // Mark that we're updating FIRST, before storing children
+                // This prevents buildWorkingTabs from hitting the early return
+                comp.addAttributes({ '_updating-tabs': 'true' });
+                
+                // Store children as HTML strings before rebuild (components will be destroyed)
+                const childrenByTabId = {};
                 const bodyComp = comp.find('.pf-tabs-body')[0];
                 if (bodyComp) {
-                  const newSecComps = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
-                  newSecComps.forEach(newSec => {
-                    const tabId = newSec.getAttributes()['data-tab-id'];
-                    const preservedChildren = sectionsToPreserve[tabId];
-                    if (preservedChildren && preservedChildren.length > 0) {
-                      // Clear the new section and add preserved children
-                      newSec.components('');
-                      preservedChildren.forEach(child => {
+                  const sections = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+                  sections.forEach(section => {
+                    const tabId = section.getAttributes()['data-tab-id'];
+                    if (tabId) {
+                      // Serialize all children to HTML so they persist through rebuild
+                      const children = section.components();
+                      const childrenHtml = [];
+                      children.forEach(child => {
                         try {
-                          newSec.append(child);
+                          if (child && child.toHTML) {
+                            childrenHtml.push(child.toHTML());
+                          }
                         } catch(e) {
-                          console.warn('[PF] Error restoring child:', e);
+                          console.warn('[PF] Error serializing child:', e);
                         }
                       });
+                      childrenByTabId[tabId] = childrenHtml.join('');
+                      console.log(`[PF] Stored ${children.length} children for tab ${tabId} as HTML (${childrenHtml.join('').length} chars)`);
                     }
                   });
                 }
                 
-                // Restore active tab state
-                if (activeTabId) {
-                  try {
-                    const headerComp = comp.find('.pf-tabs-header')[0];
-                    const bodyComp = comp.find('.pf-tabs-body')[0];
-                    if (headerComp && bodyComp) {
-                      headerComp.components().forEach(btn => {
-                        const btnEl = btn.getEl();
-                        if (btnEl) {
-                          if (btn.getAttributes()['data-tab-id'] === activeTabId) {
-                            btnEl.classList.add('active');
-                          } else {
-                            btnEl.classList.remove('active');
-                          }
-                        }
-                      });
-                      
-                      bodyComp.components().forEach(section => {
-                        const sectionEl = section.getEl();
-                        if (sectionEl) {
-                          if (section.getAttributes()['data-tab-id'] === activeTabId) {
-                            sectionEl.classList.add('active');
-                          } else {
-                            sectionEl.classList.remove('active');
-                          }
-                        }
-                      });
-                    }
-                  } catch(e) {
-                    console.warn('[PF] Error restoring active tab:', e);
-                  }
+                // Verify tabs-json is updated before rebuilding
+                const updatedTabsJson = comp.getAttributes()['tabs-json'];
+                console.log('[PF] About to rebuild, tabs-json:', updatedTabsJson);
+                try {
+                  const parsedTabs = JSON.parse(updatedTabsJson);
+                  console.log('[PF] Parsed tabs for rebuild:', parsedTabs.length, 'tabs');
+                } catch(e) {
+                  console.error('[PF] Error parsing tabs-json before rebuild:', e);
                 }
                 
-                // Remove the update flag
-                comp.addAttributes({ '_updating-tabs': '' });
+                // Rebuild the tabs structure - this ensures the component tree is correct
+                // This will clear and recreate the tabsWrapper, header, body, and sections
+                if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+                  // Call buildWorkingTabs and wait for it to complete
+                  window.TabsComponent.buildWorkingTabs(comp);
+                  
+                  // Wait longer for all buttons to be created and added to component tree
+                  setTimeout(() => {
+                    // Find the tabsWrapper component first
+                    const tabsWrapperComp = comp.components().find(c => {
+                      const el = c.getEl();
+                      return el && el.classList && el.classList.contains('pf-tabs');
+                    });
+                    
+                    if (tabsWrapperComp) {
+                      const headerComp = tabsWrapperComp.components().find(c => {
+                        const el = c.getEl();
+                        return el && el.classList && el.classList.contains('pf-tabs-header');
+                      });
+                      
+                      if (headerComp) {
+                        const buttons = headerComp.components();
+                        console.log('[PF] After rebuild (via tabsWrapper), found', buttons.length, 'tab buttons');
+                        buttons.forEach((btn, idx) => {
+                          const tabId = btn.getAttributes()['data-tab-id'];
+                          console.log(`[PF] Button ${idx}: tabId=${tabId}`);
+                        });
+                      } else {
+                        console.warn('[PF] No header component found after rebuild');
+                      }
+                    } else {
+                      console.warn('[PF] No tabsWrapper component found after rebuild');
+                    }
+                  }, 200);
+                }
                 
-                console.log('[PF] Tabs config saved and rebuilt with preserved content');
+                // Restore children to their sections after rebuild by appending HTML
+                // GrapesJS will parse the HTML and create components
+                const newBodyComp = comp.find('.pf-tabs-body')[0];
+                if (newBodyComp) {
+                  const sections = comp.find('[data-role="pf-tab-section"]').slice(0, 500);
+                  sections.forEach(section => {
+                    const tabId = section.getAttributes()['data-tab-id'];
+                    // Only restore children if this tab ID exists in our stored children
+                    // New tabs won't have an entry, so they'll remain empty
+                    if (tabId && childrenByTabId.hasOwnProperty(tabId) && childrenByTabId[tabId]) {
+                      // Clear section first to avoid duplicates
+                      section.components('');
+                      
+                      // Append HTML - GrapesJS will parse it into components
+                      const storedHtml = childrenByTabId[tabId];
+                      if (storedHtml && storedHtml.trim()) {
+                        // Use append to add components, not replace
+                        try {
+                          const added = section.append(storedHtml);
+                          const restoredChildren = section.components();
+                          console.log(`[PF] Restored ${restoredChildren.length} children to tab ${tabId} after rebuild (added ${Array.isArray(added) ? added.length : 1} components)`);
+                        } catch(e) {
+                          console.error(`[PF] Error restoring children to tab ${tabId}:`, e);
+                          // Fallback: try components() method
+                          try {
+                            section.components(storedHtml);
+                            const restoredChildren = section.components();
+                            console.log(`[PF] Restored ${restoredChildren.length} children to tab ${tabId} using fallback method`);
+                          } catch(e2) {
+                            console.error(`[PF] Fallback restore also failed for tab ${tabId}:`, e2);
+                          }
+                        }
+                      }
+                    } else {
+                      // New tab - ensure it's empty
+                      console.log(`[PF] Tab ${tabId} is new (no stored children), keeping empty`);
+                      if (section.components().length > 0) {
+                        section.components('');
+                      }
+                    }
+                  });
+                }
+                
+                // Remove the updating flag AFTER everything is done
+                // Don't remove it yet - wait until handlers are attached
+                
+                // Wait for buttons to be fully created and DOM to be ready
+                // Handlers are attached when buttons are created (in buildWorkingTabs)
+                // Just verify and remove the flag after everything is done
+                setTimeout(() => {
+                  // Find header through component tree (more reliable than comp.find)
+                  const tabsWrapperComp = comp.components().find(c => {
+                    const el = c.getEl();
+                    return el && el.classList && el.classList.contains('pf-tabs');
+                  });
+                  
+                  if (tabsWrapperComp) {
+                    const verifyHeader = tabsWrapperComp.components().find(c => {
+                      const el = c.getEl();
+                      return el && el.classList && el.classList.contains('pf-tabs-header');
+                    });
+                    
+                    if (verifyHeader) {
+                      const buttons = verifyHeader.components();
+                      const headerEl = verifyHeader.getEl();
+                      const domButtons = headerEl ? headerEl.querySelectorAll('.pf-tab-btn') : [];
+                      
+                      console.log(`[PF] Final verification: ${buttons.length} buttons in tree, ${domButtons.length} in DOM`);
+                      
+                      buttons.forEach((btn, idx) => {
+                        const tabId = btn.getAttributes()['data-tab-id'];
+                        const btnEl = btn.getEl();
+                        console.log(`[PF] Button ${idx}: tabId=${tabId}, hasEl=${!!btnEl}`);
+                      });
+                      
+                      if (buttons.length !== domButtons.length) {
+                        console.warn('[PF] Mismatch between component tree and DOM! Buttons in tree:', buttons.length, 'in DOM:', domButtons.length);
+                        // Force GrapesJS to sync DOM with component tree
+                        buttons.forEach(btn => {
+                          if (btn.view && btn.view.render) {
+                            btn.view.render();
+                          }
+                        });
+                      }
+                    }
+                  }
+                  
+                  // Remove the updating flag AFTER verification
+                  comp.addAttributes({ '_updating-tabs': '' });
+                  
+                  // Set a flag to prevent immediate comparison checks after rebuild
+                  const compEl = comp.getEl();
+                  if (compEl) {
+                    compEl.__pf_just_rebuilt = true;
+                    setTimeout(() => {
+                      if (compEl) {
+                        compEl.__pf_just_rebuilt = false;
+                      }
+                    }, 2000); // Give it 2 seconds to settle
+                  }
+                  
+                  console.log('[PF] Tabs config saved, structure rebuilt, and handlers re-attached');
+                }, 500);
               } catch(e) {
-                console.error('[PF] Error restoring content:', e);
+                console.error('[PF] Error rebuilding tabs structure:', e);
                 comp.addAttributes({ '_updating-tabs': '' });
               }
-            }, 150);
-          }
+            }, 100);
           
           console.log('[PF] Tabs config saved');
         } catch(e) { 

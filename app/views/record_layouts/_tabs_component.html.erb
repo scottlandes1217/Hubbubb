@@ -2,982 +2,243 @@
 <script>
   console.log('[PF] Tabs component partial loaded');
   
-  // WORKING tabs component - fixed and simplified
   function buildWorkingTabs(comp) {
-    console.log('[PF] Building tabs for component:', comp);
-    
-    // Check if tabs are already built with proper structure
-    // Skip early return if we're updating tabs (from modal save)
-    const isUpdating = comp.getAttributes() && comp.getAttributes()['_updating-tabs'] === 'true';
-    if (!isUpdating && comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
-        comp.getEl().querySelector('.pf-tabs-header') && 
-        comp.getEl().querySelector('.pf-tabs-body')) {
-      console.log('[PF] Tabs structure exists, ensuring delete button and restoring state');
-      // Always ensure delete button exists (it might have been removed)
-      // Check for direct child only, not nested ones (field delete buttons)
+    const isUpdating = comp.getAttributes()?.['_updating-tabs'] === 'true';
       const compEl = comp.getEl();
-      let tabsDeleteBtn = null;
-      if (compEl) {
-        // Check if first child is the delete button, or find direct child delete button
-        const firstChild = compEl.firstElementChild;
-        if (firstChild && firstChild.classList.contains('rb-del')) {
-          tabsDeleteBtn = firstChild;
-        } else {
-          // Look for direct child delete button
-          Array.from(compEl.children).forEach(child => {
-            if (child.classList.contains('rb-del') && !tabsDeleteBtn) {
-              tabsDeleteBtn = child;
-            }
-          });
-        }
+    
+    // Prevent loops
+    if (!isUpdating && compEl?.__pf_building_tabs) return;
+    if (compEl && !isUpdating) compEl.__pf_building_tabs = true;
+    
+    // CRITICAL: Read tabs-json from HTML element FIRST (before checking structure)
+    // This ensures we get the saved data even if attributes aren't set yet
+    let tabsJson = null;
+    if (compEl) {
+      tabsJson = compEl.getAttribute('tabs-json');
+      if (tabsJson) {
+        console.log('[PF] Found tabs-json in HTML element:', tabsJson);
+        comp.addAttributes({ 'tabs-json': tabsJson });
       }
-      if (compEl && !tabsDeleteBtn) {
-        // Delete button missing, add it
-        const deleteBtn = document.createElement('span');
-        deleteBtn.className = 'rb-del';
-        deleteBtn.setAttribute('data-role', 'rb-del');
-        deleteBtn.setAttribute('aria-label', 'Delete');
-        deleteBtn.title = 'Delete';
-        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-        deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
-        deleteBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          try {
-            const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-            if (editor && editor.Components) {
-              const view = editor.Components.getView(comp);
-              if (view && typeof view.onDelete === 'function') {
-                view.onDelete(e);
-              } else if (comp && typeof comp.remove === 'function') {
-                comp.remove();
-              }
-            } else if (comp && typeof comp.remove === 'function') {
-              comp.remove();
-            }
-          } catch (err) {
-            console.error('[PF] Error removing tabs component:', err);
-          }
-        });
-        compEl.insertBefore(deleteBtn, compEl.firstChild);
-        if (window.getComputedStyle(compEl).position === 'static') {
-          compEl.style.position = 'relative';
-        }
-      }
-      
-      // Also check for edit button
-      if (compEl) {
-        const existingEdit = compEl.querySelector(':scope > .rb-edit-tabs');
-        if (!existingEdit) {
-          const editBtn = document.createElement('span');
-          editBtn.className = 'rb-edit-tabs';
-          editBtn.setAttribute('data-role', 'rb-edit-tabs');
-          editBtn.title = 'Edit Tabs';
-          editBtn.textContent = '✎';
-          editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
-          
-          editBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (window.openTabsConfigModal) {
-              window.openTabsConfigModal(comp);
-            }
-          });
-          
-          if (compEl.firstChild) {
-            compEl.insertBefore(editBtn, compEl.firstChild);
-          } else {
-            compEl.appendChild(editBtn);
-          }
-        }
-      }
-      
-      // Restore state
-      addMissingIcons(comp);
-      attachTabClickHandlers(comp);
-      restoreActiveTabState(comp);
-      return;
     }
     
-    console.log('[PF] Tabs need rebuilding or are incomplete');
+    // If not in HTML, try attributes
+    if (!tabsJson) {
+      tabsJson = comp.getAttributes()['tabs-json'];
+      console.log('[PF] Found tabs-json in attributes:', tabsJson);
+    }
     
-    // Get existing tabs data or use defaults
+    // Get tabs data - NEVER use defaults if we have saved data
     let tabs = [];
-    let activeTabId = 'tab1';
-    
-    try {
-      const existingTabsJson = comp.getAttributes()['tabs-json'];
-      if (existingTabsJson) {
-        tabs = JSON.parse(existingTabsJson);
-        activeTabId = comp.getAttributes()['active-tab-id'] || tabs[0]?.id || 'tab1';
-        console.log('[PF] Using existing tabs:', tabs, 'active:', activeTabId);
-      } else {
-        tabs = [
-          { id: 'tab1', title: 'Tab 1' },
-          { id: 'tab2', title: 'Tab 2' }
-        ];
-        // Set initial attributes
-        comp.addAttributes({ 
-          'tabs-json': JSON.stringify(tabs), 
-          'active-tab-id': activeTabId 
-        });
+    if (tabsJson) {
+      try {
+        tabs = JSON.parse(tabsJson);
+        if (!Array.isArray(tabs) || tabs.length === 0) {
+          console.warn('[PF] tabs-json exists but is invalid or empty:', tabsJson);
+        }
+      } catch(e) {
+        console.error('[PF] Error parsing tabs-json:', e, 'tabsJson:', tabsJson);
       }
-    } catch(e) {
-      console.warn('[PF] Error parsing existing tabs, using defaults:', e);
-      tabs = [
-        { id: 'tab1', title: 'Tab 1' },
-        { id: 'tab2', title: 'Tab 2' }
-      ];
-      comp.addAttributes({ 
-        'tabs-json': JSON.stringify(tabs), 
-        'active-tab-id': activeTabId 
-      });
     }
     
-    // Only clear if no existing structure
-    if (!comp.getEl() || !comp.getEl().querySelector('.pf-tabs')) {
+    // Only use default if we truly have no saved data (new component)
+    if (!tabsJson || tabs.length === 0) {
+      console.log('[PF] No saved tabs found, using default for new component');
+      tabs = [{ id: 'tab1', title: 'Tab 1' }];
+      comp.addAttributes({ 'tabs-json': JSON.stringify(tabs), 'active-tab-id': tabs[0]?.id || 'tab1' });
+    }
+    
+    console.log('[PF] Using tabs:', tabs);
+    
+    // Skip if structure already exists (check both DOM and component tree)
+    if (!isUpdating) {
+      const hasDomStructure = compEl?.querySelector('.pf-tabs')?.querySelector('.pf-tabs-header')?.querySelector('.pf-tabs-body');
+      const hasComponentStructure = comp.components().find(c => {
+        const el = c.getEl();
+        return el?.classList?.contains('pf-tabs');
+      });
+      
+      if (hasDomStructure || hasComponentStructure) {
+        if (compEl) compEl.__pf_building_tabs = false;
+        addButtons(comp);
+        restoreActiveTabState(comp);
+        // Re-attach click handlers even if structure exists (important after reload)
+        attachTabClickHandlers(comp);
+        return;
+      }
+    }
+    
+    // Clear existing components before rebuilding
+    const existingTabsWrapper = comp.components().find(c => {
+      const el = c.getEl();
+      return el?.classList?.contains('pf-tabs');
+    });
+    if (existingTabsWrapper || isUpdating || !compEl?.querySelector('.pf-tabs')) {
       comp.components('');
     }
     
-    // Create the main tabs wrapper
+    // Create structure
     const tabsWrapper = comp.append('<div class="pf-tabs pf-interactive"></div>')[0];
-    
-    // Create header with tab buttons
     const header = tabsWrapper.append('<div class="pf-tabs-header"></div>')[0];
-    tabs.forEach((t, i) => {
-      const btn = header.append(`<span class="pf-tab-btn ${i === 0 ? 'active' : ''}" data-role="pf-tab-btn" data-tab-id="${t.id}">${t.title}</span>`)[0];
-      // Lock tab buttons from GrapesJS dragging, but allow custom drag for reordering
-      btn.set({
-        selectable: false,
-        hoverable: true,
-        draggable: false, // Prevent GrapesJS from dragging tab buttons out
-        droppable: false,
-        editable: false,
-        copyable: false,
-        highlightable: false
-      });
-      
-      // Add custom drag-and-drop for tab reordering within header
-      // Use setTimeout to ensure element is fully rendered and GrapesJS has finished
-      setTimeout(() => {
-        const btnEl = btn.getEl();
-        if (!btnEl) {
-          console.warn('[PF] Could not get element for tab button:', t.id);
-          return;
-        }
-        
-        // Get header DOM element (header is a GrapesJS component, not DOM)
-        const headerEl = header.getEl ? header.getEl() : null;
-        if (!headerEl) {
-          console.warn('[PF] Could not get header DOM element');
-          return;
-        }
-        
-        // Enable HTML5 drag for custom handling
-        btnEl.draggable = true;
-        btnEl.setAttribute('data-tab-id', t.id);
-        btnEl.style.cursor = 'grab';
-        btnEl.style.userSelect = 'none'; // Prevent text selection while dragging
-        
-        // Store reference to avoid duplicate handlers
-        if (btnEl.__pf_tab_drag_setup) {
-          console.log('[PF] Tab drag handlers already set up for:', t.id);
-          return;
-        }
-        btnEl.__pf_tab_drag_setup = true;
-        
-        const handleDragStart = (e) => {
-          e.stopPropagation(); // Prevent GrapesJS from handling
-          e.stopImmediatePropagation(); // Prevent other handlers
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', t.id);
-          e.dataTransfer.setData('application/x-tab-reorder', 'true'); // Custom type to identify tab reordering
-          btnEl.classList.add('dragging');
-          btnEl.style.opacity = '0.5';
-          console.log('[PF] Tab drag started:', t.id);
-        };
-        
-        const handleDragEnd = (e) => {
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          btnEl.classList.remove('dragging');
-          btnEl.style.opacity = '1';
-          
-          // Remove drag-over class from all buttons
-          headerEl.querySelectorAll('.pf-tab-btn').forEach(b => {
-            b.classList.remove('drag-over');
-          });
-          
-          // Don't check for drops outside header in dragend - that's handled in drop handler
-          // The dragend event fires even for successful drops
-          console.log('[PF] Tab drag ended');
-        };
-        
-        const handleDragOver = (e) => {
-          const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder') || 
-                              e.dataTransfer.types.includes('text/plain');
-          if (isTabReorder) {
-            // Only allow drag over within header
-            if (!headerEl.contains(e.target)) {
-              e.dataTransfer.dropEffect = 'none';
-              return;
-            }
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            e.dataTransfer.dropEffect = 'move';
-            btnEl.classList.add('drag-over');
-          }
-        };
-        
-        const handleDragLeave = (e) => {
-          e.stopPropagation();
-          btnEl.classList.remove('drag-over');
-        };
-        
-        const handleDrop = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          btnEl.classList.remove('drag-over');
-          
-          // Only allow drops within the header
-          if (!headerEl.contains(e.target)) {
-            console.log('[PF] Drop cancelled - outside header');
-            return;
-          }
-          
-          const draggedTabId = e.dataTransfer.getData('text/plain');
-          if (!draggedTabId || draggedTabId === t.id) {
-            console.log('[PF] Invalid drop:', { draggedTabId, currentId: t.id });
-            return;
-          }
-          
-          console.log('[PF] Tab drop:', { draggedTabId, targetId: t.id });
-          
-          // Find the dragged button
-          const draggedBtn = headerEl.querySelector(`[data-tab-id="${draggedTabId}"]`);
-          if (!draggedBtn) {
-            console.warn('[PF] Could not find dragged button:', draggedTabId);
-            return;
-          }
-          
-          // Get all tab buttons in CURRENT order (before any changes)
-          const allBtns = Array.from(headerEl.querySelectorAll('.pf-tab-btn'));
-          const draggedIndex = allBtns.indexOf(draggedBtn);
-          const targetIndex = allBtns.indexOf(btnEl);
-          
-          if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
-            console.log('[PF] Invalid indices:', { draggedIndex, targetIndex });
-            return;
-          }
-          
-          console.log('[PF] Reordering tabs:', { draggedIndex, targetIndex, draggedTabId, targetId: t.id });
-          
-          // Simple approach: Just reorder DOM, update JSON, and rebuild
-          // Reorder DOM elements directly
-          if (draggedIndex < targetIndex) {
-            btnEl.parentNode.insertBefore(draggedBtn, btnEl.nextSibling);
-          } else {
-            btnEl.parentNode.insertBefore(draggedBtn, btnEl);
-          }
-          
-          // Also reorder sections in DOM
-          const body = tabsWrapper.querySelector('.pf-tabs-body');
-          if (body) {
-            const allSections = Array.from(body.querySelectorAll('.pf-tab-section'));
-            const draggedSection = allSections.find(s => s.getAttribute('data-tab-id') === draggedTabId);
-            const targetSection = allSections.find(s => s.getAttribute('data-tab-id') === t.id);
-            if (draggedSection && targetSection) {
-              if (draggedIndex < targetIndex) {
-                targetSection.parentNode.insertBefore(draggedSection, targetSection.nextSibling);
-              } else {
-                targetSection.parentNode.insertBefore(draggedSection, targetSection);
-              }
-            }
-          }
-          
-          // Update tabs JSON to reflect new order
-          const tabsJson = pfParseTabsJson(comp.getAttributes()['tabs-json']);
-          const draggedTab = tabsJson.find(tab => tab.id === draggedTabId);
-          if (draggedTab) {
-            tabsJson.splice(draggedIndex, 1);
-            tabsJson.splice(targetIndex, 0, draggedTab);
-            comp.addAttributes({ 'tabs-json': pfStringifyTabsJson(tabsJson) });
-          }
-          
-          // Rebuild to sync with GrapesJS (this is the simplest way to ensure everything stays in sync)
-          setTimeout(() => {
-            const tabsWrapperEl = comp.getEl()?.querySelector('.pf-tabs');
-            if (tabsWrapperEl) {
-              const headerEl = tabsWrapperEl.querySelector('.pf-tabs-header');
-              const bodyEl = tabsWrapperEl.querySelector('.pf-tabs-body');
-              if (headerEl && bodyEl) {
-                // Store active tab
-                const activeTabId = comp.getAttributes()['active-tab-id'];
-                
-                // Remove structure
-                headerEl.remove();
-                bodyEl.remove();
-                const deleteBtn = tabsWrapperEl.querySelector('.rb-del');
-                const editBtn = tabsWrapperEl.querySelector('.rb-edit-tabs');
-                if (deleteBtn) deleteBtn.remove();
-                if (editBtn) editBtn.remove();
-                
-                // Rebuild with new order
-                buildWorkingTabs(comp);
-                
-                // Restore active tab
-                if (activeTabId) {
-                  setTimeout(() => {
-                    restoreActiveTabState(comp);
-                  }, 50);
-                }
-              }
-            }
-          }, 10);
-          
-          console.log('[PF] Tab reorder complete');
-        };
-        
-        // Attach handlers with capture phase to catch before GrapesJS
-        btnEl.addEventListener('dragstart', handleDragStart, true);
-        btnEl.addEventListener('dragend', handleDragEnd, true);
-        btnEl.addEventListener('dragover', handleDragOver, true);
-        btnEl.addEventListener('dragleave', handleDragLeave, true);
-        btnEl.addEventListener('drop', handleDrop, true);
-        
-        console.log('[PF] Tab drag handlers attached for:', t.id);
-      }, 150);
-    });
-    
-    // Also attach drop handler to the header itself to handle drops between tabs
-    setTimeout(() => {
-      const headerEl = header.getEl ? header.getEl() : null;
-      if (!headerEl) return;
-      
-      // Remove existing handler if any
-      if (headerEl.__pf_header_drop_handler) {
-        headerEl.removeEventListener('drop', headerEl.__pf_header_drop_handler, true);
-      }
-      
-      const handleHeaderDrop = (e) => {
-        // Only handle if this is a tab reorder drag
-        const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder') || 
-                            e.dataTransfer.types.includes('text/plain');
-        if (!isTabReorder) return;
-        
-        // Only handle if dropped directly on header (not on a button)
-        if (e.target.classList.contains('pf-tab-btn')) {
-          // Let the button's drop handler handle it
-          return;
-        }
-        
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        const draggedTabId = e.dataTransfer.getData('text/plain');
-        if (!draggedTabId) return;
-        
-        console.log('[PF] Header drop:', { draggedTabId, target: e.target });
-        
-        // Find the dragged button
-        const draggedBtn = headerEl.querySelector(`[data-tab-id="${draggedTabId}"]`);
-        if (!draggedBtn) return;
-        
-        // Get all tab buttons
-        const allBtns = Array.from(headerEl.querySelectorAll('.pf-tab-btn'));
-        const draggedIndex = allBtns.indexOf(draggedBtn);
-        
-        if (draggedIndex === -1) return;
-        
-        // Find insertion point based on mouse position
-        const dropX = e.clientX;
-        let insertIndex = allBtns.length;
-        
-        for (let i = 0; i < allBtns.length; i++) {
-          const btn = allBtns[i];
-          const rect = btn.getBoundingClientRect();
-          const btnCenterX = rect.left + rect.width / 2;
-          
-          if (dropX < btnCenterX) {
-            insertIndex = i;
-            break;
-          }
-        }
-        
-        // Don't reorder if it's the same position
-        if (insertIndex === draggedIndex || insertIndex === draggedIndex + 1) {
-          return;
-        }
-        
-        console.log('[PF] Reordering tab to header position:', { draggedIndex, insertIndex });
-        
-        // Update tabs JSON
-        const tabsJson = pfParseTabsJson(comp.getAttributes()['tabs-json']);
-        const draggedTab = tabsJson.find(tab => tab.id === draggedTabId);
-        if (!draggedTab) return;
-        
-        tabsJson.splice(draggedIndex, 1);
-        const newIndex = insertIndex > draggedIndex ? insertIndex - 1 : insertIndex;
-        tabsJson.splice(newIndex, 0, draggedTab);
-        
-        // Get GrapesJS components
-        const headerComp = comp.find('.pf-tabs-header')[0];
-        const bodyComp = comp.find('.pf-tabs-body')[0];
-        
-        if (headerComp && bodyComp) {
-          const headerChildren = headerComp.components().models || [];
-          const bodyChildren = bodyComp.components().models || [];
-          
-          const draggedBtnComp = headerChildren.find(c => {
-            const el = c.getEl();
-            return el && el.getAttribute('data-tab-id') === draggedTabId;
-          });
-          
-          const draggedSectionComp = bodyChildren.find(c => {
-            const el = c.getEl();
-            return el && el.getAttribute('data-tab-id') === draggedTabId;
-          });
-          
-          // Simple approach: Just reorder DOM, update JSON, and rebuild
-          // Reorder DOM elements directly
-          if (draggedIndex < insertIndex) {
-            const targetBtn = allBtns[insertIndex];
-            if (targetBtn) {
-              targetBtn.parentNode.insertBefore(draggedBtn, targetBtn.nextSibling);
-            }
-          } else {
-            const targetBtn = allBtns[insertIndex];
-            if (targetBtn) {
-              targetBtn.parentNode.insertBefore(draggedBtn, targetBtn);
-            }
-          }
-          
-          // Also reorder sections in DOM
-          const body = tabsWrapper.querySelector('.pf-tabs-body');
-          if (body) {
-            const allSections = Array.from(body.querySelectorAll('.pf-tab-section'));
-            const draggedSection = allSections.find(s => s.getAttribute('data-tab-id') === draggedTabId);
-            if (draggedSection) {
-              const targetSection = allSections[newIndex];
-              if (targetSection) {
-                if (draggedIndex < newIndex) {
-                  targetSection.parentNode.insertBefore(draggedSection, targetSection.nextSibling);
-                } else {
-                  targetSection.parentNode.insertBefore(draggedSection, targetSection);
-                }
-              }
-            }
-          }
-          
-          // Update JSON
-          comp.addAttributes({ 'tabs-json': pfStringifyTabsJson(tabsJson) });
-          
-          // Rebuild to sync with GrapesJS
-          setTimeout(() => {
-            const tabsWrapperEl = comp.getEl()?.querySelector('.pf-tabs');
-            if (tabsWrapperEl) {
-              const headerEl = tabsWrapperEl.querySelector('.pf-tabs-header');
-              const bodyEl = tabsWrapperEl.querySelector('.pf-tabs-body');
-              if (headerEl && bodyEl) {
-                const activeTabId = comp.getAttributes()['active-tab-id'];
-                headerEl.remove();
-                bodyEl.remove();
-                const deleteBtn = tabsWrapperEl.querySelector('.rb-del');
-                const editBtn = tabsWrapperEl.querySelector('.rb-edit-tabs');
-                if (deleteBtn) deleteBtn.remove();
-                if (editBtn) editBtn.remove();
-                buildWorkingTabs(comp);
-                if (activeTabId) {
-                  setTimeout(() => {
-                    restoreActiveTabState(comp);
-                  }, 50);
-                }
-              }
-            }
-          }, 10);
-          
-          console.log('[PF] Tab reordered to header position');
-        }
-      };
-      
-      headerEl.__pf_header_drop_handler = handleHeaderDrop;
-      headerEl.addEventListener('drop', handleHeaderDrop, true);
-      
-      // Also need dragover on header
-      const handleHeaderDragOver = (e) => {
-        const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder') || 
-                            e.dataTransfer.types.includes('text/plain');
-        if (isTabReorder && !e.target.classList.contains('pf-tab-btn')) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.dataTransfer.dropEffect = 'move';
-        }
-      };
-      
-      headerEl.addEventListener('dragover', handleHeaderDragOver, true);
-      
-      console.log('[PF] Header drop handler attached');
-    }, 200);
-    
-    // Also lock the header itself
-    header.set({
-      selectable: false,
-      hoverable: false,
-      draggable: false, // Prevent dragging header
-      droppable: false,
-      editable: false,
-      copyable: false,
-      highlightable: false
-    });
-    
-    // Lock the tabs wrapper
-    tabsWrapper.set({
-      selectable: false,
-      hoverable: false,
-      draggable: false, // Prevent dragging wrapper separately
-      droppable: false,
-      editable: false,
-      copyable: false,
-      highlightable: false
-    });
-    
-    // Attach click handlers to all tab buttons
-    attachTabClickHandlers(comp);
-    
-    // Create body with tab sections
     const body = tabsWrapper.append('<div class="pf-tabs-body"></div>')[0];
     
-    // Create tab sections as proper GrapesJS components
+    // Lock wrapper components
+    [tabsWrapper, header, body].forEach(c => c.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false }));
+    
+    // Create tabs
     tabs.forEach((t, i) => {
-      const section = body.append('<div class="pf-tab-section" data-role="pf-tab-section" data-tab-id="' + t.id + '"></div>')[0];
+      const btn = header.append(`<span class="pf-tab-btn ${i === 0 ? 'active' : ''}" data-tab-id="${t.id}">${t.title}</span>`)[0];
+      btn.set({ selectable: false, hoverable: true, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false });
       
-      // Set first tab as active
-      if (i === 0) {
-        section.addClass('active');
-      }
-      
-      // Configure section to accept drops
-      section.set({
-        droppable: true,
-        accept: ['record-field', 'record-partial'],
-        selectable: false,
-        hoverable: false,
-        highlightable: false,
-        draggable: false
-      });
-      
-      console.log('[PF] Tab section created:', { id: t.id, droppable: section.get('droppable') });
+      const section = body.append(`<div class="pf-tab-section ${i === 0 ? 'active' : ''}" data-role="pf-tab-section" data-tab-id="${t.id}"></div>`)[0];
+      section.set({ droppable: true, accept: ['record-field', 'record-partial'], selectable: false, hoverable: false, highlightable: false, draggable: false });
     });
     
-    // Configure tabs wrapper and body to NOT accept drops
-    tabsWrapper.set({
-      droppable: false,
-      accept: []
-    });
-    
-    body.set({
-      droppable: false,
-      accept: [],
-      selectable: false,
-      hoverable: false,
-      draggable: false, // Prevent dragging body
-      editable: false,
-      copyable: false,
-      highlightable: false
-    });
-    
-    // Add delete button as a direct child of the main component (not tabsWrapper)
-    // This ensures it shows on hover of the main component
-    const compEl = comp.getEl();
-    let deleteBtn = null;
-    if (compEl) {
-      // Remove any existing tabs delete button first (only direct children, not field buttons)
-      // Find the tabs container's delete button (direct child, not nested)
-      let tabsDeleteBtn = null;
-      const firstChild = compEl.firstElementChild;
-      if (firstChild && firstChild.classList.contains('rb-del')) {
-        tabsDeleteBtn = firstChild;
-      } else {
-        // Look through direct children only
-        Array.from(compEl.children).forEach(child => {
-          if (child.classList.contains('rb-del') && !tabsDeleteBtn) {
-            tabsDeleteBtn = child;
-          }
-        });
-      }
-      if (tabsDeleteBtn) {
-        tabsDeleteBtn.remove();
-      }
-      
-      // Create delete button in the main component's DOM
-      deleteBtn = document.createElement('span');
-      deleteBtn.className = 'rb-del';
-      deleteBtn.setAttribute('data-role', 'rb-del');
-      deleteBtn.setAttribute('aria-label', 'Delete');
-      deleteBtn.title = 'Delete';
-      deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-      deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
-      
-      // Add click handler
-      deleteBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-          const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-          if (editor && editor.Components) {
-            const view = editor.Components.getView(comp);
-            if (view && typeof view.onDelete === 'function') {
-              view.onDelete(e);
-            } else if (comp && typeof comp.remove === 'function') {
-              comp.remove();
-            }
-          } else if (comp && typeof comp.remove === 'function') {
-            comp.remove();
-          }
-        } catch (err) {
-          console.error('[PF] Error removing tabs component:', err);
-        }
-      });
-      
-      // Insert as first child of main component - ALWAYS at the very beginning
-      compEl.insertBefore(deleteBtn, compEl.firstChild);
-      
-      // Make sure component has position relative
-      if (window.getComputedStyle(compEl).position === 'static') {
-        compEl.style.position = 'relative';
-      }
-      
-      // Ensure component has pf-interactive class for CSS hover rules
-      if (!compEl.classList.contains('pf-interactive')) {
-        compEl.classList.add('pf-interactive');
-      }
-    }
-    
-    // Add edit button as a direct child of the main component
-    if (compEl) {
-      // Check for existing edit button as direct child only
-      let existingEdit = null;
-      Array.from(compEl.children).forEach(child => {
-        if (child.classList.contains('rb-edit-tabs') && !existingEdit) {
-          existingEdit = child;
-        }
-      });
-      if (existingEdit) {
-        existingEdit.remove();
-      }
-      
-      const editBtn = document.createElement('span');
-      editBtn.className = 'rb-edit-tabs';
-      editBtn.setAttribute('data-role', 'rb-edit-tabs');
-      editBtn.title = 'Edit Tabs';
-      editBtn.textContent = '✎';
-      editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
-      
-      editBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (window.openTabsConfigModal) {
-          window.openTabsConfigModal(comp);
-        }
-      });
-      
-      if (compEl.firstChild) {
-        compEl.insertBefore(editBtn, compEl.firstChild);
-      } else {
-        compEl.appendChild(editBtn);
-      }
-    }
-    
-    // Keep tabs wrapper locked (don't make it selectable - only the main container should be)
-    // tabsWrapper.set({
-    //   selectable: true,
-    //   hoverable: true,
-    //   highlightable: true
-    // });
-    
-    // CRITICAL: Ensure the main component itself has the right configuration
-    comp.set({
-      droppable: false, // Main component doesn't accept drops
-      selectable: true,
-      hoverable: true,
-      highlightable: true
-    });
-    
-    // Debug: Log the final structure
-    console.log('[PF] Tabs component built successfully');
-    console.log('[PF] Tabs wrapper element:', tabsWrapper.getEl());
-    console.log('[PF] Tabs wrapper classes:', tabsWrapper.getEl()?.className);
-    console.log('[PF] Delete button element:', deleteBtn);
-    const editBtnComp = tabsWrapper.find('[data-role="rb-edit-tabs"]')[0];
-    console.log('[PF] Edit button element:', editBtnComp ? editBtnComp.getEl() : null);
-    
-    // CRITICAL: After building, ensure all functionality is properly attached
-    // This ensures that restored tabs work exactly like new tabs
+    // Attach click handlers after all tabs are created
     setTimeout(() => {
-      try {
-        // Re-attach click handlers (in case they were lost during rebuild)
-        attachTabClickHandlers(comp);
-        
-        // Restore active tab state
-        restoreActiveTabState(comp);
-        
-        // Ensure proper component configuration is maintained
-        const finalTabsWrapper = comp.getEl()?.querySelector('.pf-tabs');
-        if (finalTabsWrapper) {
-          // Force the component to recognize its new structure
-          comp.trigger('change:components');
-          
-          console.log('[PF] Tabs component fully configured and ready');
-        }
-      } catch(e) {
-        console.warn('[PF] Error in post-build configuration:', e);
-      }
-    }, 50);
+      attachTabClickHandlers(comp);
+    }, 100);
+    
+    // Add delete/edit buttons
+    addButtons(comp);
+    
+    // Configure main component
+    comp.set({ droppable: false, selectable: true, hoverable: true, highlightable: true });
+    
+    // Clear flag and restore state
+    setTimeout(() => {
+      if (compEl) compEl.__pf_building_tabs = false;
+      restoreActiveTabState(comp);
+      // Ensure handlers are attached
+      attachTabClickHandlers(comp);
+    }, 150);
   }
 
-  // Function to restore the active tab state
-  function restoreActiveTabState(comp) {
-    try {
-      let activeTabId = comp.getAttributes()['active-tab-id'];
-      
-      const tabsWrapper = comp.getEl().querySelector('.pf-tabs');
-      if (!tabsWrapper) return;
-      
-      const header = tabsWrapper.querySelector('.pf-tabs-header');
-      const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
-      
-      if (!header) return;
-      
-      // If no active tab is set, default to the first tab
-      if (!activeTabId) {
-        const firstBtn = header.querySelector('.pf-tab-btn');
-        if (firstBtn) {
-          activeTabId = firstBtn.getAttribute('data-tab-id');
-          // Update the component attribute
-          comp.addAttributes({ 'active-tab-id': activeTabId });
-          console.log('[PF] No active tab set, defaulting to first tab:', activeTabId);
-        }
-      }
-      
-      if (!activeTabId) return;
-      
-      // Remove active from all buttons and sections
-      const allBtns = header.querySelectorAll('.pf-tab-btn');
-      allBtns.forEach(b => b.classList.remove('active'));
-      allSections.forEach(s => s.classList.remove('active'));
-      
-      // Add active to the correct button and section
-      const activeBtn = header.querySelector(`[data-tab-id="${activeTabId}"]`);
-      const activeSection = tabsWrapper.querySelector(`[data-role="pf-tab-section"][data-tab-id="${activeTabId}"]`);
-      
-      if (activeBtn) {
-        activeBtn.classList.add('active');
-        console.log('[PF] Restored active button:', activeTabId);
-      }
-      
-      if (activeSection) {
-        activeSection.classList.add('active');
-        console.log('[PF] Restored active section:', activeTabId);
-      }
-      
-      console.log('[PF] Active tab state restored:', activeTabId);
-    } catch(e) {
-      console.warn('[PF] Error restoring active tab state:', e);
+  function addButtons(comp) {
+    const compEl = comp.getEl();
+    if (!compEl) return;
+    
+    // Delete button
+    if (!compEl.querySelector(':scope > .rb-del')) {
+      const btn = document.createElement('span');
+      btn.className = 'rb-del';
+      btn.setAttribute('data-role', 'rb-del');
+      btn.title = 'Delete';
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+      btn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 99999; pointer-events: auto;';
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+          const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+        const view = editor?.Components?.getView(comp);
+        if (view?.onDelete) view.onDelete(e);
+        else comp.remove();
+      };
+      compEl.insertBefore(btn, compEl.firstChild);
+      if (window.getComputedStyle(compEl).position === 'static') compEl.style.position = 'relative';
+    }
+    
+    // Edit button
+    if (!compEl.querySelector(':scope > .rb-edit-tabs')) {
+      const btn = document.createElement('span');
+      btn.className = 'rb-edit-tabs';
+      btn.setAttribute('data-role', 'rb-edit-tabs');
+      btn.title = 'Edit Tabs';
+      btn.textContent = '✎';
+      btn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto;';
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.openTabsConfigModal) window.openTabsConfigModal(comp);
+      };
+      compEl.insertBefore(btn, compEl.firstChild);
     }
   }
-  
-  // Function to attach click handlers to tab buttons
+
   function attachTabClickHandlers(comp) {
     try {
-      const tabsWrapper = comp.getEl().querySelector('.pf-tabs');
-      if (!tabsWrapper) return;
-      
-      const header = tabsWrapper.querySelector('.pf-tabs-header');
+      const wrapper = comp.getEl()?.querySelector('.pf-tabs');
+      if (!wrapper) return;
+      const header = wrapper.querySelector('.pf-tabs-header');
       if (!header) return;
       
-      const tabButtons = header.querySelectorAll('.pf-tab-btn');
-      console.log('[PF] Attaching click handlers to', tabButtons.length, 'tab buttons');
-      
-      // Always re-attach handlers (remove old ones first)
-      tabButtons.forEach((btn) => {
-        if (btn.__pf_tab_click_listener) {
-          btn.removeEventListener('click', btn.__pf_tab_click_listener);
-          btn.__pf_tab_click_listener = null;
+      header.querySelectorAll('.pf-tab-btn').forEach(btn => {
+        const tabId = btn.getAttribute('data-tab-id');
+        if (!tabId) return;
+        
+        // Remove old handler if exists
+        if (btn.__pf_click) {
+          btn.removeEventListener('click', btn.__pf_click);
         }
-      });
-      
-      tabButtons.forEach((btn, index) => {
-        // Ensure no duplicate listeners by removing existing ones (if any)
-        if (btn.__pf_tab_click_listener) {
-          btn.removeEventListener('click', btn.__pf_tab_click_listener);
-        }
-
-        const clickHandler = (e) => {
+        
+        // Create new handler
+        const handler = (e) => {
           e.preventDefault();
           e.stopPropagation();
-          
-          const tabId = btn.getAttribute('data-tab-id');
-          console.log('[PF] Tab clicked:', tabId);
-          console.log('[PF] Previous active tab:', comp.getAttributes()['active-tab-id']);
-          
-          // Set flag to prevent re-rendering during tab switch
-          comp.addAttributes({ '_switchingTabs': true });
-          
-          // Update active tab
           comp.addAttributes({ 'active-tab-id': tabId });
-          console.log('[PF] Updated active tab to:', tabId);
-          
-          // Update UI - remove active from all buttons and sections
-          const allBtns = header.querySelectorAll('.pf-tab-btn');
-          const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
-          
-          console.log('[PF] Found buttons:', allBtns.length, 'sections:', allSections.length);
-          
-          allBtns.forEach(b => b.classList.remove('active'));
-          allSections.forEach(s => s.classList.remove('active'));
-          
+          // Remove active from all buttons
+          header.querySelectorAll('.pf-tab-btn').forEach(b => b.classList.remove('active'));
+          // Remove active from all sections
+          wrapper.querySelectorAll('[data-role="pf-tab-section"]').forEach(s => {
+            if (s.classList.contains('pf-tab-section')) {
+              s.classList.remove('active');
+            }
+          });
           // Add active to clicked button
           btn.classList.add('active');
-          console.log('[PF] Button activated:', tabId);
-          
-          // Find and activate the corresponding section
-          const section = tabsWrapper.querySelector(`[data-role="pf-tab-section"][data-tab-id="${tabId}"]`);
-          if (section) {
+          // Add active to corresponding section
+          const section = wrapper.querySelector(`[data-role="pf-tab-section"][data-tab-id="${tabId}"]`);
+          if (section && section.classList.contains('pf-tab-section')) {
             section.classList.add('active');
-            console.log('[PF] Tab section activated:', tabId);
-            
-            // Verify the change was applied
-            console.log('[PF] Section active state:', section.classList.contains('active'));
-            console.log('[PF] All sections:', Array.from(tabsWrapper.querySelectorAll('.pf-tab-section')).map(s => ({
-              id: s.getAttribute('data-tab-id'),
-              active: s.classList.contains('active'),
-              visible: s.style.display !== 'none'
-            })));
-          } else {
-            console.warn('[PF] Could not find section for tab:', tabId);
-          }
-          
-          // Update the DOM directly instead of using GrapesJS render
-          console.log('[PF] DOM updated successfully');
-          
-          // Clear the switching flag and ensure active tab is set
-          try {
-            comp.addAttributes({ 
-              'active-tab-id': tabId,
-              '_switchingTabs': false 
-            });
-            console.log('[PF] Tab switch completed successfully');
-          } catch(e) {
-            console.warn('[PF] Could not update component attributes:', e);
           }
         };
-
-        btn.addEventListener('click', clickHandler);
-        btn.__pf_tab_click_listener = clickHandler; // Store reference to remove later if needed
+        
+        btn.__pf_click = handler;
+        btn.addEventListener('click', handler);
       });
-      
-      // Don't set a flag - always allow re-attachment after reordering
-      console.log('[PF] Click handlers attached successfully');
     } catch(e) {
       console.warn('[PF] Error attaching click handlers:', e);
     }
   }
-  
-  // Function to add missing icons without rebuilding the entire structure
-  function addMissingIcons(comp) {
+
+  function restoreActiveTabState(comp) {
     try {
-      const compEl = comp.getEl();
-      if (!compEl) return;
+      const wrapper = comp.getEl()?.querySelector('.pf-tabs');
+      if (!wrapper) return;
+      const header = wrapper.querySelector('.pf-tabs-header');
+      if (!header) return;
       
-      // Add delete button if missing - check for direct child only, not nested field buttons
-      // Field delete buttons are inside .pf-tab-section, so we only check direct children
-      let tabsDeleteBtn = null;
-      const firstChild = compEl.firstElementChild;
-      if (firstChild && firstChild.classList.contains('rb-del')) {
-        tabsDeleteBtn = firstChild;
-      } else {
-        // Look through direct children only (not nested inside .pf-tabs or .pf-tab-section)
-        Array.from(compEl.children).forEach(child => {
-          if (child.classList.contains('rb-del') && !tabsDeleteBtn) {
-            tabsDeleteBtn = child;
-          }
-        });
-      }
-      if (!tabsDeleteBtn) {
-        const deleteBtn = document.createElement('span');
-        deleteBtn.className = 'rb-del';
-        deleteBtn.setAttribute('data-role', 'rb-del');
-        deleteBtn.setAttribute('aria-label', 'Delete');
-        deleteBtn.title = 'Delete';
-        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-        deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
-        deleteBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          try {
-            const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-            if (editor && editor.Components) {
-              const view = editor.Components.getView(comp);
-              if (view && typeof view.onDelete === 'function') {
-                view.onDelete(e);
-              } else if (comp && typeof comp.remove === 'function') {
-                comp.remove();
-              }
-            } else if (comp && typeof comp.remove === 'function') {
-              comp.remove();
-            }
-          } catch (err) {
-            console.error('[PF] Error removing tabs component:', err);
-          }
-        });
-        if (compEl.firstChild) {
-          compEl.insertBefore(deleteBtn, compEl.firstChild);
-        } else {
-          compEl.appendChild(deleteBtn);
-        }
-        if (window.getComputedStyle(compEl).position === 'static') {
-          compEl.style.position = 'relative';
+      let activeTabId = comp.getAttributes()['active-tab-id'];
+      if (!activeTabId) {
+        const firstBtn = header.querySelector('.pf-tab-btn');
+        if (firstBtn) {
+          activeTabId = firstBtn.getAttribute('data-tab-id');
+          comp.addAttributes({ 'active-tab-id': activeTabId });
         }
       }
       
-      // Add edit button if missing - check for direct child only
-      let tabsEditBtn = null;
-      Array.from(compEl.children).forEach(child => {
-        if (child.classList.contains('rb-edit-tabs') && !tabsEditBtn) {
-          tabsEditBtn = child;
-        }
-      });
-      if (!tabsEditBtn) {
-        const editBtn = document.createElement('span');
-        editBtn.className = 'rb-edit-tabs';
-        editBtn.setAttribute('data-role', 'rb-edit-tabs');
-        editBtn.title = 'Edit Tabs';
-        editBtn.textContent = '✎';
-        editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
-        editBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (window.openTabsConfigModal) {
-            window.openTabsConfigModal(comp);
+      if (activeTabId) {
+        // Remove active from all buttons
+        header.querySelectorAll('.pf-tab-btn').forEach(b => b.classList.remove('active'));
+        // Remove active from all sections (be specific)
+        wrapper.querySelectorAll('[data-role="pf-tab-section"]').forEach(s => {
+          if (s.classList.contains('pf-tab-section')) {
+            s.classList.remove('active');
           }
         });
-        if (compEl.firstChild) {
-          compEl.insertBefore(editBtn, compEl.firstChild);
-        } else {
-          compEl.appendChild(editBtn);
+        // Add active to correct button
+        const activeBtn = header.querySelector(`.pf-tab-btn[data-tab-id="${activeTabId}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        // Add active to correct section
+        const activeSection = wrapper.querySelector(`[data-role="pf-tab-section"][data-tab-id="${activeTabId}"]`);
+        if (activeSection && activeSection.classList.contains('pf-tab-section')) {
+        activeSection.classList.add('active');
         }
       }
-      
-      console.log('[PF] Missing icons added successfully');
-    } catch(e) {
-      console.warn('[PF] Error adding missing icons:', e);
+          } catch(e) {
+      console.warn('[PF] Error restoring active tab:', e);
     }
   }
-  
-  // Helper functions for tabs
+
   function pfGenerateId(prefix = 't') { 
     return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`; 
   }
@@ -990,81 +251,6 @@
     try { return JSON.stringify(arr || []); } catch(_) { return '[]'; } 
   }
 
-  // Handle component drops into tab sections
-  function handleTabSectionDrop(component, tabSection) {
-    try {
-      console.log('[PF] Handling drop into tab section:', { component, tabSection });
-      
-      // Ensure the component is properly configured
-      if (component.set) {
-        component.set({
-          selectable: true,
-          hoverable: true,
-          highlightable: true,
-          draggable: true,
-          droppable: false,
-          copyable: false
-        });
-      }
-      
-      // Add delete button if it doesn't exist
-      const el = component.getEl();
-      if (el && !el.querySelector('.rb-del')) {
-        const deleteBtn = document.createElement('span');
-        deleteBtn.className = 'rb-del';
-        deleteBtn.setAttribute('data-role', 'rb-del');
-        deleteBtn.setAttribute('title', 'Delete');
-        deleteBtn.setAttribute('aria-label', 'Delete');
-        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-        deleteBtn.style.cssText = `
-          position: absolute;
-          top: 4px;
-          right: 6px;
-          background: rgba(0,0,0,0.7);
-          color: #fff;
-          border-radius: 12px;
-          width: 22px;
-          height: 22px;
-          line-height: 22px;
-          text-align: center;
-          font-size: 12px;
-          cursor: pointer;
-          z-index: 9999;
-          display: none;
-        `;
-        
-        // Show on hover/selection
-        el.addEventListener('mouseenter', () => deleteBtn.style.display = 'inline-flex');
-        el.addEventListener('mouseleave', () => deleteBtn.style.display = 'none');
-        
-        // Handle delete - make sure we remove the field, not the tab section
-        deleteBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          try {
-            // component should be the field, but double-check
-            if (component && typeof component.remove === 'function') {
-          component.remove();
-            } else if (component && component.model && typeof component.model.remove === 'function') {
-              component.model.remove();
-            } else {
-              console.warn('[PF] Could not remove field component', { component });
-            }
-          } catch (err) {
-            console.error('[PF] Error removing field component:', err);
-          }
-        });
-        
-        el.appendChild(deleteBtn);
-      }
-      
-      console.log('[PF] Component successfully configured in tab section');
-    } catch(e) {
-      console.warn('[PF] Tab section drop handler error:', e);
-    }
-  }
-
-  // Tabs component definition
   function defineTabsComponent(editor) {
     editor.DomComponents.addType('record-tabs', {
       model: {
@@ -1080,85 +266,35 @@
           selectable: true,
           hoverable: true,
           highlightable: true,
-          badgable: false,
-          toolbar: [],
-          components: '',
-          // Ensure the component can be selected and interacted with
-          lockInnerComponents: false,
-          // Make sure the component itself is interactive
-          interactive: true
+          components: ''
         },
         toHTML(opts = {}) {
-          // Get the actual DOM element to ensure we capture the built structure
           const el = this.getEl();
-          if (!el) {
-            // No element yet, use default
-            return this.constructor.prototype.toHTML.call(this, opts);
-          }
+          if (!el) return this.constructor.prototype.toHTML.call(this, opts);
           
-          // Check if tabs are built
           const tabsWrapper = el.querySelector('.pf-tabs');
-          if (tabsWrapper && tabsWrapper.querySelector('.pf-tabs-header')) {
-            // Tabs are built, get from DOM
+          if (!tabsWrapper) return this.constructor.prototype.toHTML.call(this, opts);
+          
             const attrs = this.getAttributes();
             let html = '<div';
-            
-            // Add all important attributes
-            Object.keys(attrs).forEach(key => {
-              if (key === 'tabs-json' || key === 'active-tab-id' || key === 'data-comp-kind' || key === 'data-comp-id') {
+          ['tabs-json', 'active-tab-id', 'data-comp-kind', 'data-comp-id'].forEach(key => {
                 const val = attrs[key];
                 if (val != null && val !== '') {
                   html += ` ${key}="${String(val).replace(/"/g, '&quot;').replace(/&/g, '&amp;')}"`;
-                }
               }
             });
-            
-            // Add classes
             const classes = this.get('classes').map(c => c.get('name')).join(' ');
-            if (classes) {
-              html += ` class="${classes}"`;
-            }
+          if (classes) html += ` class="${classes}"`;
             html += '>';
             
-            // Get the built tabs structure from DOM (this includes all children)
-            html += tabsWrapper.outerHTML;
-            html += '</div>';
-            
-            console.log('[PF] Tabs toHTML: returning HTML with tabs structure, length:', html.length);
-            return html;
-          } else {
-            // Tabs not built yet, try to get from components
-            console.log('[PF] Tabs not built in toHTML, using component serialization');
-            const children = this.components();
-            const attrs = this.getAttributes();
-            let html = '<div';
-            
-            Object.keys(attrs).forEach(key => {
-              if (key === 'tabs-json' || key === 'active-tab-id' || key === 'data-comp-kind' || key === 'data-comp-id') {
-                const val = attrs[key];
-                if (val != null && val !== '') {
-                  html += ` ${key}="${String(val).replace(/"/g, '&quot;').replace(/&/g, '&amp;')}"`;
-                }
-              }
-            });
-            
-            const classes = this.get('classes').map(c => c.get('name')).join(' ');
-            if (classes) {
-              html += ` class="${classes}"`;
-            }
-            html += '>';
-            
-            // Serialize children
-            if (children && children.length > 0) {
-              children.forEach(comp => {
-                if (comp && comp.toHTML) {
-                  html += comp.toHTML(opts);
-                }
-              });
+          const tabsWrapperComp = this.components().find(c => c.getEl()?.classList?.contains('pf-tabs'));
+            if (tabsWrapperComp) {
+                html += tabsWrapperComp.toHTML(opts);
+            } else {
+              html += tabsWrapper.outerHTML;
             }
             html += '</div>';
             return html;
-          }
         }
       },
       view: {
@@ -1167,376 +303,97 @@
           'click [data-role="rb-edit-tabs"]': 'onEdit'
         },
         onRender() {
-          try {
-            // Check if we're in the middle of a tab switch to prevent re-rendering
-            if (this.model.get('_switchingTabs')) {
-              console.log('[PF] Tabs component rendering during switch, skipping');
-              return;
-            }
-            
-            console.log('[PF] Tabs component rendering, model:', this.model);
+          if (this.model.get('_switchingTabs') || this.model.getAttributes()?.['_updating-tabs'] === 'true') return;
+          
+          // Check if tabs are already built in component tree
+          const existingTabs = this.model.components().find(c => {
+            const el = c.getEl();
+            return el?.classList?.contains('pf-tabs');
+          });
+          if (existingTabs) return;
+          
             buildWorkingTabs(this.model);
-          } catch(e) { 
-            console.warn('[PF] Tabs render error:', e); 
-          }
         },
         onDelete(e) { 
           e.preventDefault(); 
           e.stopPropagation(); 
-          try { this.model.remove(); } catch(_) {} 
+          this.model.remove();
         },
         onEdit(e) {
           e.preventDefault();
           e.stopPropagation();
-          try {
-            // Open the edit modal from the main builder
-            if (window.openTabsConfigModal) {
-              window.openTabsConfigModal(this.model);
-            } else {
-              console.log('[PF] Edit tabs clicked - modal function not available');
-            }
-          } catch(_) {}
+          if (window.openTabsConfigModal) window.openTabsConfigModal(this.model);
         }
       }
     });
     
-    // Add runtime CSS and JavaScript to the editor's CSS
-    const runtimeCSS = `
-/* RUNTIME: Tabs JavaScript and CSS */
-// Runtime tabs functionality - ONLY runs on rendered pages, not in builder
-(function() {
-  function initTabs() {
-    // Skip if we're in the builder (GrapesJS iframe or builder page)
-    // Check for builder indicators more carefully
-    const isBuilder = (window.parent !== window && window.parent.grapesjs) ||
-                      document.getElementById('gjs') ||
-                      document.querySelector('.gjs-editor') ||
-                      window.location.pathname.includes('/record_layouts/builder');
-    
-    if (isBuilder) {
-      console.log('[PF Runtime] Skipping tabs init - in builder');
-      return;
-    }
-    
-    console.log('[PF Runtime] Initializing tabs on rendered page');
-    
-  // Find all tabs components on the page
-  const tabsContainers = document.querySelectorAll('.pf-tabs-container');
-  
-  tabsContainers.forEach(container => {
-      // Skip if already initialized
-      if (container.__pf_tabs_initialized) return;
-      container.__pf_tabs_initialized = true;
-      
-    const tabsWrapper = container.querySelector('.pf-tabs');
-    if (!tabsWrapper) return;
-    
-    const header = tabsWrapper.querySelector('.pf-tabs-header');
-      if (!header) return;
-      
-    const tabButtons = header.querySelectorAll('.pf-tab-btn');
-    
-    // Attach click handlers to tab buttons
-    tabButtons.forEach(btn => {
-        // Skip if button already has builder handler (check for __pf_tab_click_listener)
-        if (btn.__pf_tab_click_listener) {
-          console.log('[PF Runtime] Tab button has builder handler, skipping runtime handler');
-          return;
-        }
-        
-        // Remove existing runtime listener if any
-        if (btn.__pf_runtime_click_listener) {
-          btn.removeEventListener('click', btn.__pf_runtime_click_listener);
-        }
-        
-        const clickHandler = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const tabId = this.getAttribute('data-tab-id');
-        console.log('[PF Runtime] Tab clicked:', tabId);
-        
-        // Remove active from all buttons and sections
-        const allBtns = header.querySelectorAll('.pf-tab-btn');
-        const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
-        
-        allBtns.forEach(b => b.classList.remove('active'));
-        allSections.forEach(s => s.classList.remove('active'));
-        
-        // Add active to clicked button
-        this.classList.add('active');
-        
-        // Find and activate the corresponding section
-        const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
-        if (section) {
-          section.classList.add('active');
-          console.log('[PF Runtime] Tab section activated:', tabId);
-        }
-        };
-        
-        btn.addEventListener('click', clickHandler);
-        btn.__pf_runtime_click_listener = clickHandler;
-    });
-    
-    // Set first tab as active by default if none is active
-    const activeBtn = header.querySelector('.pf-tab-btn.active');
-    if (!activeBtn && tabButtons.length > 0) {
-      const firstBtn = tabButtons[0];
-      const firstTabId = firstBtn.getAttribute('data-tab-id');
-      
-      firstBtn.classList.add('active');
-      const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
-      if (firstSection) {
-        firstSection.classList.add('active');
-      }
-    }
-  });
-  }
-  
-  // Run immediately if DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTabs);
-  } else {
-    initTabs();
-  }
-  
-  // Also run on Turbo navigation events
-  if (typeof Turbo !== 'undefined') {
-    document.addEventListener('turbo:load', initTabs);
-    document.addEventListener('turbo:frame-load', initTabs);
-  }
-})();
-
-// Runtime tabs CSS
-.pf-tabs-container {
-  position: relative;
-}
-
-.pf-tabs {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.pf-tabs-header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #ddd;
-  display: flex;
-}
-
-.pf-tab-btn {
-  padding: 8px 16px;
-  cursor: pointer;
-  border-right: 1px solid #ddd;
-  background: #f8f9fa;
-  transition: background-color 0.2s;
-}
-
-.pf-tab-btn:hover {
-  background: #e9ecef;
-}
-
-.pf-tab-btn.active {
-  background: #fff;
-  border-bottom: 2px solid #007bff;
-  margin-bottom: -1px;
-}
-
-.pf-tabs-body {
-  background: #fff;
-  padding: 16px;
-}
-
-.pf-tab-section {
-  display: none;
-}
-
-.pf-tab-section.active {
-  display: block;
-}
-
-/* Remove blue outlines on hover for runtime */
-.pf-tabs-container:hover,
-.pf-tabs-container:focus,
-.pf-tabs-container:active {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.pf-tabs-container *:hover,
-.pf-tabs-container *:focus,
-.pf-tabs-container *:active {
-  outline: none !important;
-  box-shadow: none !important;
-}
+    // Inject runtime CSS
+    const style = document.createElement('style');
+    style.textContent = `
+.pf-tabs-container { position: relative; }
+.pf-tabs { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+.pf-tabs-header { background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; }
+.pf-tab-btn { padding: 8px 16px; cursor: pointer; border-right: 1px solid #ddd; background: #f8f9fa; transition: background-color 0.2s; }
+.pf-tab-btn:hover { background: #e9ecef; }
+.pf-tab-btn.active { background: #fff; border-bottom: 2px solid #007bff; margin-bottom: -1px; }
+.pf-tabs-body { background: #fff; padding: 16px; }
+.pf-tab-section { display: none; }
+.pf-tab-section.active { display: block; }
 `;
-    
-    // Inject the runtime CSS into the editor
-    const styleElement = document.createElement('style');
-    styleElement.textContent = runtimeCSS;
-    document.head.appendChild(styleElement);
-    
-    console.log('[PF] Runtime tabs CSS and JavaScript injected into editor');
+    document.head.appendChild(style);
   }
 
-  // Flag to prevent infinite loops
-  let isRestoring = false;
-  
-  // Function to restore tabs after loading a saved layout
-  function restoreTabsAfterLoad(editor) {
-    // Prevent infinite loops
-    if (isRestoring) {
-      console.log('[PF] Already restoring, skipping duplicate call');
-      return;
-    }
-    
-    console.log('[PF] Restoring tabs after load...');
-    isRestoring = true;
-    
-    // Check if editor is properly initialized
-    if (!editor || !editor.DomComponents || !editor.DomComponents.getWrapper) {
-      console.warn('[PF] Editor not properly initialized, skipping restore');
-      isRestoring = false;
-      return;
-    }
-    
-    try {
-      // Try multiple selectors to find tabs components
-      let tabsComponents = editor.DomComponents.getWrapper().find('[data-comp-kind="record-tabs"]');
-      if (!tabsComponents || tabsComponents.length === 0) {
-        tabsComponents = editor.DomComponents.getWrapper().find('.pf-tabs-container');
-      }
-      if (!tabsComponents || tabsComponents.length === 0) {
-        tabsComponents = editor.DomComponents.getWrapper().find('.pf-tabs');
-      }
-      
-      console.log('[PF] Found tabs components to restore:', tabsComponents ? tabsComponents.length : 0);
-      
-      if (tabsComponents && tabsComponents.length > 0) {
-        tabsComponents.forEach(comp => {
-          console.log('[PF] Restoring tabs component:', comp);
-          console.log('[PF] Component element:', comp.getEl());
-          console.log('[PF] Component attributes:', comp.getAttributes());
-          
-          // Force a rebuild to ensure proper structure
-          setTimeout(() => {
-            buildWorkingTabs(comp);
-          }, 100);
-        });
-      } else {
-        console.log('[PF] No tabs components found to restore');
-      }
-    } catch (error) {
-      console.warn('[PF] Error during tabs restore:', error);
-    } finally {
-      // Reset flag after a delay to allow for any pending operations
-      setTimeout(() => {
-        isRestoring = false;
-      }, 500);
-    }
-  }
-  
-  // Function to get runtime CSS and JavaScript for saving
   function getRuntimeCode() {
     return `/* RUNTIME: Tabs JavaScript and CSS */
 // Runtime tabs functionality - ONLY runs on rendered pages, not in builder
 (function() {
   function initTabs() {
-    // Skip if we're in the builder (GrapesJS iframe or builder page)
-    // Check for builder indicators more carefully
-    const isBuilder = (window.parent !== window && window.parent.grapesjs) ||
-                      document.getElementById('gjs') ||
-                      document.querySelector('.gjs-editor') ||
-                      window.location.pathname.includes('/record_layouts/builder');
-    
-    if (isBuilder) {
-      console.log('[PF Runtime] Skipping tabs init - in builder');
-      return;
-    }
-    
-    console.log('[PF Runtime] Initializing tabs on rendered page');
-    
-  // Find all tabs components on the page
-  const tabsContainers = document.querySelectorAll('.pf-tabs-container');
-  
-  tabsContainers.forEach(container => {
-      // Skip if already initialized
+    const isBuilder = (window.parent !== window && window.parent.grapesjs) || document.getElementById('gjs') || window.location.pathname.includes('/record_layouts/builder');
+    if (isBuilder) return;
+    document.querySelectorAll('.pf-tabs-container').forEach(container => {
       if (container.__pf_tabs_initialized) return;
       container.__pf_tabs_initialized = true;
-      
-    const tabsWrapper = container.querySelector('.pf-tabs');
-    if (!tabsWrapper) return;
-    
-    const header = tabsWrapper.querySelector('.pf-tabs-header');
+      const wrapper = container.querySelector('.pf-tabs');
+      const header = wrapper?.querySelector('.pf-tabs-header');
       if (!header) return;
-      
-    const tabButtons = header.querySelectorAll('.pf-tab-btn');
-    
-    // Attach click handlers to tab buttons
-    tabButtons.forEach(btn => {
-        // Skip if button already has builder handler (check for __pf_tab_click_listener)
-        if (btn.__pf_tab_click_listener) {
-          console.log('[PF Runtime] Tab button has builder handler, skipping runtime handler');
-          return;
-        }
-        
-        // Remove existing runtime listener if any
-        if (btn.__pf_runtime_click_listener) {
-          btn.removeEventListener('click', btn.__pf_runtime_click_listener);
-        }
-        
-        const clickHandler = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const tabId = this.getAttribute('data-tab-id');
-        console.log('[PF Runtime] Tab clicked:', tabId);
-        
-        // Remove active from all buttons and sections
-        const allBtns = header.querySelectorAll('.pf-tab-btn');
-        const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
-        
-        allBtns.forEach(b => b.classList.remove('active'));
-        allSections.forEach(s => s.classList.remove('active'));
-        
-        // Add active to clicked button
-        this.classList.add('active');
-        
-        // Find and activate the corresponding section
-        const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
-        if (section) {
-          section.classList.add('active');
-          console.log('[PF Runtime] Tab section activated:', tabId);
-        }
+      header.querySelectorAll('.pf-tab-btn').forEach(btn => {
+        if (btn.__pf_runtime_click) return;
+        btn.__pf_runtime_click = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const tabId = btn.getAttribute('data-tab-id');
+          // Remove active from all buttons
+          header.querySelectorAll('.pf-tab-btn').forEach(b => b.classList.remove('active'));
+          // Remove active from all sections (be specific)
+          wrapper.querySelectorAll('[data-role="pf-tab-section"]').forEach(s => {
+            if (s.classList.contains('pf-tab-section')) {
+              s.classList.remove('active');
+            }
+          });
+          // Add active to clicked button
+          btn.classList.add('active');
+          // Add active to corresponding section (be specific)
+          const section = wrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
+          if (section && section.classList.contains('pf-tab-section')) {
+            section.classList.add('active');
+          }
         };
-        
-        btn.addEventListener('click', clickHandler);
-        btn.__pf_runtime_click_listener = clickHandler;
-    });
-    
-    // Set first tab as active by default if none is active
-    const activeBtn = header.querySelector('.pf-tab-btn.active');
-    if (!activeBtn && tabButtons.length > 0) {
-      const firstBtn = tabButtons[0];
-      const firstTabId = firstBtn.getAttribute('data-tab-id');
-      
-      firstBtn.classList.add('active');
-      const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
-      if (firstSection) {
-        firstSection.classList.add('active');
+        btn.addEventListener('click', btn.__pf_runtime_click);
+      });
+      // Set first tab as active if none is active
+      if (!header.querySelector('.pf-tab-btn.active') && header.querySelector('.pf-tab-btn')) {
+        const first = header.querySelector('.pf-tab-btn');
+        const firstTabId = first.getAttribute('data-tab-id');
+        first.classList.add('active');
+        const firstSection = wrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
+        if (firstSection && firstSection.classList.contains('pf-tab-section')) {
+          firstSection.classList.add('active');
+        }
       }
-    }
-  });
+    });
   }
-  
-  // Run immediately if DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTabs);
-  } else {
-    initTabs();
-  }
-  
-  // Also run on Turbo navigation events
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initTabs);
+  else initTabs();
   if (typeof Turbo !== 'undefined') {
     document.addEventListener('turbo:load', initTabs);
     document.addEventListener('turbo:frame-load', initTabs);
@@ -1544,133 +401,25 @@
 })();
 
 // Runtime tabs CSS
-.pf-tabs-container {
-  position: relative;
-}
-
-.pf-tabs {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.pf-tabs-header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #ddd;
-  display: flex;
-}
-
-.pf-tab-btn {
-  padding: 8px 16px;
-  cursor: pointer;
-  border-right: 1px solid #ddd;
-  background: #f8f9fa;
-  transition: background-color 0.2s;
-}
-
-.pf-tab-btn:hover {
-  background: #e9ecef;
-}
-
-.pf-tab-btn.active {
-  background: #fff;
-  border-bottom: 2px solid #007bff;
-  margin-bottom: -1px;
-}
-
-.pf-tabs-body {
-  background: #fff;
-  padding: 16px;
-}
-
-.pf-tab-section {
-  display: none;
-}
-
-.pf-tab-section.active {
-  display: block;
-}
-
-/* Remove blue outlines on hover for runtime */
-.pf-tabs-container:hover,
-.pf-tabs-container:focus,
-.pf-tabs-container:active {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.pf-tabs-container *:hover,
-.pf-tabs-container *:focus,
-.pf-tabs-container *:active {
-  outline: none !important;
-  box-shadow: none !important;
-}`;
+.pf-tabs-container { position: relative; }
+.pf-tabs { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+.pf-tabs-header { background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; }
+.pf-tab-btn { padding: 8px 16px; cursor: pointer; border-right: 1px solid #ddd; background: #f8f9fa; transition: background-color 0.2s; }
+.pf-tab-btn:hover { background: #e9ecef; }
+.pf-tab-btn.active { background: #fff; border-bottom: 2px solid #007bff; margin-bottom: -1px; }
+.pf-tabs-body { background: #fff; padding: 16px; }
+.pf-tab-section { display: none; }
+.pf-tab-section.active { display: block; }`;
   }
 
-  // Export functions for use in main builder
   window.TabsComponent = {
     buildWorkingTabs,
     pfGenerateId,
     pfParseTabsJson,
     pfStringifyTabsJson,
-    handleTabSectionDrop,
     defineTabsComponent,
-    restoreTabsAfterLoad,
-    addMissingIcons,
-    attachTabClickHandlers,
     restoreActiveTabState,
+    attachTabClickHandlers,
     getRuntimeCode
   };
-  
-  // Make restore function globally available for debugging
-  window.restoreTabs = function() {
-    if (window.gjsEditor && window.gjsEditor.DomComponents && window.gjsEditor.DomComponents.getWrapper) {
-      console.log('[PF] Manual restore triggered');
-      window.TabsComponent.restoreTabsAfterLoad(window.gjsEditor);
-    } else {
-      console.log('[PF] No GrapesJS editor found or not ready');
-      console.log('[PF] gjsEditor:', window.gjsEditor);
-      if (window.gjsEditor) {
-        console.log('[PF] DomComponents:', window.gjsEditor.DomComponents);
-        console.log('[PF] getWrapper:', window.gjsEditor.DomComponents?.getWrapper);
-      }
-    }
-  };
-  
-  // Test function to verify tabs are working
-  window.testTabs = function() {
-    console.log('[PF] Testing tabs functionality...');
-    
-    const tabsContainer = document.querySelector('.pf-tabs-container');
-    if (!tabsContainer) {
-      console.log('[PF] No tabs container found');
-      return;
-    }
-    
-    const tabsWrapper = tabsContainer.querySelector('.pf-tabs');
-    if (!tabsWrapper) {
-      console.log('[PF] No tabs wrapper found');
-      return;
-    }
-    
-    const buttons = tabsWrapper.querySelectorAll('.pf-tab-btn');
-    const sections = tabsWrapper.querySelectorAll('.pf-tab-section');
-    
-    console.log('[PF] Found tabs:', {
-      container: !!tabsContainer,
-      wrapper: !!tabsWrapper,
-      buttons: buttons.length,
-      sections: sections.length,
-      activeButton: tabsWrapper.querySelector('.pf-tab-btn.active')?.textContent,
-      activeSection: tabsWrapper.querySelector('.pf-tab-section.active')?.getAttribute('data-tab-id')
-    });
-    
-    // Test clicking each tab
-    buttons.forEach((btn, index) => {
-      console.log(`[PF] Testing tab ${index + 1}:`, btn.textContent);
-      btn.click();
-    });
-  };
-  
-  console.log('[PF] Tabs component partial fully loaded, TabsComponent available:', !!window.TabsComponent);
 </script>
