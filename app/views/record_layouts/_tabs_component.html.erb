@@ -8,26 +8,63 @@
     
     // Check if tabs are already built with proper structure
     if (comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
-        comp.getEl().querySelector('.rb-del') && 
-        comp.getEl().querySelector('.rb-edit-tabs')) {
-      console.log('[PF] Tabs already exist with proper structure, checking if restoration needed');
-      // Even if structure exists, we might need to restore state after reload
-      addMissingIcons(comp);
-      attachTabClickHandlers(comp);
-      restoreActiveTabState(comp);
-      return;
-    }
-    
-    // Check if basic tabs structure exists but might be missing controls
-    if (comp.getEl() && comp.getEl().querySelector('.pf-tabs') && 
         comp.getEl().querySelector('.pf-tabs-header') && 
         comp.getEl().querySelector('.pf-tabs-body')) {
-      console.log('[PF] Basic tabs structure exists, adding missing controls and restoring state');
-      // Add missing icons and re-attach click handlers
+      console.log('[PF] Tabs structure exists, ensuring delete button and restoring state');
+      // Always ensure delete button exists (it might have been removed)
+      // Check for direct child only, not nested ones (field delete buttons)
+      const compEl = comp.getEl();
+      let tabsDeleteBtn = null;
+      if (compEl) {
+        // Check if first child is the delete button, or find direct child delete button
+        const firstChild = compEl.firstElementChild;
+        if (firstChild && firstChild.classList.contains('rb-del')) {
+          tabsDeleteBtn = firstChild;
+        } else {
+          // Look for direct child delete button
+          Array.from(compEl.children).forEach(child => {
+            if (child.classList.contains('rb-del') && !tabsDeleteBtn) {
+              tabsDeleteBtn = child;
+            }
+          });
+        }
+      }
+      if (compEl && !tabsDeleteBtn) {
+        // Delete button missing, add it
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'rb-del';
+        deleteBtn.setAttribute('data-role', 'rb-del');
+        deleteBtn.setAttribute('aria-label', 'Delete');
+        deleteBtn.title = 'Delete';
+        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+        deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
+        deleteBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+            if (editor && editor.Components) {
+              const view = editor.Components.getView(comp);
+              if (view && typeof view.onDelete === 'function') {
+                view.onDelete(e);
+              } else if (comp && typeof comp.remove === 'function') {
+                comp.remove();
+              }
+            } else if (comp && typeof comp.remove === 'function') {
+              comp.remove();
+            }
+          } catch (err) {
+            console.error('[PF] Error removing tabs component:', err);
+          }
+        });
+        compEl.insertBefore(deleteBtn, compEl.firstChild);
+        if (window.getComputedStyle(compEl).position === 'static') {
+          compEl.style.position = 'relative';
+        }
+      }
+      // Restore state
       addMissingIcons(comp);
       attachTabClickHandlers(comp);
-      
-      // Restore the active tab state
       restoreActiveTabState(comp);
       return;
     }
@@ -526,10 +563,22 @@
     // This ensures it shows on hover of the main component
     const compEl = comp.getEl();
     if (compEl) {
-      // Remove any existing delete button first
-      const existingDel = compEl.querySelector('.rb-del');
-      if (existingDel) {
-        existingDel.remove();
+      // Remove any existing tabs delete button first (only direct children, not field buttons)
+      // Find the tabs container's delete button (direct child, not nested)
+      let tabsDeleteBtn = null;
+      const firstChild = compEl.firstElementChild;
+      if (firstChild && firstChild.classList.contains('rb-del')) {
+        tabsDeleteBtn = firstChild;
+      } else {
+        // Look through direct children only
+        Array.from(compEl.children).forEach(child => {
+          if (child.classList.contains('rb-del') && !tabsDeleteBtn) {
+            tabsDeleteBtn = child;
+          }
+        });
+      }
+      if (tabsDeleteBtn) {
+        tabsDeleteBtn.remove();
       }
       
       // Create delete button in the main component's DOM
@@ -539,59 +588,31 @@
       deleteBtn.setAttribute('aria-label', 'Delete');
       deleteBtn.title = 'Delete';
       deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-      deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+      deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
       
-      // Add click handler that calls the view's onDelete method
-      // This ensures it works for both new and loaded components
-      const deleteHandler = (e) => {
-        console.log('[PF] Delete button clicked!', { comp, e });
+      // Add click handler
+      deleteBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         try {
-          // comp might be the model or the component
-          // Try to get the view from the editor if available
           const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
           if (editor && editor.Components) {
-            // Get the view from the component manager
             const view = editor.Components.getView(comp);
-            console.log('[PF] View found:', view);
             if (view && typeof view.onDelete === 'function') {
-              console.log('[PF] Calling view.onDelete');
               view.onDelete(e);
             } else if (comp && typeof comp.remove === 'function') {
-              console.log('[PF] Fallback: calling comp.remove() directly');
               comp.remove();
-            } else if (comp && comp.model && typeof comp.model.remove === 'function') {
-              console.log('[PF] Fallback: calling comp.model.remove()');
-              comp.model.remove();
-            } else {
-              console.warn('[PF] Could not remove tabs component - view.onDelete not available', { comp, view });
             }
-          } else {
-            // Fallback: try direct remove
-            if (comp && typeof comp.remove === 'function') {
-              console.log('[PF] No editor, calling comp.remove() directly');
-              comp.remove();
-            } else if (comp && comp.model && typeof comp.model.remove === 'function') {
-              console.log('[PF] No editor, calling comp.model.remove() directly');
-              comp.model.remove();
-            } else {
-              console.warn('[PF] No editor and no remove method', { comp });
-            }
+          } else if (comp && typeof comp.remove === 'function') {
+            comp.remove();
           }
         } catch (err) {
           console.error('[PF] Error removing tabs component:', err);
         }
-      };
-      deleteBtn.addEventListener('click', deleteHandler);
-      console.log('[PF] Delete button event listener attached', { deleteBtn, comp });
+      });
       
-      // Insert as first child of main component
-      if (compEl.firstChild) {
-        compEl.insertBefore(deleteBtn, compEl.firstChild);
-      } else {
-        compEl.appendChild(deleteBtn);
-      }
+      // Insert as first child of main component - ALWAYS at the very beginning
+      compEl.insertBefore(deleteBtn, compEl.firstChild);
       
       // Make sure component has position relative
       if (window.getComputedStyle(compEl).position === 'static') {
@@ -825,60 +846,80 @@
   // Function to add missing icons without rebuilding the entire structure
   function addMissingIcons(comp) {
     try {
-      const tabsWrapper = comp.getEl().querySelector('.pf-tabs');
-      if (!tabsWrapper) return;
+      const compEl = comp.getEl();
+      if (!compEl) return;
       
-      // Add delete button if missing
-      if (!tabsWrapper.querySelector('.rb-del')) {
+      // Add delete button if missing - check for direct child only, not nested field buttons
+      // Field delete buttons are inside .pf-tab-section, so we only check direct children
+      let tabsDeleteBtn = null;
+      const firstChild = compEl.firstElementChild;
+      if (firstChild && firstChild.classList.contains('rb-del')) {
+        tabsDeleteBtn = firstChild;
+      } else {
+        // Look through direct children only (not nested inside .pf-tabs or .pf-tab-section)
+        Array.from(compEl.children).forEach(child => {
+          if (child.classList.contains('rb-del') && !tabsDeleteBtn) {
+            tabsDeleteBtn = child;
+          }
+        });
+      }
+      if (!tabsDeleteBtn) {
         const deleteBtn = document.createElement('span');
         deleteBtn.className = 'rb-del';
         deleteBtn.setAttribute('data-role', 'rb-del');
         deleteBtn.setAttribute('aria-label', 'Delete');
         deleteBtn.title = 'Delete';
         deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-        deleteBtn.style.cssText = `
-          position: absolute;
-          top: 4px;
-          right: 6px;
-          background: rgba(0,0,0,0.7);
-          color: #fff;
-          border-radius: 12px;
-          width: 22px;
-          height: 22px;
-          line-height: 22px;
-          text-align: center;
-          font-size: 12px;
-          cursor: pointer;
-          z-index: 9999;
-          display: none;
-        `;
-        tabsWrapper.appendChild(deleteBtn);
+        deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
+        deleteBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+            if (editor && editor.Components) {
+              const view = editor.Components.getView(comp);
+              if (view && typeof view.onDelete === 'function') {
+                view.onDelete(e);
+              } else if (comp && typeof comp.remove === 'function') {
+                comp.remove();
+              }
+            } else if (comp && typeof comp.remove === 'function') {
+              comp.remove();
+            }
+          } catch (err) {
+            console.error('[PF] Error removing tabs component:', err);
+          }
+        });
+        if (compEl.firstChild) {
+          compEl.insertBefore(deleteBtn, compEl.firstChild);
+        } else {
+          compEl.appendChild(deleteBtn);
+        }
+        if (window.getComputedStyle(compEl).position === 'static') {
+          compEl.style.position = 'relative';
+        }
       }
       
       // Add edit button if missing
-      if (!tabsWrapper.querySelector('.rb-edit-tabs')) {
+      if (!compEl.querySelector('.rb-edit-tabs')) {
         const editBtn = document.createElement('span');
         editBtn.className = 'rb-edit-tabs';
         editBtn.setAttribute('data-role', 'rb-edit-tabs');
         editBtn.title = 'Edit Tabs';
         editBtn.textContent = '✎';
-        editBtn.style.cssText = `
-          position: absolute;
-          top: 4px;
-          right: 30px;
-          background: rgba(0,0,0,0.6);
-          color: #fff;
-          border-radius: 12px;
-          width: 22px;
-          height: 22px;
-          line-height: 22px;
-          text-align: center;
-          font-size: 12px;
-          cursor: pointer;
-          z-index: 9999;
-          display: none;
-        `;
-        tabsWrapper.appendChild(editBtn);
+        editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 99999; pointer-events: auto;';
+        editBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.openTabsConfigModal) {
+            window.openTabsConfigModal(comp);
+          }
+        });
+        if (compEl.firstChild) {
+          compEl.insertBefore(editBtn, compEl.firstChild);
+        } else {
+          compEl.appendChild(editBtn);
+        }
       }
       
       console.log('[PF] Missing icons added successfully');
@@ -947,11 +988,22 @@
         el.addEventListener('mouseenter', () => deleteBtn.style.display = 'inline-flex');
         el.addEventListener('mouseleave', () => deleteBtn.style.display = 'none');
         
-        // Handle delete
+        // Handle delete - make sure we remove the field, not the tab section
         deleteBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
+          try {
+            // component should be the field, but double-check
+            if (component && typeof component.remove === 'function') {
           component.remove();
+            } else if (component && component.model && typeof component.model.remove === 'function') {
+              component.model.remove();
+            } else {
+              console.warn('[PF] Could not remove field component', { component });
+            }
+          } catch (err) {
+            console.error('[PF] Error removing field component:', err);
+          }
         });
         
         el.appendChild(deleteBtn);
@@ -1119,24 +1171,24 @@
     
     console.log('[PF Runtime] Initializing tabs on rendered page');
     
-    // Find all tabs components on the page
-    const tabsContainers = document.querySelectorAll('.pf-tabs-container');
-    
-    tabsContainers.forEach(container => {
+  // Find all tabs components on the page
+  const tabsContainers = document.querySelectorAll('.pf-tabs-container');
+  
+  tabsContainers.forEach(container => {
       // Skip if already initialized
       if (container.__pf_tabs_initialized) return;
       container.__pf_tabs_initialized = true;
       
-      const tabsWrapper = container.querySelector('.pf-tabs');
-      if (!tabsWrapper) return;
-      
-      const header = tabsWrapper.querySelector('.pf-tabs-header');
+    const tabsWrapper = container.querySelector('.pf-tabs');
+    if (!tabsWrapper) return;
+    
+    const header = tabsWrapper.querySelector('.pf-tabs-header');
       if (!header) return;
       
-      const tabButtons = header.querySelectorAll('.pf-tab-btn');
-      
-      // Attach click handlers to tab buttons
-      tabButtons.forEach(btn => {
+    const tabButtons = header.querySelectorAll('.pf-tab-btn');
+    
+    // Attach click handlers to tab buttons
+    tabButtons.forEach(btn => {
         // Skip if button already has builder handler (check for __pf_tab_click_listener)
         if (btn.__pf_tab_click_listener) {
           console.log('[PF Runtime] Tab button has builder handler, skipping runtime handler');
@@ -1149,47 +1201,47 @@
         }
         
         const clickHandler = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          const tabId = this.getAttribute('data-tab-id');
-          console.log('[PF Runtime] Tab clicked:', tabId);
-          
-          // Remove active from all buttons and sections
-          const allBtns = header.querySelectorAll('.pf-tab-btn');
-          const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
-          
-          allBtns.forEach(b => b.classList.remove('active'));
-          allSections.forEach(s => s.classList.remove('active'));
-          
-          // Add active to clicked button
-          this.classList.add('active');
-          
-          // Find and activate the corresponding section
-          const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
-          if (section) {
-            section.classList.add('active');
-            console.log('[PF Runtime] Tab section activated:', tabId);
-          }
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const tabId = this.getAttribute('data-tab-id');
+        console.log('[PF Runtime] Tab clicked:', tabId);
+        
+        // Remove active from all buttons and sections
+        const allBtns = header.querySelectorAll('.pf-tab-btn');
+        const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
+        
+        allBtns.forEach(b => b.classList.remove('active'));
+        allSections.forEach(s => s.classList.remove('active'));
+        
+        // Add active to clicked button
+        this.classList.add('active');
+        
+        // Find and activate the corresponding section
+        const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
+        if (section) {
+          section.classList.add('active');
+          console.log('[PF Runtime] Tab section activated:', tabId);
+        }
         };
         
         btn.addEventListener('click', clickHandler);
         btn.__pf_runtime_click_listener = clickHandler;
-      });
-      
-      // Set first tab as active by default if none is active
-      const activeBtn = header.querySelector('.pf-tab-btn.active');
-      if (!activeBtn && tabButtons.length > 0) {
-        const firstBtn = tabButtons[0];
-        const firstTabId = firstBtn.getAttribute('data-tab-id');
-        
-        firstBtn.classList.add('active');
-        const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
-        if (firstSection) {
-          firstSection.classList.add('active');
-        }
-      }
     });
+    
+    // Set first tab as active by default if none is active
+    const activeBtn = header.querySelector('.pf-tab-btn.active');
+    if (!activeBtn && tabButtons.length > 0) {
+      const firstBtn = tabButtons[0];
+      const firstTabId = firstBtn.getAttribute('data-tab-id');
+      
+      firstBtn.classList.add('active');
+      const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
+      if (firstSection) {
+        firstSection.classList.add('active');
+      }
+    }
+  });
   }
   
   // Run immediately if DOM is ready
@@ -1355,24 +1407,24 @@
     
     console.log('[PF Runtime] Initializing tabs on rendered page');
     
-    // Find all tabs components on the page
-    const tabsContainers = document.querySelectorAll('.pf-tabs-container');
-    
-    tabsContainers.forEach(container => {
+  // Find all tabs components on the page
+  const tabsContainers = document.querySelectorAll('.pf-tabs-container');
+  
+  tabsContainers.forEach(container => {
       // Skip if already initialized
       if (container.__pf_tabs_initialized) return;
       container.__pf_tabs_initialized = true;
       
-      const tabsWrapper = container.querySelector('.pf-tabs');
-      if (!tabsWrapper) return;
-      
-      const header = tabsWrapper.querySelector('.pf-tabs-header');
+    const tabsWrapper = container.querySelector('.pf-tabs');
+    if (!tabsWrapper) return;
+    
+    const header = tabsWrapper.querySelector('.pf-tabs-header');
       if (!header) return;
       
-      const tabButtons = header.querySelectorAll('.pf-tab-btn');
-      
-      // Attach click handlers to tab buttons
-      tabButtons.forEach(btn => {
+    const tabButtons = header.querySelectorAll('.pf-tab-btn');
+    
+    // Attach click handlers to tab buttons
+    tabButtons.forEach(btn => {
         // Skip if button already has builder handler (check for __pf_tab_click_listener)
         if (btn.__pf_tab_click_listener) {
           console.log('[PF Runtime] Tab button has builder handler, skipping runtime handler');
@@ -1385,47 +1437,47 @@
         }
         
         const clickHandler = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          const tabId = this.getAttribute('data-tab-id');
-          console.log('[PF Runtime] Tab clicked:', tabId);
-          
-          // Remove active from all buttons and sections
-          const allBtns = header.querySelectorAll('.pf-tab-btn');
-          const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
-          
-          allBtns.forEach(b => b.classList.remove('active'));
-          allSections.forEach(s => s.classList.remove('active'));
-          
-          // Add active to clicked button
-          this.classList.add('active');
-          
-          // Find and activate the corresponding section
-          const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
-          if (section) {
-            section.classList.add('active');
-            console.log('[PF Runtime] Tab section activated:', tabId);
-          }
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const tabId = this.getAttribute('data-tab-id');
+        console.log('[PF Runtime] Tab clicked:', tabId);
+        
+        // Remove active from all buttons and sections
+        const allBtns = header.querySelectorAll('.pf-tab-btn');
+        const allSections = tabsWrapper.querySelectorAll('.pf-tab-section');
+        
+        allBtns.forEach(b => b.classList.remove('active'));
+        allSections.forEach(s => s.classList.remove('active'));
+        
+        // Add active to clicked button
+        this.classList.add('active');
+        
+        // Find and activate the corresponding section
+        const section = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${tabId}"]\`);
+        if (section) {
+          section.classList.add('active');
+          console.log('[PF Runtime] Tab section activated:', tabId);
+        }
         };
         
         btn.addEventListener('click', clickHandler);
         btn.__pf_runtime_click_listener = clickHandler;
-      });
-      
-      // Set first tab as active by default if none is active
-      const activeBtn = header.querySelector('.pf-tab-btn.active');
-      if (!activeBtn && tabButtons.length > 0) {
-        const firstBtn = tabButtons[0];
-        const firstTabId = firstBtn.getAttribute('data-tab-id');
-        
-        firstBtn.classList.add('active');
-        const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
-        if (firstSection) {
-          firstSection.classList.add('active');
-        }
-      }
     });
+    
+    // Set first tab as active by default if none is active
+    const activeBtn = header.querySelector('.pf-tab-btn.active');
+    if (!activeBtn && tabButtons.length > 0) {
+      const firstBtn = tabButtons[0];
+      const firstTabId = firstBtn.getAttribute('data-tab-id');
+      
+      firstBtn.classList.add('active');
+      const firstSection = tabsWrapper.querySelector(\`[data-role="pf-tab-section"][data-tab-id="\${firstTabId}"]\`);
+      if (firstSection) {
+        firstSection.classList.add('active');
+      }
+    }
+  });
   }
   
   // Run immediately if DOM is ready

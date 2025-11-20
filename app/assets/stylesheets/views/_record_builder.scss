@@ -206,6 +206,13 @@
   display: inline-flex !important; 
 }
 
+/* Specifically for tabs container - show delete button on hover */
+.pf-tabs-container.pf-interactive:hover > .rb-del,
+.pf-tabs-container.pf-interactive.gjs-selected > .rb-del {
+  display: inline-flex !important;
+  z-index: 99999 !important;
+}
+
 // Hide built-in right-side panels completely
 .gjs-pn-views,
 .gjs-pn-views-container,
@@ -326,16 +333,21 @@
 .builder-btn-row { margin-left: 25% !important; }
 
 /* Ensure delete and edit buttons are visible on tabs components */
-.pf-tabs-container:hover > .rb-del,
-.pf-tabs-container:hover > .rb-edit-tabs,
-.pf-tabs-container.gjs-selected > .rb-del,
-.pf-tabs-container.gjs-selected > .rb-edit-tabs {
+/* Target ONLY the tabs container's own delete button (must be direct child AND first element) */
+.pf-tabs-container.pf-interactive:hover > .rb-del:first-child,
+.pf-tabs-container.pf-interactive:hover > .rb-edit-tabs:first-child,
+.pf-tabs-container.pf-interactive.gjs-selected > .rb-del:first-child,
+.pf-tabs-container.pf-interactive.gjs-selected > .rb-edit-tabs:first-child {
   display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 99999 !important;
 }
 
-.pf-tabs-container > .rb-del,
-.pf-tabs-container > .rb-edit-tabs {
-  display: none;
+/* Hide the tabs container's own delete button when not hovered/selected */
+.pf-tabs-container.pf-interactive > .rb-del:first-child,
+.pf-tabs-container.pf-interactive > .rb-edit-tabs:first-child {
+  display: none !important;
 }
 
 /* Additional styling for delete and edit buttons */

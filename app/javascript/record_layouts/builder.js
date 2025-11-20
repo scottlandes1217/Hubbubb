@@ -549,11 +549,29 @@ export class RecordLayoutBuilder {
         deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
         deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
         
-        // Add click handler
+        // Add click handler - ensure it works for both new and loaded components
         deleteBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          comp.remove();
+          try {
+            // Try multiple ways to remove the component
+            if (comp && typeof comp.remove === 'function') {
+              comp.remove();
+            } else if (comp && comp.model && typeof comp.model.remove === 'function') {
+              comp.model.remove();
+            } else {
+              // Fallback: get view and call onDelete
+              const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+              if (editor && editor.Components) {
+                const view = editor.Components.getView(comp);
+                if (view && typeof view.onDelete === 'function') {
+                  view.onDelete(e);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('[PF] Error removing component:', err);
+          }
         });
         
         // Insert as first child so it's a direct child of the container
@@ -617,16 +635,58 @@ export class RecordLayoutBuilder {
             const partials = root.find('[partial-name]');
             const tabs = root.find('[data-comp-kind="record-tabs"]');
             
-            fields.forEach(field => {
-              this.addDeleteButton(field);
-              this.lockInnerComponents(field);
-            });
-            partials.forEach(partial => {
-              this.addDeleteButton(partial);
-              this.lockInnerComponents(partial);
-            });
+            // Process fields and partials first
+            // Use a longer timeout to ensure all components are fully loaded, especially those inside tabs
+            setTimeout(() => {
+              fields.forEach(field => {
+                // Re-check if delete button exists and is working
+                const el = field.getEl();
+                if (el) {
+                  const existingBtn = el.querySelector('.rb-del');
+                  if (existingBtn) {
+                    // Button exists, but make sure click handler works
+                    // Remove old handler and re-add
+                    const newBtn = existingBtn.cloneNode(true);
+                    existingBtn.parentNode.replaceChild(newBtn, existingBtn);
+                    newBtn.addEventListener('click', (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      field.remove();
+                    });
+                  } else {
+                    // Button missing, add it
+                    this.addDeleteButton(field);
+                  }
+                } else {
+                  // Element not ready, add button with delay
+                  setTimeout(() => this.addDeleteButton(field), 50);
+                }
+                this.lockInnerComponents(field);
+              });
+              partials.forEach(partial => {
+                const el = partial.getEl();
+                if (el) {
+                  const existingBtn = el.querySelector('.rb-del');
+                  if (existingBtn) {
+                    const newBtn = existingBtn.cloneNode(true);
+                    existingBtn.parentNode.replaceChild(newBtn, existingBtn);
+                    newBtn.addEventListener('click', (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      partial.remove();
+                    });
+                  } else {
+                    this.addDeleteButton(partial);
+                  }
+                } else {
+                  setTimeout(() => this.addDeleteButton(partial), 50);
+                }
+                this.lockInnerComponents(partial);
+              });
+            }, 100);
             
-            // Rebuild tabs to ensure proper structure, delete button, and handlers
+            // Rebuild tabs AFTER fields/partials are processed
+            // This ensures tabs are rebuilt with delete buttons after all content is loaded
             tabs.forEach(tab => {
               console.log('[PF] Rebuilding loaded tabs component:', tab);
               
@@ -652,8 +712,9 @@ export class RecordLayoutBuilder {
                 // Also lock inner components
                 this.lockTabsInnerComponents(tab);
                 
-                // Double-check delete button was added
-                setTimeout(() => {
+                // Double-check delete button was added - wait longer if fields are present
+                // Fields might be processed after tabs, so we need to check again
+                const checkDeleteButton = () => {
                   const compEl = tab.getEl();
                   console.log('[PF] Checking delete button for loaded tab:', { compEl, tab });
                   if (compEl) {
@@ -751,9 +812,73 @@ export class RecordLayoutBuilder {
                       });
                     }
                   }
-                }, 100);
+                };
+                
+                // Check immediately
+                setTimeout(checkDeleteButton, 100);
+                
+                // Check again after fields might have been processed
+                setTimeout(checkDeleteButton, 500);
+                
+                // Final check after everything should be loaded
+                setTimeout(checkDeleteButton, 1000);
               }, 100);
             });
+            
+            // Final pass: ensure all tabs have delete buttons after ALL processing is done
+            setTimeout(() => {
+              console.log('[PF] Final pass: ensuring all tabs have delete buttons');
+              tabs.forEach(tab => {
+                const compEl = tab.getEl();
+                if (compEl) {
+                  let deleteBtn = compEl.querySelector('.rb-del');
+                  if (!deleteBtn) {
+                    console.log('[PF] Final pass: Adding missing delete button to tab');
+                    deleteBtn = document.createElement('span');
+                    deleteBtn.className = 'rb-del';
+                    deleteBtn.setAttribute('data-role', 'rb-del');
+                    deleteBtn.setAttribute('aria-label', 'Delete');
+                    deleteBtn.title = 'Delete';
+                    deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+                    deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+                    
+                    const deleteHandler = (e) => {
+                      console.log('[PF] Delete button clicked (final pass)!', { tab, e });
+                      e.preventDefault();
+                      e.stopPropagation();
+                      try {
+                        const editor = window.recordLayoutBuilderInstance?.editor;
+                        if (editor) {
+                          const view = editor.Components.getView(tab);
+                          if (view && typeof view.onDelete === 'function') {
+                            view.onDelete(e);
+                          } else if (tab && typeof tab.remove === 'function') {
+                            tab.remove();
+                          }
+                        } else if (tab && typeof tab.remove === 'function') {
+                          tab.remove();
+                        }
+                      } catch (err) {
+                        console.error('[PF] Error removing tabs component (final pass):', err);
+                      }
+                    };
+                    deleteBtn.addEventListener('click', deleteHandler);
+                    
+                    if (compEl.firstChild) {
+                      compEl.insertBefore(deleteBtn, compEl.firstChild);
+                    } else {
+                      compEl.appendChild(deleteBtn);
+                    }
+                    if (window.getComputedStyle(compEl).position === 'static') {
+                      compEl.style.position = 'relative';
+                    }
+                  } else {
+                    // Button exists, make sure it's visible and has proper styling
+                    deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+                  }
+                }
+              });
+            }, 1500);
           } catch (error) {
             console.warn('[PF] Error locking initial components:', error);
           }
