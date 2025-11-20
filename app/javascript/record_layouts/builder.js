@@ -68,6 +68,7 @@ export class RecordLayoutBuilder {
       this.loadInitialContent();
       this.buildLeftSidebar();
       this.setupCanvasDragAndDrop();
+      this.setupComponentLocking();
       
       console.log('[PF] Editor setup completed');
     } catch (error) {
@@ -75,51 +76,348 @@ export class RecordLayoutBuilder {
     }
   }
 
-  addSaveCommand() {
-    this.editor.Commands.add('save-record-layout', {
-      run: (editor, sender, options) => {
-        const html = editor.getHtml();
-        const css = editor.getCss();
-        const sanitizedHtml = this.sanitizeLayoutHtml(html);
-        this.saveLayoutToDatabase(sanitizedHtml, css);
+  setupComponentLocking() {
+    // Lock inner components whenever a component is added or updated
+    this.editor.on('component:add', (component) => {
+      // Only lock inner components of record-field and record-partial
+      const attrs = component.getAttributes ? component.getAttributes() : {};
+      if (attrs['field-api-name'] || attrs['partial-name']) {
+        // Small delay to ensure children are added first
+        setTimeout(() => {
+          this.addDeleteButton(component);
+          this.lockInnerComponents(component);
+        }, 10);
+      } else if (attrs['data-comp-kind'] === 'record-tabs' || component.get('type') === 'record-tabs') {
+        // Lock tabs inner components (but allow tab buttons to be draggable for reordering)
+        setTimeout(() => {
+          this.lockTabsInnerComponents(component);
+        }, 50);
+      }
+    });
+
+    // Also lock when components are updated
+    this.editor.on('component:update', (component) => {
+      const attrs = component.getAttributes ? component.getAttributes() : {};
+      if (attrs['field-api-name'] || attrs['partial-name']) {
+        setTimeout(() => {
+          this.addDeleteButton(component);
+          this.lockInnerComponents(component);
+        }, 10);
+      } else if (attrs['data-comp-kind'] === 'record-tabs' || component.get('type') === 'record-tabs') {
+        // Lock tabs inner components
+        setTimeout(() => {
+          this.lockTabsInnerComponents(component);
+        }, 50);
       }
     });
   }
 
-  saveLayoutToDatabase(html, css) {
+  lockTabsInnerComponents(comp) {
+    try {
+      const el = comp.getEl();
+      if (!el) return;
+      
+      // First, ensure the main tabs container is draggable (so the whole component can be moved)
+      comp.set({
+        draggable: true,
+        selectable: true,
+        hoverable: true,
+        highlightable: true
+      });
+      
+      // Find the tabs wrapper
+      const tabsWrapper = el.querySelector('.pf-tabs');
+      if (!tabsWrapper) return;
+      
+      // Find all inner components using GrapesJS
+      // We need to find the component by traversing from the main component
+      // The tabs wrapper is a child of the main component
+      let tabsWrapperComp = null;
+      const compChildren = comp.components().models || [];
+      for (const child of compChildren) {
+        const childEl = child.getEl();
+        if (childEl && childEl.classList.contains('pf-tabs')) {
+          tabsWrapperComp = child;
+          break;
+        }
+      }
+      
+      if (!tabsWrapperComp) {
+        // Fallback: try to find by selector
+        const found = comp.find('.pf-tabs');
+        tabsWrapperComp = found && found.length > 0 ? found[0] : null;
+      }
+      
+      if (!tabsWrapperComp) return;
+      
+      // Lock the tabs wrapper itself - it should not be draggable separately
+      tabsWrapperComp.set({
+        selectable: false,
+        hoverable: false,
+        draggable: false, // Prevent dragging the wrapper separately
+        droppable: false,
+        editable: false,
+        copyable: false,
+        highlightable: false
+      });
+      
+      // Lock header and body
+      const header = tabsWrapperComp.find('.pf-tabs-header')[0];
+      const body = tabsWrapperComp.find('.pf-tabs-body')[0];
+      
+      if (header) {
+        header.set({
+          selectable: false,
+          hoverable: false,
+          draggable: false, // Header should not be draggable
+          droppable: false,
+          editable: false,
+          copyable: false,
+          highlightable: false
+        });
+        
+        // Lock all children of header EXCEPT tab buttons (tab buttons should be draggable for reordering)
+        const headerChildren = header.components().models || [];
+        headerChildren.forEach(ch => {
+          const chAttrs = ch.getAttributes ? ch.getAttributes() : {};
+          const isTabButton = chAttrs.class && chAttrs.class.includes('pf-tab-btn');
+          
+          if (!isTabButton) {
+            // Lock non-tab-button children
+            ch.set({
+              selectable: false,
+              hoverable: false,
+              draggable: false,
+              droppable: false,
+              editable: false,
+              copyable: false,
+              highlightable: false
+            });
+          } else {
+            // Tab buttons should NOT be draggable in GrapesJS (to prevent dragging them out)
+            // Tab reordering will need to be implemented via custom drag handlers if needed
+            ch.set({
+              selectable: false,
+              hoverable: true, // Allow hover for visual feedback
+              draggable: false, // Prevent dragging tab buttons out of header
+              droppable: false,
+              editable: false,
+              copyable: false,
+              highlightable: false
+            });
+          }
+        });
+      }
+      
+      if (body) {
+        body.set({
+          selectable: false,
+          hoverable: false,
+          draggable: false, // Body should not be draggable
+          droppable: false,
+          editable: false,
+          copyable: false,
+          highlightable: false
+        });
+        
+        // Tab sections should not be draggable, but components inside them should be
+        const bodyChildren = body.components().models || [];
+        bodyChildren.forEach(ch => {
+          const chAttrs = ch.getAttributes ? ch.getAttributes() : {};
+          const isTabSection = chAttrs.class && chAttrs.class.includes('pf-tab-section');
+          
+          if (isTabSection) {
+            // Tab sections should not be draggable/selectable
+            ch.set({
+              selectable: false,
+              hoverable: false,
+              draggable: false,
+              droppable: true, // But they should accept drops
+              editable: false,
+              copyable: false,
+              highlightable: false
+            });
+          }
+        });
+      }
+      
+      // Lock delete and edit buttons
+      const deleteBtn = tabsWrapperComp.find('.rb-del')[0];
+      const editBtn = tabsWrapperComp.find('.rb-edit-tabs')[0];
+      
+      if (deleteBtn) {
+        deleteBtn.set({
+          selectable: false,
+          hoverable: false,
+          draggable: false,
+          droppable: false,
+          editable: false,
+          copyable: false,
+          highlightable: false
+        });
+      }
+      
+      if (editBtn) {
+        editBtn.set({
+          selectable: false,
+          hoverable: false,
+          draggable: false,
+          droppable: false,
+          editable: false,
+          copyable: false,
+          highlightable: false
+        });
+      }
+      
+    } catch (error) {
+      console.warn('[PF] Error locking tabs inner components:', error);
+    }
+  }
+
+  addSaveCommand() {
+    this.editor.Commands.add('save-record-layout', {
+      run: (editor, sender, options) => {
+        // Get HTML with all components properly serialized
+        let html = editor.getHtml();
+        let css = editor.getCss();
+        let js = editor.getJs() || '';
+        
+        // Debug: Log what we're getting
+        console.log('[PF] HTML before sanitization length:', html.length);
+        
+        // Check if tabs are in the HTML
+        if (html.includes('pf-tabs')) {
+          console.log('[PF] Tabs component found in HTML');
+          
+          // Check for tab sections
+          if (html.includes('pf-tab-section')) {
+            console.log('[PF] Tab sections found in HTML');
+          } else {
+            console.warn('[PF] Tab sections NOT found in HTML!');
+          }
+        } else {
+          console.warn('[PF] Tabs component NOT found in HTML!');
+        }
+        
+        // Check for record-field and record-partial components
+        const fieldCount = (html.match(/record-field/g) || []).length;
+        const partialCount = (html.match(/record-partial/g) || []).length;
+        console.log('[PF] Component counts:', { fields: fieldCount, partials: partialCount });
+        
+        // Get runtime tabs JavaScript and CSS from the TabsComponent
+        if (window.TabsComponent && window.TabsComponent.getRuntimeCode) {
+          const runtimeCode = window.TabsComponent.getRuntimeCode();
+          console.log('[PF] Got runtime code from TabsComponent, length:', runtimeCode.length);
+          console.log('[PF] Runtime code preview:', runtimeCode.substring(0, 500));
+          
+          // Split into JS and CSS parts based on the "// Runtime tabs CSS" marker
+          const parts = runtimeCode.split('// Runtime tabs CSS');
+          let jsCode = '';
+          let cssCode = '';
+          
+          if (parts.length > 0) {
+            // Get JS part - remove comment markers
+            jsCode = parts[0]
+              .replace('/* RUNTIME: Tabs JavaScript and CSS */', '')
+              .replace('// Runtime tabs functionality - ONLY runs on rendered pages, not in builder', '')
+              .replace('// Runtime tabs functionality', '')
+              .trim();
+            console.log('[PF] Extracted JS, length:', jsCode.length);
+            console.log('[PF] JS preview:', jsCode.substring(0, 200));
+            if (jsCode) {
+              js = js + '\n' + jsCode;
+            }
+          } else {
+            console.warn('[PF] Could not find JS part in runtime content');
+          }
+          
+          if (parts.length > 1) {
+            cssCode = parts[1].trim();
+            console.log('[PF] Extracted CSS, length:', cssCode.length);
+            if (cssCode) {
+              css = css + '\n' + cssCode;
+            }
+          } else {
+            console.warn('[PF] Could not find CSS part in runtime content');
+          }
+        } else {
+          console.warn('[PF] TabsComponent.getRuntimeCode not available');
+        }
+        
+        const sanitizedHtml = this.sanitizeLayoutHtml(html);
+        console.log('[PF] HTML after sanitization length:', sanitizedHtml.length);
+        this.saveLayoutToDatabase(sanitizedHtml, css, js);
+      }
+    });
+  }
+
+  saveLayoutToDatabase(html, css, js = '') {
     try {
       const metadataScript = document.getElementById('record-layout-metadata');
-      if (!metadataScript) return;
+      if (!metadataScript) {
+        this.showSaveMessage('Save failed: Missing metadata', 'error');
+        return;
+      }
       
       const meta = JSON.parse(metadataScript.textContent);
-      const layoutId = meta.layout_id;
+      const orgId = meta.organization_id;
+      const tableType = meta.table_type;
+      const tableId = meta.table_id;
       
-      if (!layoutId) return;
+      if (!orgId || !tableType) {
+        this.showSaveMessage('Save failed: Missing organization or table type', 'error');
+        return;
+      }
       
-      const formData = new FormData();
-      formData.append('record_layout[layout_html]', html);
-      formData.append('record_layout[layout_css]', css);
+      // Build URL with query parameters
+      let url = `/organizations/${orgId}/record_layout?table_type=${encodeURIComponent(tableType)}`;
+      if (tableId) {
+        url += `&table_id=${encodeURIComponent(tableId)}`;
+      }
+      url += '&format=json';
       
-      fetch(`/organizations/${this.getOrganizationId()}/record_layout`, {
+      console.log('[PF] Saving layout to:', url);
+      console.log('[PF] HTML length:', html.length);
+      console.log('[PF] CSS length:', css.length);
+      console.log('[PF] JS length:', js.length);
+      
+      fetch(url, {
         method: 'PATCH',
-        body: formData,
         headers: {
           'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
-        }
+        },
+        body: JSON.stringify({ 
+          record_layout: { 
+            layout_html: html, 
+            layout_css: css, 
+            layout_js: js 
+          } 
+        })
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.errors || 'Server error');
+          });
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.success) {
           this.showSaveMessage('Layout saved successfully!', 'success');
+          console.log('[PF] Layout saved successfully');
         } else {
           this.showSaveMessage('Save failed: ' + (data.errors || 'Unknown error'), 'error');
         }
       })
       .catch(error => {
-        this.showSaveMessage('Save failed: Network error', 'error');
+        console.error('[PF] Save error:', error);
+        this.showSaveMessage('Save failed: ' + error.message, 'error');
       });
     } catch (error) {
+      console.error('[PF] Save error:', error);
       this.showSaveMessage('Save failed: ' + error.message, 'error');
     }
   }
@@ -133,6 +431,9 @@ export class RecordLayoutBuilder {
           attributes: { class: 'record-field-placeholder pf-interactive border rounded p-2 mb-2 bg-white' },
           draggable: true,
           droppable: false,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
           components: [
             { tagName: 'span', attributes: { class: 'rb-del', title: 'Delete' }, content: '×' },
             { type: 'text', content: '' }
@@ -153,6 +454,9 @@ export class RecordLayoutBuilder {
           attributes: { class: 'record-partial-placeholder pf-interactive border rounded p-2 mb-2 bg-light' },
           draggable: true,
           droppable: false,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
           components: [
             { tagName: 'span', attributes: { class: 'rb-del', title: 'Delete' }, content: '×' },
             { type: 'text', content: '' }
@@ -168,6 +472,112 @@ export class RecordLayoutBuilder {
     // Add blocks
     this.editor.BlockManager.add('rp-field', { label: 'Field', category: 'Fields', content: { type: 'record-field' } });
     this.editor.BlockManager.add('rp-partial', { label: 'Partial', category: 'Content', content: { type: 'record-partial' } });
+  }
+
+  lockInnerComponents(comp) {
+    try {
+      const stack = Array.isArray(comp) ? comp.slice() : [comp];
+      while (stack.length) {
+        const node = stack.pop();
+        if (!node || !node.components) continue;
+        const children = node.components().models || [];
+        children.forEach(ch => {
+          // Don't lock the delete button - it needs to be clickable
+          const attrs = ch.getAttributes ? ch.getAttributes() : {};
+          const isDeleteButton = attrs.class && attrs.class.includes('rb-del');
+          
+          if (!isDeleteButton) {
+            // Lock all inner components to prevent individual selection/editing
+            ch.set({ 
+              selectable: false, 
+              hoverable: false, 
+              draggable: false, 
+              droppable: false, 
+              editable: false, 
+              copyable: false, 
+              highlightable: false, 
+              badgable: false, 
+              layerable: false 
+            });
+          } else {
+            // Ensure delete button is clickable and visible
+            ch.set({
+              selectable: false,
+              hoverable: false,
+              draggable: false,
+              droppable: false,
+              editable: false,
+              copyable: false,
+              highlightable: false,
+              badgable: false,
+              layerable: false,
+              // But keep it clickable via pointer events
+              pointerEvents: 'auto'
+            });
+          }
+          
+          if (ch.components && ch.components().length) {
+            stack.push(ch);
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('[PF] Error locking inner components:', error);
+    }
+  }
+
+  addDeleteButton(comp) {
+    try {
+      // Wait for component to be rendered
+      const addButton = () => {
+        const el = comp.getEl();
+        if (!el) {
+          // Retry if element not ready
+          setTimeout(addButton, 50);
+          return;
+        }
+        
+        // Check if delete button already exists
+        if (el.querySelector('.rb-del')) return;
+        
+        // Create delete button as a direct child of the component
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'rb-del';
+        deleteBtn.setAttribute('title', 'Delete');
+        deleteBtn.setAttribute('data-role', 'rb-del');
+        deleteBtn.setAttribute('aria-label', 'Delete');
+        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+        deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+        
+        // Add click handler
+        deleteBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          comp.remove();
+        });
+        
+        // Insert as first child so it's a direct child of the container
+        if (el.firstChild) {
+          el.insertBefore(deleteBtn, el.firstChild);
+        } else {
+          el.appendChild(deleteBtn);
+        }
+        
+        // Make sure the component element has position relative
+        if (window.getComputedStyle(el).position === 'static') {
+          el.style.position = 'relative';
+        }
+      };
+      
+      // Try immediately, or wait a bit for rendering
+      if (comp.getEl()) {
+        addButton();
+      } else {
+        setTimeout(addButton, 10);
+      }
+    } catch (error) {
+      console.warn('[PF] Error adding delete button:', error);
+    }
   }
 
   setupTabsComponent() {
@@ -198,6 +608,156 @@ export class RecordLayoutBuilder {
       if (initialHtml) {
         console.log('[PF] Setting initial HTML components...');
         this.editor.setComponents(initialHtml);
+        
+        // Lock inner components of all existing fields and partials, and rebuild tabs
+        setTimeout(() => {
+          try {
+            const root = this.editor.DomComponents.getWrapper();
+            const fields = root.find('[field-api-name]');
+            const partials = root.find('[partial-name]');
+            const tabs = root.find('[data-comp-kind="record-tabs"]');
+            
+            fields.forEach(field => {
+              this.addDeleteButton(field);
+              this.lockInnerComponents(field);
+            });
+            partials.forEach(partial => {
+              this.addDeleteButton(partial);
+              this.lockInnerComponents(partial);
+            });
+            
+            // Rebuild tabs to ensure proper structure, delete button, and handlers
+            tabs.forEach(tab => {
+              console.log('[PF] Rebuilding loaded tabs component:', tab);
+              
+              // Force a re-render first to ensure DOM is ready
+              if (tab.view && tab.view.render) {
+                tab.view.render();
+              }
+              
+              // Wait a bit for the component to be fully rendered in the DOM
+              setTimeout(() => {
+                // Call buildWorkingTabs to rebuild the structure
+                // buildWorkingTabs is defined in the tabs component partial
+                if (window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
+                  console.log('[PF] Calling buildWorkingTabs for loaded tab');
+                  window.TabsComponent.buildWorkingTabs(tab);
+                } else if (typeof buildWorkingTabs === 'function') {
+                  buildWorkingTabs(tab);
+                } else if (window.buildWorkingTabs) {
+                  window.buildWorkingTabs(tab);
+                } else {
+                  console.warn('[PF] buildWorkingTabs function not found');
+                }
+                // Also lock inner components
+                this.lockTabsInnerComponents(tab);
+                
+                // Double-check delete button was added
+                setTimeout(() => {
+                  const compEl = tab.getEl();
+                  console.log('[PF] Checking delete button for loaded tab:', { compEl, tab });
+                  if (compEl) {
+                    const existingBtn = compEl.querySelector('.rb-del');
+                    console.log('[PF] Existing delete button:', existingBtn);
+                    if (!existingBtn) {
+                      console.log('[PF] Delete button missing, adding manually');
+                      // Manually add delete button if it's still missing
+                      const deleteBtn = document.createElement('span');
+                      deleteBtn.className = 'rb-del';
+                      deleteBtn.setAttribute('data-role', 'rb-del');
+                      deleteBtn.setAttribute('aria-label', 'Delete');
+                      deleteBtn.title = 'Delete';
+                      deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+                      deleteBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; text-align: center; font-size: 12px; cursor: pointer; z-index: 9999; pointer-events: auto;';
+                      // Add click handler that calls the view's onDelete method
+                      const deleteHandler = (e) => {
+                        console.log('[PF] Delete button clicked (manual)!', { tab, e });
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          // tab is the model, so try to get the view from the editor
+                          const editor = window.recordLayoutBuilderInstance?.editor;
+                          if (editor) {
+                            // Get the view from the component manager
+                            const view = editor.Components.getView(tab);
+                            console.log('[PF] View found (manual):', view);
+                            if (view && typeof view.onDelete === 'function') {
+                              console.log('[PF] Calling view.onDelete (manual)');
+                              view.onDelete(e);
+                            } else if (tab && typeof tab.remove === 'function') {
+                              console.log('[PF] Calling tab.remove() directly (manual)');
+                              tab.remove();
+                            } else {
+                              console.warn('[PF] Could not remove tabs component - view.onDelete not available (manual)', { tab, view });
+                            }
+                          } else {
+                            // Fallback: try direct remove
+                            if (tab && typeof tab.remove === 'function') {
+                              console.log('[PF] No editor, calling tab.remove() directly (manual)');
+                              tab.remove();
+                            } else {
+                              console.warn('[PF] No editor and no remove method (manual)', { tab });
+                            }
+                          }
+                        } catch (err) {
+                          console.error('[PF] Error removing tabs component (manual):', err);
+                        }
+                      };
+                      deleteBtn.addEventListener('click', deleteHandler);
+                      console.log('[PF] Delete button event listener attached (manual)', { deleteBtn, tab });
+                      if (compEl.firstChild) {
+                        compEl.insertBefore(deleteBtn, compEl.firstChild);
+                      } else {
+                        compEl.appendChild(deleteBtn);
+                      }
+                      if (window.getComputedStyle(compEl).position === 'static') {
+                        compEl.style.position = 'relative';
+                      }
+                    } else {
+                      // Button exists, but let's verify it has a click handler
+                      console.log('[PF] Delete button exists, checking if it has click handler');
+                      // Re-attach handler to be safe
+                      existingBtn.addEventListener('click', (e) => {
+                        console.log('[PF] Delete button clicked (existing)!', { tab, e });
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          // tab is the model, so try to get the view from the editor
+                          const editor = window.recordLayoutBuilderInstance?.editor;
+                          if (editor) {
+                            // Get the view from the component manager
+                            const view = editor.Components.getView(tab);
+                            if (view && typeof view.onDelete === 'function') {
+                              console.log('[PF] Calling view.onDelete');
+                              view.onDelete(e);
+                            } else if (tab && typeof tab.remove === 'function') {
+                              console.log('[PF] Calling tab.remove() directly');
+                              tab.remove();
+                            } else {
+                              console.warn('[PF] Could not remove - no remove method', { tab, view });
+                            }
+                          } else {
+                            // Fallback: try direct remove
+                            if (tab && typeof tab.remove === 'function') {
+                              console.log('[PF] No editor, calling tab.remove() directly');
+                              tab.remove();
+                            } else {
+                              console.warn('[PF] No editor and no remove method', { tab });
+                            }
+                          }
+                        } catch (err) {
+                          console.error('[PF] Error removing tabs component (existing):', err);
+                        }
+                      });
+                    }
+                  }
+                }, 100);
+              }, 100);
+            });
+          } catch (error) {
+            console.warn('[PF] Error locking initial components:', error);
+          }
+        }, 200); // Increased timeout to ensure DOM is ready
       }
       
       if (initialCss) {
@@ -351,6 +911,12 @@ export class RecordLayoutBuilder {
     item.addEventListener('dragstart', e => {
       e.dataTransfer.setData('component-type', componentType);
       e.dataTransfer.effectAllowed = 'copy';
+      // Store in global variable as fallback (for cross-frame drags)
+      window.rbDragPayload = { type: componentType };
+    });
+    
+    item.addEventListener('dragend', () => {
+      window.rbDragPayload = null;
     });
     
     item.addEventListener('click', () => {
@@ -384,6 +950,12 @@ export class RecordLayoutBuilder {
           e.dataTransfer.setData('component-type', 'partial');
           e.dataTransfer.setData('partial-name', c.partial);
           e.dataTransfer.effectAllowed = 'copy';
+          // Store in global variable as fallback (for cross-frame drags)
+          window.rbDragPayload = { type: 'partial', partial: c.partial };
+        });
+        
+        item.addEventListener('dragend', () => {
+          window.rbDragPayload = null;
         });
         
         componentsList.appendChild(item);
@@ -402,6 +974,18 @@ export class RecordLayoutBuilder {
           e.dataTransfer.setData('field-label', f.label);
           e.dataTransfer.setData('field-type', f.type || 'text');
           e.dataTransfer.effectAllowed = 'copy';
+          // Store in global variable as fallback (for cross-frame drags)
+          window.rbDragPayload = { 
+            type: 'field', 
+            api: f.api_name, 
+            label: f.label, 
+            ftype: f.type || 'text',
+            options: f.options || []
+          };
+        });
+        
+        item.addEventListener('dragend', () => {
+          window.rbDragPayload = null;
         });
         
         fieldsList.appendChild(item);
@@ -413,56 +997,357 @@ export class RecordLayoutBuilder {
   }
 
   setupCanvasDragAndDrop() {
-    const sidebar = document.getElementById('record-leftbar');
-    if (!sidebar) return;
+    const canvasContainer = document.getElementById('gjs');
+    if (!canvasContainer) return;
     
-    sidebar.addEventListener('dragstart', (e) => {
-      const item = e.target;
-      const fieldName = item.getAttribute('data-field');
-      const componentType = item.getAttribute('data-component');
+    let dropLock = false;
+    
+    const handleDrop = (e) => {
+      try {
+        e.preventDefault();
+        e.stopPropagation();
+      } catch(_) {}
       
-      if (fieldName) {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'field', name: fieldName }));
-      } else if (componentType) {
-        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'component', name: componentType }));
+      if (dropLock) return;
+      dropLock = true;
+      setTimeout(() => { dropLock = false; }, 150);
+      
+      const dt = (e && e.dataTransfer) ? e.dataTransfer : {};
+      const componentType = (dt && dt.getData && dt.getData('component-type')) || 
+                           (window.rbDragPayload && window.rbDragPayload.type) || '';
+      
+      if (!componentType) {
+        window.rbDragPayload = null;
+        return;
       }
-    });
-    
-    this.editor.on('component:dropped', (component, target) => {
-      const dataTransfer = this.editor.getDragData();
-      if (dataTransfer && dataTransfer.dataTransfer) {
-        const data = JSON.parse(dataTransfer.dataTransfer.getData('text/plain'));
+      
+      console.log('[PF] Drop detected:', { componentType, target: e.target });
+      
+      // First, check if we're dropping into a tab section
+      let targetTabSection = null;
+      try {
+        const targetEl = e.target;
+        if (targetEl) {
+          // Look for tab section in the target's ancestors
+          const tabSectionEl = targetEl.closest && targetEl.closest('[data-role="pf-tab-section"]');
+          if (tabSectionEl) {
+            console.log('[PF] Found tab section element:', tabSectionEl);
+            // Find the GrapesJS component for this tab section
+            const root = this.editor.DomComponents.getWrapper();
+            const sections = root.find('[data-role="pf-tab-section"]');
+            targetTabSection = sections.find(s => s.getEl() === tabSectionEl);
+            if (targetTabSection) {
+              console.log('[PF] Found tab section component:', targetTabSection);
+            }
+          }
+        }
+      } catch(err) {
+        console.warn('[PF] Error detecting tab section:', err);
+      }
+      
+      const root = this.editor.DomComponents.getWrapper();
+      let insertAt = root.components().length;
+      
+      // Calculate drop position based on Y coordinate (only if not dropping into tab section)
+      if (!targetTabSection) {
+        try {
+          const dropY = e.clientY;
+          const children = root.components().models || [];
+          for (let i = 0; i < children.length; i += 1) {
+            const el = children[i].getEl && children[i].getEl();
+            if (!el) continue;
+            const rect = el.getBoundingClientRect();
+            if (dropY < rect.top + rect.height / 2) {
+              insertAt = i;
+              break;
+            }
+          }
+        } catch(_) {}
+      }
+      
+      if (componentType === 'record-tabs') {
+        // Add tabs component
+        const comp = this.editor.DomComponents.addComponent({ type: 'record-tabs' }, { at: insertAt });
+        comp.addAttributes({ 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
+        // Lock inner components for tabs (but tabs have special handling, so we'll let the tabs component handle it)
+      } else if (componentType === 'partial') {
+        const partialName = (dt && dt.getData && dt.getData('partial-name')) || 
+                           (window.rbDragPayload && window.rbDragPayload.partial) || '';
+        if (!partialName) {
+          window.rbDragPayload = null;
+          return;
+        }
         
-        if (data.type === 'field') {
-          this.addFieldComponent(data.name, target);
-        } else if (data.type === 'component') {
-          this.addPartialComponent(data.name, target);
+        let comp;
+        if (targetTabSection) {
+          // Add to tab section
+          const added = targetTabSection.append({ type: 'record-partial' });
+          comp = Array.isArray(added) ? added[0] : added;
+        } else {
+          // Add to root
+          comp = this.editor.DomComponents.addComponent({ type: 'record-partial' }, { at: insertAt });
+        }
+        
+        if (comp && comp.addAttributes) {
+          comp.addAttributes({ 
+            'partial-name': partialName, 
+            'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` 
+          });
+          
+          // Add preview content
+          try {
+            const previewScript = document.getElementById('record-layout-preview');
+            if (previewScript) {
+              const preview = JSON.parse(previewScript.textContent);
+              const parts = preview.partials || {};
+              const html = parts[partialName] || '';
+              if (html) {
+                comp.components(html);
+                // Add delete button as direct child
+                this.addDeleteButton(comp);
+                // Lock all inner components so they can't be selected/edited individually
+                this.lockInnerComponents(comp);
+              } else {
+                // Even without preview, add delete button
+                this.addDeleteButton(comp);
+              }
+            } else {
+              this.addDeleteButton(comp);
+            }
+          } catch(_) {
+            // Fallback: add delete button even if preview fails
+            this.addDeleteButton(comp);
+          }
+        }
+      } else if (componentType === 'field') {
+        const api = (dt && dt.getData && dt.getData('field-api-name')) || 
+                   (window.rbDragPayload && window.rbDragPayload.api) || '';
+        const label = (dt && dt.getData && dt.getData('field-label')) || 
+                     (window.rbDragPayload && window.rbDragPayload.label) || api;
+        const ftype = (dt && dt.getData && dt.getData('field-type')) || 
+                     (window.rbDragPayload && window.rbDragPayload.ftype) || 'text';
+        
+        if (!api) {
+          window.rbDragPayload = null;
+          return;
+        }
+        
+        let comp;
+        if (targetTabSection) {
+          // Add to tab section
+          const added = targetTabSection.append({ type: 'record-field' });
+          comp = Array.isArray(added) ? added[0] : added;
+        } else {
+          // Add to root
+          comp = this.editor.DomComponents.addComponent({ type: 'record-field' }, { at: insertAt });
+        }
+        
+        if (comp && comp.addAttributes) {
+          comp.addAttributes({ 
+            'field-api-name': api, 
+            'field-label': label, 
+            'field-type': ftype, 
+            'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` 
+          });
+          
+          // Add preview content
+          try {
+            const previewScript = document.getElementById('record-layout-preview');
+            if (previewScript) {
+              const preview = JSON.parse(previewScript.textContent);
+              const values = preview.values || {};
+              const val = Object.prototype.hasOwnProperty.call(values, api) ? values[api] : '';
+              const html = `<div class="rf-row d-flex align-items-start justify-content-between">
+                <div class="rf-content flex-grow-1">
+                  <div class="rf-label">${label || ''}</div>
+                  <div class="rf-value">${val == null ? '' : String(val)}</div>
+                </div>
+                <i class="fas fa-pencil-alt" aria-hidden="true" style="color:#000; margin-left:8px;"></i>
+              </div>`;
+              comp.components(html);
+              // Add delete button as direct child (not nested in preview HTML)
+              this.addDeleteButton(comp);
+              // Lock all inner components so they can't be selected/edited individually
+              this.lockInnerComponents(comp);
+              if (comp.view && comp.view.render) {
+                comp.view.render();
+              }
+            } else {
+              // Fallback: add delete button even if preview script is missing
+              this.addDeleteButton(comp);
+            }
+          } catch(_) {
+            // Fallback: add delete button even if preview fails
+            this.addDeleteButton(comp);
+          }
         }
       }
-    });
-  }
-
-  addFieldComponent(fieldName, target) {
-    const component = this.editor.DomComponents.addComponent({
-      type: 'record-field',
-      attributes: { 'data-field': fieldName }
+      
+      window.rbDragPayload = null;
+    };
+    
+    // Set up dragover and drop handlers on canvas container
+    canvasContainer.addEventListener('dragover', (e) => {
+      try {
+        // Check if this is a tab reorder drag (should be handled by tab buttons)
+        const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder');
+        if (isTabReorder) {
+          // Don't handle tab reorder drags here - let tab buttons handle them
+          // But prevent default to allow the drag
+          const header = e.target.closest && e.target.closest('.pf-tabs-header');
+          if (header) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+          } else {
+            // Outside header - prevent drop
+            e.dataTransfer.dropEffect = 'none';
+          }
+          return;
+        }
+        
+        if (window.rbDragPayload || (e.dataTransfer && e.dataTransfer.getData('component-type'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = 'copy';
+          
+          // Highlight tab sections when dragging over them
+          const tabSection = e.target.closest && e.target.closest('[data-role="pf-tab-section"]');
+          if (tabSection) {
+            tabSection.classList.add('dragover');
+          } else {
+            // Remove dragover class from all tab sections
+            document.querySelectorAll('.pf-tab-section.dragover').forEach(s => {
+              s.classList.remove('dragover');
+            });
+          }
+        }
+      } catch(_) {}
     });
     
-    if (target && target.components) {
-      target.components().add(component);
+    canvasContainer.addEventListener('dragleave', (e) => {
+      // Remove dragover class when leaving
+      document.querySelectorAll('.pf-tab-section.dragover').forEach(s => {
+        s.classList.remove('dragover');
+      });
+    });
+    
+    canvasContainer.addEventListener('drop', (e) => {
+      // Check if this is a tab reorder drop (should be handled by tab buttons)
+      const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder');
+      if (isTabReorder) {
+        // Don't handle tab reorder drops here - let tab buttons handle them
+        // Only handle if dropped outside header
+        const header = e.target.closest && e.target.closest('.pf-tabs-header');
+        if (!header) {
+          // Cancel the drop if outside header
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('[PF] Tab reorder drop cancelled - outside header');
+        }
+        return;
+      }
+      
+      // Remove dragover class on drop
+      document.querySelectorAll('.pf-tab-section.dragover').forEach(s => {
+        s.classList.remove('dragover');
+      });
+      handleDrop(e);
+    });
+    
+    // Also set up handlers on the iframe (GrapesJS canvas)
+    // Retry mechanism since iframe might not be ready immediately
+    const setupIframeHandlers = () => {
+      try {
+        const iframe = this.editor.Canvas.getFrameEl();
+        if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
+          iframe.contentDocument.addEventListener('dragover', (e) => {
+            try {
+              // Check if this is a tab reorder drag
+              const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder');
+              if (isTabReorder) {
+                // Only allow drag over within header
+                const header = e.target.closest && e.target.closest('.pf-tabs-header');
+                if (header) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = 'move';
+                } else {
+                  e.dataTransfer.dropEffect = 'none';
+                }
+                return;
+              }
+              
+              if (window.rbDragPayload || (e.dataTransfer && e.dataTransfer.getData('component-type'))) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = 'copy';
+                
+                // Highlight tab sections when dragging over them
+                const tabSection = e.target.closest && e.target.closest('[data-role="pf-tab-section"]');
+                if (tabSection) {
+                  tabSection.classList.add('dragover');
+                } else {
+                  // Remove dragover class from all tab sections
+                  iframe.contentDocument.querySelectorAll('.pf-tab-section.dragover').forEach(s => {
+                    s.classList.remove('dragover');
+                  });
+                }
+              }
+            } catch(_) {}
+          });
+          
+          iframe.contentDocument.addEventListener('dragleave', (e) => {
+            // Remove dragover class when leaving
+            try {
+              iframe.contentDocument.querySelectorAll('.pf-tab-section.dragover').forEach(s => {
+                s.classList.remove('dragover');
+              });
+            } catch(_) {}
+          });
+          
+          iframe.contentDocument.addEventListener('drop', (e) => {
+            try {
+              // Check if this is a tab reorder drop
+              const isTabReorder = e.dataTransfer.types.includes('application/x-tab-reorder');
+              if (isTabReorder) {
+                // Don't handle tab reorder drops here - let tab buttons handle them
+                // Only cancel if dropped outside header
+                const header = e.target.closest && e.target.closest('.pf-tabs-header');
+                if (!header) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('[PF] Tab reorder drop cancelled in iframe - outside header');
+                }
+                return;
+              }
+              
+              // Remove dragover class on drop
+              iframe.contentDocument.querySelectorAll('.pf-tab-section.dragover').forEach(s => {
+                s.classList.remove('dragover');
+              });
+              // Forward to main handler
+              handleDrop(e);
+            } catch(_) {}
+          });
+          return true;
+        }
+      } catch(_) {}
+      return false;
+    };
+    
+    // Try immediately
+    if (!setupIframeHandlers()) {
+      // Retry after a short delay
+      setTimeout(() => {
+        if (!setupIframeHandlers()) {
+          // One more retry
+          setTimeout(setupIframeHandlers, 500);
+        }
+      }, 100);
     }
   }
 
-  addPartialComponent(partialName, target) {
-    const component = this.editor.DomComponents.addComponent({
-      type: 'record-partial',
-      attributes: { 'data-partial': partialName }
-    });
-    
-    if (target && target.components) {
-      target.components().add(component);
-    }
-  }
 
   sanitizeLayoutHtml(html) {
     if (!html) return '';
@@ -551,18 +1436,52 @@ export class RecordLayoutBuilder {
       }
     }, 5000);
   }
+
+  destroy() {
+    if (this.editor) {
+      try {
+        this.editor.destroy();
+        console.log('[PF] Record builder editor destroyed');
+      } catch (error) {
+        console.warn('[PF] Error destroying editor:', error);
+      }
+      this.editor = null;
+    }
+  }
 }
 
 // Initialize the builder
 let builderInitialized = false;
+let builderInstance = null;
+
+function destroyRecordPageBuilder() {
+  if (builderInstance) {
+    try {
+      builderInstance.destroy();
+    } catch (error) {
+      console.warn('[PF] Error destroying builder instance:', error);
+    }
+    builderInstance = null;
+  }
+  builderInitialized = false;
+}
 
 function initRecordPageBuilder() {
+  // Only initialize if we're on the builder page
+  if (!document.getElementById('gjs') || !document.getElementById('record-layout-metadata')) {
+    return;
+  }
+
   if (builderInitialized) return;
   builderInitialized = true;
   
-  new RecordLayoutBuilder();
+  builderInstance = new RecordLayoutBuilder();
 }
 
 // Event listeners
+document.addEventListener('turbo:before-cache', destroyRecordPageBuilder);
+document.addEventListener('turbo:load', function() {
+  destroyRecordPageBuilder();
+  initRecordPageBuilder();
+});
 document.addEventListener('DOMContentLoaded', initRecordPageBuilder);
-document.addEventListener('turbo:load', initRecordPageBuilder);

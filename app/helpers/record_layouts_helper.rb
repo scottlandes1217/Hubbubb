@@ -91,7 +91,10 @@ module RecordLayoutsHelper
 
     result = { 
       fields: fields, 
-      components: components 
+      components: components,
+      organization_id: organization.id,
+      table_type: table_type,
+      table_id: table_id
     }
     
     # Add layout data if it exists
