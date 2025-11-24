@@ -24,6 +24,14 @@
     pointer-events: auto !important;
     cursor: pointer;
   }
+  /* Remove section borders on rendered pages */
+  .record-layout-render .pf-section {
+    border: none !important;
+  }
+  .record-layout-render .pf-section-column {
+    border: none !important;
+    background: transparent !important;
+  }
 </style>
 
 <div class="record-layout-render">
@@ -74,37 +82,39 @@
         const val = values && Object.prototype.hasOwnProperty.call(values, api) ? values[api] : '';
         const safeVal = (val == null ? '' : String(val));
         el.classList.add('field-container');
+        // Generate a unique instance ID for this field instance
+        const instanceId = 'field-instance-' + api + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         let inputHtml = '';
         if (ftype === 'textarea') {
-          inputHtml = '<textarea class="edit-input form-control mt-2" data-field="' + api + '" data-edit-field-target="input" style="display:none;">' + safeVal.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>';
+          inputHtml = '<textarea class="edit-input form-control mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + safeVal.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>';
         } else if (ftype === 'checkbox') {
           const checked = (safeVal === 'true' || safeVal === '1') ? 'checked' : '';
-          inputHtml = '<div class="form-check mt-2" style="display:none;"><input type="checkbox" class="form-check-input edit-input" data-field="' + api + '" data-edit-field-target="input" ' + checked + ' /></div>';
+          inputHtml = '<div class="form-check mt-2" style="display:none;"><input type="checkbox" class="form-check-input edit-input" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" ' + checked + ' /></div>';
         } else if (ftype === 'date') {
-          inputHtml = '<input type="date" class="edit-input form-control mt-2" data-field="' + api + '" data-edit-field-target="input" value="' + safeVal + '" style="display:none;" />';
+          inputHtml = '<input type="date" class="edit-input form-control mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" value="' + safeVal + '" style="display:none;" />';
         } else if (ftype === 'picklist') {
           const opts = (el.getAttribute('data-options') || '').split('|').filter(Boolean);
           if (opts.length === 0) {
             opts.push('None');
           }
-          inputHtml = '<select class="edit-input form-select mt-2" data-field="' + api + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (o===safeVal?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
+          inputHtml = '<select class="edit-input form-select mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (o===safeVal?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
         } else if (ftype === 'multipicklist') {
           const opts = (el.getAttribute('data-options') || '').split('|').filter(Boolean);
           if (opts.length === 0) {
             opts.push('None');
           }
           const selected = Array.isArray(val) ? val : String(safeVal).split(',').map(function(s){ return s.trim(); });
-          inputHtml = '<select multiple class="edit-input form-select mt-2" data-field="' + api + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (selected.includes(o)?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
+          inputHtml = '<select multiple class="edit-input form-select mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (selected.includes(o)?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
         } else {
-          inputHtml = '<input type="text" class="edit-input form-control mt-2" data-field="' + api + '" data-edit-field-target="input" value="' + safeVal.replace(/"/g, '&quot;') + '" style="display:none;" />';
+          inputHtml = '<input type="text" class="edit-input form-control mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" value="' + safeVal.replace(/"/g, '&quot;') + '" style="display:none;" />';
         }
         el.innerHTML =
           '<div class="d-flex justify-content-between align-items-start w-100">' +
             '<div class="flex-grow-1">' +
               '<strong>' + (label || '') + ':</strong> ' +
-              '<span class="value" data-edit-field-target="value" data-field="' + api + '">' + safeVal + '</span>' +
+              '<span class="value" data-edit-field-target="value" data-field="' + api + '" data-instance-id="' + instanceId + '">' + safeVal + '</span>' +
             '</div>' +
-            '<button class="edit-button btn btn-link p-0 ms-2" data-field="' + api + '" data-edit-field-target="editButton" data-action="click->edit-field#edit" title="Edit ' + (label || api) + '"><i class="fas fa-pencil-alt"></i></button>' +
+            '<button class="edit-button btn btn-link p-0 ms-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="editButton" data-action="click->edit-field#edit" title="Edit ' + (label || api) + '"><i class="fas fa-pencil-alt"></i></button>' +
           '</div>' +
           inputHtml;
       });
@@ -112,33 +122,79 @@
       // Replace partial placeholders with known server-rendered partials
       var partials = {};
       <% if table_type == 'Pet' %>
-        partials['pets/pet_header'] = <%= raw((j render('pets/pet_header', pet: record))) %>;
+        partials['pets/pet_header'] = <%= raw((j render('pets/pet_header', pet: record, with_id: false))) %>;
       <% end %>
       document.querySelectorAll('[partial-name]').forEach(function(el){
         var name = el.getAttribute('partial-name');
         if (name && partials[name]) {
-          el.innerHTML = partials[name];
+          // The partials[name] is already properly escaped by the j() helper
+          // Create a temporary element to parse the HTML string
+          const temp = document.createElement('div');
+          // Set innerHTML - this will parse the HTML string correctly
+          temp.innerHTML = partials[name];
+          const fresh = temp.firstElementChild;
+          if (fresh && el.parentNode) {
+            // Replace the entire element to remove placeholder classes
+            el.parentNode.replaceChild(fresh, el);
+          } else {
+            // Fallback: if no firstElementChild (shouldn't happen), try setting innerHTML directly
+            el.innerHTML = partials[name];
+            // Remove placeholder classes that might hide content
+            el.classList.remove('record-partial-placeholder', 'pf-interactive', 'border', 'rounded', 'p-2', 'mb-2', 'bg-light');
+          }
         }
       });
       // Fallback: If saved layout lacks partial-name attribute, aggressively replace any header snapshot
-      // with the live-rendered header to avoid stale text.
+      // with the live-rendered header to avoid stale text and ensure photo is always shown.
+      // BUT: Skip headers that are inside [partial-name] elements (already replaced correctly)
       try {
         if (partials['pets/pet_header']) {
           const candidates = new Set();
-          document.querySelectorAll('.pet-header, [id^="pet_header_"]').forEach(n => candidates.add(n));
-          document.querySelectorAll('.name-field-header').forEach(n => {
-            const header = n.closest('.pet-header');
-            candidates.add(header || n);
+          // Find all pet-header elements that haven't been replaced yet
+          document.querySelectorAll('.pet-header, [id^="pet_header_"]').forEach(n => {
+            // Skip if this node or any ancestor has [partial-name] attribute (already handled)
+            let check = n;
+            let skip = false;
+            while (check && check !== document.body) {
+              if (check.hasAttribute && check.hasAttribute('partial-name')) {
+                skip = true;
+                break;
+              }
+              check = check.parentElement;
+            }
+            if (!skip) candidates.add(n);
           });
+          // Also find name-field-header elements that might be part of a pet header
+          document.querySelectorAll('.name-field-header').forEach(n => {
+            // Skip if inside a [partial-name] element
+            let check = n;
+            let skip = false;
+            while (check && check !== document.body) {
+              if (check.hasAttribute && check.hasAttribute('partial-name')) {
+                skip = true;
+                break;
+              }
+              check = check.parentElement;
+            }
+            if (!skip) {
+              const header = n.closest('.pet-header');
+              if (header) candidates.add(header);
+            }
+          });
+          // Replace all candidates with fresh rendered header (includes photo)
           candidates.forEach(function(node){
             if (!node || !node.parentNode) return;
             const temp = document.createElement('div');
             temp.innerHTML = partials['pets/pet_header'];
             const fresh = temp.firstElementChild;
-            if (fresh) node.parentNode.replaceChild(fresh, node);
+            if (fresh) {
+              node.parentNode.replaceChild(fresh, node);
+            }
           });
         }
-      } catch(_e) {}
+      } catch(e) {
+        console.warn('Error replacing pet header:', e);
+      }
 
       // Strip builder-only wrappers if any leaked into runtime HTML (initial + future mutations)
       (function(){

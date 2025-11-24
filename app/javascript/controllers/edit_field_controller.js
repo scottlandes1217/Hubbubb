@@ -21,6 +21,9 @@ export default class extends Controller {
     }
     this.initialized = true;
 
+    // Generate instance IDs for fields that don't have them (backwards compatibility)
+    this.ensureInstanceIds();
+
     this.url = this.element.dataset.url;
     this.currentValues = new Map();
     this.changedFields = new Set();
@@ -68,6 +71,40 @@ export default class extends Controller {
     this.updateUI();
   }
 
+  /* ------------------------------------------------------------
+   * ENSURE INSTANCE IDS
+   * Generate unique instance IDs for fields that don't have them
+   * ------------------------------------------------------------ */
+  ensureInstanceIds() {
+    // Find all field containers
+    const fieldContainers = this.element.querySelectorAll('.field-container');
+    fieldContainers.forEach((container) => {
+      // Check if this container already has fields with instance IDs
+      const hasInstanceId = container.querySelector('[data-instance-id]');
+      if (hasInstanceId) return; // Already has instance IDs
+
+      // Generate a unique instance ID for this field container
+      const instanceId = 'field-instance-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+      
+      // Find all related elements in this container
+      const value = container.querySelector('[data-edit-field-target="value"]');
+      const button = container.querySelector('[data-edit-field-target="editButton"]');
+      const inputs = container.querySelectorAll('[data-edit-field-target="input"]');
+      const groupContainer = container.querySelector('.edit-input-group');
+      
+      // Add instance ID to all related elements
+      if (value) value.dataset.instanceId = instanceId;
+      if (button) button.dataset.instanceId = instanceId;
+      inputs.forEach((input) => {
+        input.dataset.instanceId = instanceId;
+      });
+      // For grouped fields, also add instance ID to the group container
+      if (groupContainer) {
+        groupContainer.dataset.instanceId = instanceId;
+      }
+    });
+  }
+
 /* ------------------------------------------------------------
  * EDIT
  * ------------------------------------------------------------ */
@@ -77,21 +114,50 @@ export default class extends Controller {
 
   // Use event.currentTarget so we always get the button's data attributes
   const button = event.currentTarget;
-  console.log('[EditField] edit click', { button, dataset: { field: button?.dataset?.field, group: button?.dataset?.group } });
+  const instanceId = button.dataset.instanceId;
   const group = button.dataset.group;
   const field = button.dataset.field;
-  console.log("[edit] Clicked edit button:", { group, field });
+  console.log("[edit] Clicked edit button:", { instanceId, group, field });
+
+  // Helper function to find elements by instance ID or fallback to container search
+  const findElement = (selector, container = null) => {
+    if (instanceId) {
+      // Use instance ID for precise targeting
+      const elements = this.element.querySelectorAll(`[data-instance-id="${instanceId}"]${selector}`);
+      return elements.length > 0 ? elements[0] : null;
+    } else {
+      // Fallback: search within container
+      const searchContainer = container || button.closest('.field-container') || this.element;
+      return searchContainer.querySelector(selector);
+    }
+  };
+
+  const findElements = (selector, container = null) => {
+    if (instanceId) {
+      // Use instance ID for precise targeting
+      return Array.from(this.element.querySelectorAll(`[data-instance-id="${instanceId}"]${selector}`));
+    } else {
+      // Fallback: search within container
+      const searchContainer = container || button.closest('.field-container') || this.element;
+      return Array.from(searchContainer.querySelectorAll(selector));
+    }
+  };
 
   if (group) {
-    // 1) Find the <span> to hide
-    const valueElement = this.valueTargets.find(
-      (el) => el.dataset.field === group
-    );
-    console.log("[edit] valueElement for group =", group, valueElement);
-
-    // 2) Find the group container <div class="edit-input-group" data-group="XYZ">
-    const groupContainer = this.element.querySelector(
-      `.edit-input-group[data-group="${group}"]`
+    // Grouped fields (e.g., weight, dob)
+    const valueElement = findElement('[data-edit-field-target="value"]');
+    let groupContainer = null;
+    if (instanceId) {
+      // Use instance ID to find the group container
+      groupContainer = this.element.querySelector(`[data-instance-id="${instanceId}"].edit-input-group`);
+    }
+    if (!groupContainer) {
+      // Fallback: search within field container
+      const fieldContainer = button.closest('.field-container') || this.element;
+      groupContainer = fieldContainer.querySelector(`.edit-input-group[data-group="${group}"]`);
+    }
+    const inputElements = findElements('[data-edit-field-target="input"]').filter(
+      (el) => el.dataset.group === group
     );
 
     // Hide the static text <span>
@@ -104,12 +170,9 @@ export default class extends Controller {
       groupContainer.style.display = "flex";
     }
 
-    // Also show each input inside that container
-    const inputElements = this.inputTargets.filter(
-      (el) => el.dataset.group === group
-    );
+    // Show each input inside that container
     inputElements.forEach((inputEl) => {
-      inputEl.style.display = "inline-block"; // or "block"
+      inputEl.style.display = "inline-block";
     });
 
     // Hide the edit button
@@ -119,8 +182,6 @@ export default class extends Controller {
     this.showCancelButton();
 
     // Listen for input changes to show/hide the Save button
-    console.log("[edit] inputElements in group =", group, inputElements);
-
     inputElements.forEach((inputEl) => {
       const eventType =
         inputEl.type === "checkbox" || inputEl.tagName === "SELECT"
@@ -147,21 +208,20 @@ export default class extends Controller {
       });
     });
   } else {
-    // Single field
-    const valueElement = this.valueTargets.find(
-      (el) => el.dataset.field === field
-    );
-    const inputElement = this.inputTargets.find(
-      (el) => el.dataset.field === field
-    );
+    // Single field - use instance ID to find related elements
+    const valueElement = findElement('[data-edit-field-target="value"]');
+    const inputElement = findElement('[data-edit-field-target="input"]');
 
     // Hide the static text
     if (valueElement) valueElement.style.display = "none";
+    
     // Show the <input> or <select>
-    if (inputElement) inputElement.style.display = "inline-block";
-
-    // Focus for convenience
-    inputElement.focus();
+    if (inputElement) {
+      inputElement.style.display = "inline-block";
+      inputElement.focus();
+    } else {
+      console.warn("[edit] Could not find input element for field", field, "instanceId", instanceId);
+    }
 
     // Hide the edit button
     button.style.display = "none";
@@ -170,46 +230,48 @@ export default class extends Controller {
     this.showCancelButton();
 
     // Watch for changes
-    const checkChange = () => {
-      if (inputElement.type === "checkbox") {
-        if (inputElement.checked.toString() !== this.currentValues.get(field)) {
-          this.changedFields.add(field);
-          this.showSaveButton();
+    if (inputElement) {
+      const checkChange = () => {
+        if (inputElement.type === "checkbox") {
+          if (inputElement.checked.toString() !== this.currentValues.get(field)) {
+            this.changedFields.add(field);
+            this.showSaveButton();
+          } else {
+            this.changedFields.delete(field);
+            this.hideSaveButton();
+          }
+        } else if (inputElement.tagName === "SELECT" && inputElement.multiple) {
+          const selectedValues = Array.from(inputElement.selectedOptions).map(
+            (o) => o.value
+          );
+          const originalValues = this.currentValues.get(field);
+          if (
+            JSON.stringify(selectedValues) !== JSON.stringify(originalValues)
+          ) {
+            this.changedFields.add(field);
+            this.showSaveButton();
+          } else {
+            this.changedFields.delete(field);
+            this.hideSaveButton();
+          }
         } else {
-          this.changedFields.delete(field);
-          this.hideSaveButton();
+          if (inputElement.value !== this.currentValues.get(field)) {
+            this.changedFields.add(field);
+            this.showSaveButton();
+          } else {
+            this.changedFields.delete(field);
+            this.hideSaveButton();
+          }
         }
-      } else if (inputElement.tagName === "SELECT" && inputElement.multiple) {
-        const selectedValues = Array.from(inputElement.selectedOptions).map(
-          (o) => o.value
-        );
-        const originalValues = this.currentValues.get(field);
-        if (
-          JSON.stringify(selectedValues) !== JSON.stringify(originalValues)
-        ) {
-          this.changedFields.add(field);
-          this.showSaveButton();
-        } else {
-          this.changedFields.delete(field);
-          this.hideSaveButton();
-        }
-      } else {
-        if (inputElement.value !== this.currentValues.get(field)) {
-          this.changedFields.add(field);
-          this.showSaveButton();
-        } else {
-          this.changedFields.delete(field);
-          this.hideSaveButton();
-        }
-      }
-    };
+      };
 
-    // For single field, use input or change event
-    const eventType =
-      inputElement.type === "checkbox" || inputElement.tagName === "SELECT"
-        ? "change"
-        : "input";
-    inputElement.addEventListener(eventType, checkChange);
+      // For single field, use input or change event
+      const eventType =
+        inputElement.type === "checkbox" || inputElement.tagName === "SELECT"
+          ? "change"
+          : "input";
+      inputElement.addEventListener(eventType, checkChange);
+    }
   }
 }
 
@@ -403,17 +465,38 @@ export default class extends Controller {
     this.inputTargets.forEach((input) => {
       const field = input.dataset.field;
       const group = input.dataset.group;
+      const instanceId = input.dataset.instanceId;
 
-      // Find matching span(s)
+      // Find matching span(s) - use instance ID if available, otherwise fallback to container search
       let valueElements = [];
-      if (group) {
-        valueElements = this.valueTargets.filter(
-          (el) => el.dataset.field === group
-        );
+      if (instanceId) {
+        // Use instance ID for precise targeting
+        valueElements = Array.from(this.element.querySelectorAll(`[data-instance-id="${instanceId}"][data-edit-field-target="value"]`));
       } else {
-        valueElements = this.valueTargets.filter(
-          (el) => el.dataset.field === field
-        );
+        // Fallback: search within field container
+        const fieldContainer = input.closest('.field-container');
+        if (fieldContainer) {
+          if (group) {
+            valueElements = Array.from(fieldContainer.querySelectorAll('[data-edit-field-target="value"]')).filter(
+              (el) => el.dataset.field === group
+            );
+          } else {
+            valueElements = Array.from(fieldContainer.querySelectorAll('[data-edit-field-target="value"]')).filter(
+              (el) => el.dataset.field === field
+            );
+          }
+        } else {
+          // Last resort: search globally
+          if (group) {
+            valueElements = this.valueTargets.filter(
+              (el) => el.dataset.field === group
+            );
+          } else {
+            valueElements = this.valueTargets.filter(
+              (el) => el.dataset.field === field
+            );
+          }
+        }
       }
       if (valueElements.length === 0) return;
 
@@ -529,7 +612,8 @@ export default class extends Controller {
 
       // If it's a grouped field, hide the entire container
       if (group) {
-        const groupContainer = this.element.querySelector(
+        const fieldContainer = input.closest('.field-container') || this.element;
+        const groupContainer = fieldContainer.querySelector(
           `.edit-input-group[data-group="${group}"]`
         );
         if (groupContainer) {
@@ -537,10 +621,18 @@ export default class extends Controller {
         }
       }
 
-      // Show the edit button again
-      const editBtn = this.editButtonTargets.find(
-        (el) => el.dataset.field === (group || field)
-      );
+      // Show the edit button again - use instance ID if available
+      let editBtn = null;
+      if (instanceId) {
+        editBtn = this.element.querySelector(
+          `[data-instance-id="${instanceId}"][data-edit-field-target="editButton"]`
+        );
+      } else {
+        const fieldContainer = input.closest('.field-container') || this.element;
+        editBtn = fieldContainer.querySelector(
+          '[data-edit-field-target="editButton"][data-field="' + (group || field) + '"]'
+        );
+      }
       if (editBtn) {
         editBtn.style.display = "inline-block";
       }

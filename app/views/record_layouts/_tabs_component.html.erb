@@ -4,10 +4,12 @@
   
   function buildWorkingTabs(comp) {
     const isUpdating = comp.getAttributes()?.['_updating-tabs'] === 'true';
-      const compEl = comp.getEl();
+    const compEl = comp.getEl();
     
     // Prevent loops
-    if (!isUpdating && compEl?.__pf_building_tabs) return;
+    if (!isUpdating && compEl?.__pf_building_tabs) {
+      return;
+    }
     if (compEl && !isUpdating) compEl.__pf_building_tabs = true;
     
     // CRITICAL: Read tabs-json from HTML element FIRST (before checking structure)
@@ -16,7 +18,10 @@
     if (compEl) {
       tabsJson = compEl.getAttribute('tabs-json');
       if (tabsJson) {
-        console.log('[PF] Found tabs-json in HTML element:', tabsJson);
+        // Decode HTML entities before parsing
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = tabsJson;
+        tabsJson = textarea.value;
         comp.addAttributes({ 'tabs-json': tabsJson });
       }
     }
@@ -24,7 +29,6 @@
     // If not in HTML, try attributes
     if (!tabsJson) {
       tabsJson = comp.getAttributes()['tabs-json'];
-      console.log('[PF] Found tabs-json in attributes:', tabsJson);
     }
     
     // Get tabs data - NEVER use defaults if we have saved data
@@ -37,17 +41,25 @@
         }
       } catch(e) {
         console.error('[PF] Error parsing tabs-json:', e, 'tabsJson:', tabsJson);
+        // If parsing fails, try to fix HTML entities and parse again
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.innerHTML = tabsJson;
+          const decoded = textarea.value;
+          tabs = JSON.parse(decoded);
+        } catch(e2) {
+          console.error('[PF] Failed to parse tabs-json even after decoding:', e2);
+          // Use default tabs if parsing completely fails
+          tabs = [{ id: 'tab1', title: 'Tab 1' }];
+        }
       }
     }
     
-    // Only use default if we truly have no saved data (new component)
+    // Only use default if we truly have no saved data (new component) or parsing failed
     if (!tabsJson || tabs.length === 0) {
-      console.log('[PF] No saved tabs found, using default for new component');
       tabs = [{ id: 'tab1', title: 'Tab 1' }];
       comp.addAttributes({ 'tabs-json': JSON.stringify(tabs), 'active-tab-id': tabs[0]?.id || 'tab1' });
     }
-    
-    console.log('[PF] Using tabs:', tabs);
     
     // Skip if structure already exists (check both DOM and component tree)
     if (!isUpdating) {
@@ -59,7 +71,45 @@
       
       if (hasDomStructure || hasComponentStructure) {
         if (compEl) compEl.__pf_building_tabs = false;
-        addButtons(comp);
+        // Ensure buttons exist even if structure already exists
+        const compElForButtons = comp.getEl();
+        if (compElForButtons) {
+          if (window.getComputedStyle(compElForButtons).position === 'static') {
+            compElForButtons.style.position = 'relative';
+          }
+          // Create buttons if they don't exist
+          if (!compElForButtons.querySelector(':scope > .rb-edit-tabs')) {
+            const editBtn = document.createElement('span');
+            editBtn.className = 'rb-edit-tabs';
+            editBtn.setAttribute('data-role', 'rb-edit-tabs');
+            editBtn.title = 'Edit Tabs';
+            editBtn.textContent = '✎';
+            editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto;';
+            editBtn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (window.openTabsConfigModal) window.openTabsConfigModal(comp);
+            };
+            compElForButtons.insertBefore(editBtn, compElForButtons.firstChild);
+          }
+          if (!compElForButtons.querySelector(':scope > .rb-del')) {
+            const delBtn = document.createElement('span');
+            delBtn.className = 'rb-del';
+            delBtn.setAttribute('data-role', 'rb-del');
+            delBtn.title = 'Delete';
+            delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+            delBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; align-items: center; justify-content: center; cursor: pointer; z-index: 99999; pointer-events: auto;';
+            delBtn.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+              const view = editor?.Components?.getView(comp);
+              if (view?.onDelete) view.onDelete(e);
+              else comp.remove();
+            };
+            compElForButtons.insertBefore(delBtn, compElForButtons.firstChild);
+          }
+        }
         restoreActiveTabState(comp);
         // Re-attach click handlers even if structure exists (important after reload)
         attachTabClickHandlers(comp);
@@ -81,8 +131,15 @@
     const header = tabsWrapper.append('<div class="pf-tabs-header"></div>')[0];
     const body = tabsWrapper.append('<div class="pf-tabs-body"></div>')[0];
     
-    // Lock wrapper components
-    [tabsWrapper, header, body].forEach(c => c.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false }));
+    // Lock wrapper components - but ensure they don't block parent dragging
+    [tabsWrapper, header, body].forEach(c => {
+      c.set({ selectable: false, hoverable: false, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false });
+      // Ensure pointer events bubble up so parent can be dragged
+      const cEl = c.getEl();
+      if (cEl) {
+        cEl.style.pointerEvents = 'auto'; // Allow events to bubble
+      }
+    });
     
     // Create tabs
     tabs.forEach((t, i) => {
@@ -90,7 +147,7 @@
       btn.set({ selectable: false, hoverable: true, draggable: false, droppable: false, editable: false, copyable: false, highlightable: false });
       
       const section = body.append(`<div class="pf-tab-section ${i === 0 ? 'active' : ''}" data-role="pf-tab-section" data-tab-id="${t.id}"></div>`)[0];
-      section.set({ droppable: true, accept: ['record-field', 'record-partial'], selectable: false, hoverable: false, highlightable: false, draggable: false });
+      section.set({ droppable: true, accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'], selectable: false, hoverable: false, highlightable: false, draggable: false });
     });
     
     // Attach click handlers after all tabs are created
@@ -98,11 +155,54 @@
       attachTabClickHandlers(comp);
     }, 100);
     
-    // Add delete/edit buttons
-    addButtons(comp);
+    // Create buttons as DOM elements directly on the component element
+    const compElForButtons = comp.getEl();
+    if (compElForButtons) {
+      // Ensure container has relative positioning
+      if (window.getComputedStyle(compElForButtons).position === 'static') {
+        compElForButtons.style.position = 'relative';
+      }
+      
+      // Edit button - create or reuse existing
+      let editBtn = compElForButtons.querySelector(':scope > .rb-edit-tabs');
+      if (!editBtn) {
+        editBtn = document.createElement('span');
+        editBtn.className = 'rb-edit-tabs';
+        editBtn.setAttribute('data-role', 'rb-edit-tabs');
+        editBtn.title = 'Edit Tabs';
+        editBtn.textContent = '✎';
+        editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto;';
+        editBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.openTabsConfigModal) window.openTabsConfigModal(comp);
+        };
+        compElForButtons.insertBefore(editBtn, compElForButtons.firstChild);
+      }
+      
+      // Delete button - create or reuse existing
+      let delBtn = compElForButtons.querySelector(':scope > .rb-del');
+      if (!delBtn) {
+        delBtn = document.createElement('span');
+        delBtn.className = 'rb-del';
+        delBtn.setAttribute('data-role', 'rb-del');
+        delBtn.title = 'Delete';
+        delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+        delBtn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; align-items: center; justify-content: center; cursor: pointer; z-index: 99999; pointer-events: auto;';
+        delBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+          const view = editor?.Components?.getView(comp);
+          if (view?.onDelete) view.onDelete(e);
+          else comp.remove();
+        };
+        compElForButtons.insertBefore(delBtn, compElForButtons.firstChild);
+      }
+    }
     
-    // Configure main component
-    comp.set({ droppable: false, selectable: true, hoverable: true, highlightable: true });
+    // Configure main component - ensure it's draggable
+    comp.set({ draggable: true, droppable: false, selectable: true, hoverable: true, highlightable: true });
     
     // Clear flag and restore state
     setTimeout(() => {
@@ -110,49 +210,9 @@
       restoreActiveTabState(comp);
       // Ensure handlers are attached
       attachTabClickHandlers(comp);
-    }, 150);
+    }, 200);
   }
 
-  function addButtons(comp) {
-    const compEl = comp.getEl();
-    if (!compEl) return;
-    
-    // Delete button
-    if (!compEl.querySelector(':scope > .rb-del')) {
-      const btn = document.createElement('span');
-      btn.className = 'rb-del';
-      btn.setAttribute('data-role', 'rb-del');
-      btn.title = 'Delete';
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
-      btn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 99999; pointer-events: auto;';
-      btn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-          const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-        const view = editor?.Components?.getView(comp);
-        if (view?.onDelete) view.onDelete(e);
-        else comp.remove();
-      };
-      compEl.insertBefore(btn, compEl.firstChild);
-      if (window.getComputedStyle(compEl).position === 'static') compEl.style.position = 'relative';
-    }
-    
-    // Edit button
-    if (!compEl.querySelector(':scope > .rb-edit-tabs')) {
-      const btn = document.createElement('span');
-      btn.className = 'rb-edit-tabs';
-      btn.setAttribute('data-role', 'rb-edit-tabs');
-      btn.title = 'Edit Tabs';
-      btn.textContent = '✎';
-      btn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto;';
-      btn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (window.openTabsConfigModal) window.openTabsConfigModal(comp);
-      };
-      compEl.insertBefore(btn, compEl.firstChild);
-    }
-  }
 
   function attachTabClickHandlers(comp) {
     try {
@@ -303,16 +363,8 @@
           'click [data-role="rb-edit-tabs"]': 'onEdit'
         },
         onRender() {
-          if (this.model.get('_switchingTabs') || this.model.getAttributes()?.['_updating-tabs'] === 'true') return;
-          
-          // Check if tabs are already built in component tree
-          const existingTabs = this.model.components().find(c => {
-            const el = c.getEl();
-            return el?.classList?.contains('pf-tabs');
-          });
-          if (existingTabs) return;
-          
-            buildWorkingTabs(this.model);
+          // Call buildWorkingTabs which will create structure and buttons
+          buildWorkingTabs(this.model);
         },
         onDelete(e) { 
           e.preventDefault(); 

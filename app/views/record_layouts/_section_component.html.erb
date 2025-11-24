@@ -1,0 +1,807 @@
+<!-- Section Component Partial -->
+<script>
+  console.log('[PF] Section component script loading...');
+  
+  function buildWorkingSection(comp) {
+    const isUpdating = comp.getAttributes()?.['_updating-section'] === 'true';
+    const isMovingComponent = comp.getAttributes()?.['_moving-component'] === 'true';
+    const compEl = comp.getEl();
+    
+    // CRITICAL: Prevent infinite loops - check flag FIRST before anything else
+    if (!isUpdating && compEl?.__pf_building_section) {
+      return; // Already building, prevent recursion
+    }
+    
+    // Set flag immediately to prevent recursive calls
+    if (compEl && !isUpdating) {
+      compEl.__pf_building_section = true;
+    }
+    
+    // CRITICAL: Never rebuild if a component is being moved within this section
+    if (isMovingComponent) {
+      if (compEl) compEl.__pf_building_section = false;
+      return;
+    }
+    
+    // Check global move flag
+    if (window.__pf_isMovingComponent === true) {
+      if (compEl) compEl.__pf_building_section = false;
+      return;
+    }
+    
+    // CRITICAL: Check if columns have content BEFORE doing anything
+    const colsCheck = compEl?.querySelectorAll('.pf-section-column');
+    const hasColsContent = colsCheck && colsCheck.length > 0 && 
+      Array.from(colsCheck).some(col => col.children.length > 0);
+    
+    if (hasColsContent) {
+      if (compEl) compEl.__pf_building_section = false;
+      addButtons(comp);
+      return;
+    }
+    
+    // Read columns-json from HTML element FIRST (before checking structure)
+    let columnsJson = null;
+    if (compEl) {
+      columnsJson = compEl.getAttribute('columns-json');
+      if (columnsJson) {
+        // Decode HTML entities before parsing
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = columnsJson;
+        columnsJson = textarea.value;
+        comp.addAttributes({ 'columns-json': columnsJson });
+      }
+    }
+    
+    // If not in HTML, try attributes
+    if (!columnsJson) {
+      columnsJson = comp.getAttributes()['columns-json'];
+    }
+    
+    // Get columns data
+    let columns = [];
+    if (columnsJson) {
+      try {
+        columns = JSON.parse(columnsJson);
+        if (!Array.isArray(columns) || columns.length === 0) {
+          console.warn('[PF] columns-json exists but is invalid or empty:', columnsJson);
+        }
+      } catch(e) {
+        console.error('[PF] Error parsing columns-json:', e, 'columnsJson:', columnsJson);
+      }
+    }
+    
+    // Only use default if we truly have no saved data (new component)
+    if (!columnsJson || columns.length === 0) {
+      columns = [{ id: 'col1', width: '50%' }, { id: 'col2', width: '50%' }];
+      comp.addAttributes({ 'columns-json': JSON.stringify(columns) });
+    }
+    
+    // CRITICAL: Check for move flag and global move flag FIRST
+    if (window.__pf_isMovingComponent === true) {
+      if (compEl) compEl.__pf_building_section = false;
+      return; // Don't do anything during moves
+    }
+    
+    // Skip if structure already exists
+    if (!isUpdating) {
+      const hasDomStructure = compEl?.querySelector('.pf-section')?.querySelector('.pf-section-body');
+      const hasComponentStructure = comp.components().find(c => {
+        const el = c.getEl();
+        return el?.classList?.contains('pf-section');
+      });
+      
+      if (hasDomStructure || hasComponentStructure) {
+        // CRITICAL: Check if columns exist with content - if so, never clear them
+        const existingCols = compEl?.querySelectorAll('.pf-section-column');
+        const hasColsContent2 = existingCols && existingCols.length > 0 && 
+          Array.from(existingCols).some(col => {
+            // Check DOM children
+            if (col.children.length > 0) return true;
+            // Also check for any components that might be in this column
+            try {
+              const allComps = comp.components();
+              for (let c of allComps) {
+                const cEl = c.getEl && c.getEl();
+                if (cEl && col.contains && col.contains(cEl)) {
+                  return true;
+                }
+              }
+            } catch(_) {}
+            return false;
+          });
+        
+        if (hasColsContent2) {
+          // Columns exist with content - just ensure buttons are there, don't rebuild
+          if (compEl) compEl.__pf_building_section = false;
+          addButtons(comp);
+          return;
+        }
+        
+        // Structure exists but no content - safe to continue
+        if (compEl) compEl.__pf_building_section = false;
+        addButtons(comp);
+        return;
+      }
+    }
+    
+    // CRITICAL: Check if columns have content BEFORE doing anything destructive
+    const existingColsCheck = compEl?.querySelectorAll('.pf-section-column');
+    const hasColsContent3 = existingColsCheck && existingColsCheck.length > 0 && 
+      Array.from(existingColsCheck).some(col => {
+        // Check both DOM children and GrapesJS component children
+        const domChildren = col.children.length;
+        // Try to find component children
+        let componentChildren = 0;
+        try {
+          const colComp = comp.components().find(c => {
+            const el = c.getEl();
+            return el === col || (el && col.contains && col.contains(el));
+          });
+          if (colComp) {
+            componentChildren = colComp.components().length;
+          }
+        } catch(_) {}
+        return domChildren > 0 || componentChildren > 0;
+      });
+    
+    // ABSOLUTE RULE: If columns have content, NEVER clear components
+    if (hasColsContent3) {
+      // Columns have content - preserve everything, just ensure structure is correct
+      const existingSection = comp.components().find(c => {
+        const el = c.getEl();
+        return el?.classList?.contains('pf-section');
+      });
+      if (existingSection) {
+        // Structure exists in component tree - good, just return
+        if (compEl) compEl.__pf_building_section = false;
+        addButtons(comp);
+        return;
+      }
+      // Structure missing from component tree but columns have content in DOM
+      // This can happen during drag operations - don't rebuild, just wait
+      if (compEl) compEl.__pf_building_section = false;
+      addButtons(comp);
+      return;
+    }
+    
+    // Only clear if columns don't have content
+    const existingSection = comp.components().find(c => {
+      const el = c.getEl();
+      return el?.classList?.contains('pf-section');
+    });
+    
+    // Only clear if we're updating OR if structure doesn't exist AND columns don't have content
+    if (isUpdating || (!compEl?.querySelector('.pf-section') && !hasColsContent3)) {
+      // Only clear if existingSection exists but we're updating, or if no structure exists
+      if (existingSection && isUpdating) {
+        comp.components('');
+      } else if (!compEl?.querySelector('.pf-section') && !hasColsContent3) {
+        comp.components('');
+      }
+    }
+    
+    // Create structure - use setTimeout to avoid infinite loops during component creation
+    let sectionWrapper, sectionBody;
+    try {
+      // Use a flag to prevent onRender from triggering during append
+      if (compEl) {
+        compEl.__pf_building_section = true;
+      }
+      
+      // Create structure using append - this will trigger onRender, but our flag will prevent recursion
+      sectionWrapper = comp.append('<div class="pf-section pf-interactive"></div>')[0];
+      sectionBody = sectionWrapper.append('<div class="pf-section-body"></div>')[0];
+    } catch(err) {
+      console.error('[PF] Error creating section structure:', err);
+      if (compEl) compEl.__pf_building_section = false;
+      return;
+    }
+    
+    // Lock wrapper components - but ensure they don't block parent dragging
+    [sectionWrapper, sectionBody].forEach(c => {
+      c.set({ 
+        selectable: false, 
+        hoverable: false, 
+        draggable: false, 
+        droppable: false, 
+        editable: false, 
+        copyable: false, 
+        highlightable: false 
+      });
+      // CRITICAL: Set pointer-events to none so clicks bubble to parent section container
+      // This allows the parent section to be dragged, but columns inside will override this
+      const cEl = c.getEl();
+      if (cEl) {
+        cEl.style.pointerEvents = 'none'; // Let events bubble to parent for dragging
+        cEl.removeAttribute('draggable'); // Ensure wrappers are not draggable
+      }
+    });
+    
+    // Create columns
+    columns.forEach((col) => {
+      const column = sectionBody.append(`<div class="pf-section-column" data-role="pf-section-column" data-column-id="${col.id}"></div>`)[0];
+      column.set({ 
+        droppable: true,
+        accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+        selectable: false, 
+        hoverable: false, 
+        highlightable: false, 
+        draggable: false 
+      });
+      if (col.width) {
+        const colEl = column.getEl();
+        if (colEl) {
+          colEl.style.flex = `0 0 ${col.width}`;
+          colEl.style.width = col.width;
+        }
+      }
+    });
+    
+    // Add delete/edit buttons
+    addButtons(comp);
+    
+    // Configure main component - ensure it's draggable
+    comp.set({ draggable: true, droppable: false, selectable: true, hoverable: true, highlightable: true });
+    
+    // CRITICAL: Ensure the section container element itself is draggable
+    setTimeout(() => {
+      const compElForDrag = comp.getEl();
+      if (compElForDrag) {
+        compElForDrag.setAttribute('draggable', 'true');
+        compElForDrag.style.cursor = 'move';
+        compElForDrag.style.pointerEvents = 'auto';
+        compElForDrag.style.userSelect = 'none'; // Prevent text selection during drag
+      }
+    }, 10);
+    
+    // Clear flag
+    setTimeout(() => {
+      if (compEl) compEl.__pf_building_section = false;
+    }, 150);
+  }
+
+  function addButtons(comp) {
+    const compEl = comp.getEl();
+    if (!compEl) return;
+    
+    // Delete button
+    if (!compEl.querySelector(':scope > .rb-del')) {
+      const btn = document.createElement('span');
+      btn.className = 'rb-del';
+      btn.setAttribute('data-role', 'rb-del');
+      btn.title = 'Delete';
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 448 512" fill="currentColor"><path d="M135.2 17.7C140.6 7.2 151.7 0 164 0h120c12.3 0 23.4 7.2 28.8 17.7L328 32H432c8.8 0 16 7.2 16 16s-7.2 16-16 16H16C7.2 64 0 56.8 0 48S7.2 32 16 32H120l15.2-14.3zM32 96H416l-21.2 371.6c-1.8 31.3-27.7 56.4-59.1 56.4H112.3c-31.4 0-57.3-25.1-59.1-56.4L32 96zm112 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16zm80 0c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16s16-7.2 16-16V192c0-8.8-7.2-16-16-16z"/></svg>';
+      btn.style.cssText = 'position: absolute; top: 4px; right: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 99999; pointer-events: auto;';
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
+        const view = editor?.Components?.getView(comp);
+        if (view?.onDelete) view.onDelete(e);
+        else comp.remove();
+      };
+      compEl.insertBefore(btn, compEl.firstChild);
+      if (window.getComputedStyle(compEl).position === 'static') compEl.style.position = 'relative';
+    }
+    
+    // Edit button
+    if (!compEl.querySelector(':scope > .rb-edit-section')) {
+      const btn = document.createElement('span');
+      btn.className = 'rb-edit-section';
+      btn.setAttribute('data-role', 'rb-edit-section');
+      btn.title = 'Edit Section';
+      btn.textContent = '✎';
+      btn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto;';
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.openSectionConfigModal) window.openSectionConfigModal(comp);
+      };
+      compEl.insertBefore(btn, compEl.firstChild);
+    }
+  }
+
+  function pfGenerateId(prefix = 'col') { 
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`; 
+  }
+  
+  function pfParseColumnsJson(attr) { 
+    try { return JSON.parse(attr || '[]'); } catch(_) { return []; } 
+  }
+  
+  function pfStringifyColumnsJson(arr) { 
+    try { return JSON.stringify(arr || []); } catch(_) { return '[]'; } 
+  }
+
+  function defineSectionComponent(editor) {
+    editor.DomComponents.addType('record-section', {
+      model: {
+        defaults: {
+          'columns-json': '[{"id":"col1","width":"50%"},{"id":"col2","width":"50%"}]',
+          tagName: 'div',
+          attributes: { class: 'pf-section-container pf-interactive', 'data-comp-kind': 'record-section' },
+          editable: false,
+          draggable: true,
+          copyable: false,
+          droppable: false,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
+          components: ''
+        },
+        toHTML(opts = {}) {
+          const el = this.getEl();
+          if (!el) return this.constructor.prototype.toHTML.call(this, opts);
+          
+          const sectionWrapper = el.querySelector('.pf-section');
+          if (!sectionWrapper) return this.constructor.prototype.toHTML.call(this, opts);
+          
+          const attrs = this.getAttributes();
+          let html = '<div';
+          ['columns-json', 'data-comp-kind', 'data-comp-id'].forEach(key => {
+            const val = attrs[key];
+            if (val != null && val !== '') {
+              html += ` ${key}="${String(val).replace(/"/g, '&quot;').replace(/&/g, '&amp;')}"`;
+            }
+          });
+          const classes = this.get('classes').map(c => c.get('name')).join(' ');
+          if (classes) html += ` class="${classes}"`;
+          html += '>';
+          
+          // Serialize the section wrapper and all its children (columns and their contents)
+          const sectionWrapperComp = this.components().find(c => c.getEl()?.classList?.contains('pf-section'));
+          if (sectionWrapperComp) {
+            // Use GrapesJS's toHTML to properly serialize all nested components
+            html += sectionWrapperComp.toHTML(opts);
+          } else if (sectionWrapper) {
+            // Fallback: use outerHTML if component not found
+            // But we need to ensure children inside columns are preserved
+            const wrapperClone = sectionWrapper.cloneNode(true);
+            html += wrapperClone.outerHTML;
+          }
+          html += '</div>';
+          return html;
+        }
+      },
+      view: {
+        events: { 
+          'click [data-role="rb-del"]': 'onDelete',
+          'click [data-role="rb-edit-section"]': 'onEdit'
+        },
+        onRender() {
+          // CRITICAL: Check for move flag FIRST before doing anything
+          if (this.model.getAttributes()?.['_updating-section'] === 'true') return;
+          if (this.model.getAttributes()?.['_moving-component'] === 'true') return;
+          
+          // Also check global move flag
+          if (window.__pf_isMovingComponent === true) {
+            return;
+          }
+          
+          const compEl = this.model.getEl();
+          if (!compEl) return;
+          
+          // CRITICAL: Check if columns exist with content - if so, NEVER rebuild
+          const existingColumns = compEl.querySelectorAll('.pf-section-column');
+          const hasColumnsWithContent = existingColumns && existingColumns.length > 0 && 
+            Array.from(existingColumns).some(col => {
+              // Check both DOM children and any nested components
+              if (col.children.length > 0) return true;
+              // Also check if there are any GrapesJS components in this column
+              try {
+                const allComponents = this.model.components();
+                for (let comp of allComponents) {
+                  const compEl = comp.getEl && comp.getEl();
+                  if (compEl && col.contains && col.contains(compEl)) {
+                    return true;
+                  }
+                }
+              } catch(_) {}
+              return false;
+            });
+          
+          if (hasColumnsWithContent) {
+            // Columns have content - just ensure buttons exist, NEVER rebuild
+            addButtons(this.model);
+            return;
+          }
+          
+          // Check if section is already built in component tree
+          const existingSection = this.model.components().find(c => {
+            const el = c.getEl();
+            return el?.classList?.contains('pf-section');
+          });
+          if (existingSection) {
+            // Structure exists - ensure buttons exist
+            addButtons(this.model);
+            return;
+          }
+          
+          // Also check DOM structure
+          const hasDomStructure = compEl.querySelector('.pf-section')?.querySelector('.pf-section-body');
+          if (hasDomStructure) {
+            // DOM structure exists - ensure buttons exist
+            addButtons(this.model);
+            return;
+          }
+          
+          // CRITICAL: Only build if structure truly doesn't exist AND no columns with content
+          // But also check one more time if DOM structure exists (even if component structure doesn't)
+          const finalCheck = compEl.querySelector('.pf-section') && 
+                            compEl.querySelector('.pf-section-body') &&
+                            compEl.querySelectorAll('.pf-section-column').length > 0;
+          
+          if (finalCheck) {
+            // DOM structure exists - don't rebuild, just ensure buttons
+            addButtons(this.model);
+            return;
+          }
+          
+          // Only build if we're absolutely sure structure doesn't exist
+          buildWorkingSection(this.model);
+        },
+        onDelete(e) { 
+          e.preventDefault(); 
+          e.stopPropagation(); 
+          // Only allow deletion if explicitly triggered by delete button
+          // Prevent accidental deletion during drag operations
+          if (window.__pf_isMovingComponent === true) {
+            console.warn('[PF] Prevented section deletion during component move');
+            return;
+          }
+          this.model.remove();
+        },
+        onEdit(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.openSectionConfigModal) window.openSectionConfigModal(this.model);
+        }
+      }
+    });
+    
+    // Inject runtime CSS
+    const style = document.createElement('style');
+    style.textContent = `
+.pf-section-container { position: relative; }
+.pf-section { border: 1px solid #dee2e6; border-radius: 6px; background: #fff; margin-bottom: 1rem; }
+.pf-section-body { display: flex; gap: 16px; padding: 16px; background: #fff; min-height: 100px; }
+.pf-section-column { flex: 1; min-height: 50px; border: 2px dashed #dee2e6; border-radius: 4px; padding: 16px; position: relative; }
+`;
+    document.head.appendChild(style);
+  }
+
+  function getRuntimeCode() {
+    return `/* RUNTIME: Section JavaScript and CSS */
+// Runtime section functionality - ONLY runs on rendered pages, not in builder
+(function() {
+  // Track which sections have been processed to prevent duplicate processing
+  const processedSections = new WeakSet();
+  
+  // Rebuild section structures on page load
+  function rebuildSections() {
+    document.querySelectorAll('[data-comp-kind="record-section"]').forEach(function(sectionEl) {
+      // Skip if already processed and structure is intact
+      if (processedSections.has(sectionEl)) {
+        const existingWrapper = sectionEl.querySelector('.pf-section');
+        const existingBody = existingWrapper ? existingWrapper.querySelector('.pf-section-body') : null;
+        const existingColsCheck = existingBody ? existingBody.querySelectorAll('.pf-section-column') : [];
+        // If structure still exists, skip
+        if (existingWrapper && existingBody && existingColsCheck.length > 0) {
+          return;
+        }
+        // Structure was removed, allow reprocessing
+        processedSections.delete(sectionEl);
+      }
+      
+      // Get columns-json from attribute FIRST
+      let columnsJson = sectionEl.getAttribute('columns-json');
+      if (!columnsJson) {
+        // Try to get from a child element if not on the container
+        const childWithJson = sectionEl.querySelector('[columns-json]');
+        if (childWithJson) {
+          columnsJson = childWithJson.getAttribute('columns-json');
+        }
+      }
+      
+      if (!columnsJson) {
+        console.warn('[PF] No columns-json found for section');
+        return;
+      }
+      
+      // Decode HTML entities
+      const textarea = document.createElement('textarea');
+      textarea.innerHTML = columnsJson;
+      columnsJson = textarea.value;
+      
+      // Parse columns
+      let columns = [];
+      try {
+        columns = JSON.parse(columnsJson);
+      } catch(e) {
+        console.warn('[PF] Error parsing columns-json:', e, 'Raw value:', columnsJson);
+        return;
+      }
+      
+      if (!Array.isArray(columns) || columns.length === 0) {
+        columns = [{ id: 'col1', width: '50%' }, { id: 'col2', width: '50%' }];
+      }
+      
+      // Check if section structure already exists and is complete
+      const existingWrapper = sectionEl.querySelector('.pf-section');
+      const existingBody = existingWrapper ? existingWrapper.querySelector('.pf-section-body') : null;
+      const existingColumns = existingBody ? existingBody.querySelectorAll('.pf-section-column') : [];
+      
+      // CRITICAL: If columns already exist with content, be VERY conservative about rebuilding
+      const hasColumnsWithContent = existingColumns.length > 0 && Array.from(existingColumns).some(function(col) {
+        return col.children.length > 0;
+      });
+      
+      // Check if structure is correct: wrapper exists, body exists, and we have the right number of columns
+      let needsRebuild = false;
+      if (!existingWrapper || !existingBody) {
+        needsRebuild = true;
+      } else if (existingColumns.length === 0) {
+        // No columns at all - definitely need to rebuild
+        needsRebuild = true;
+      } else if (existingColumns.length !== columns.length) {
+        // Column count mismatch - but if we have columns with content, be careful
+        if (!hasColumnsWithContent) {
+          needsRebuild = true;
+        } else {
+          // Columns exist with content but count is wrong - this is unusual, log it but don't rebuild
+          console.warn('[PF] Column count mismatch but columns have content, skipping rebuild to preserve data');
+          processedSections.add(sectionEl);
+          return;
+        }
+      } else {
+        // Same number of columns - check if they match
+        // If columns exist (even without matching IDs), and they have content, don't rebuild
+        if (hasColumnsWithContent) {
+          // Just ensure widths are set, don't rebuild
+          columns.forEach(function(col) {
+            // Try to find column by ID first
+            let foundCol = Array.from(existingColumns).find(function(c) {
+              return c.getAttribute('data-column-id') === col.id;
+            });
+            // If not found by ID, just use the column at the same index
+            if (!foundCol) {
+              const colIndex = columns.indexOf(col);
+              if (colIndex >= 0 && colIndex < existingColumns.length) {
+                foundCol = existingColumns[colIndex];
+                // Set the ID if missing
+                if (!foundCol.getAttribute('data-column-id')) {
+                  foundCol.setAttribute('data-column-id', col.id);
+                }
+              }
+            }
+            if (foundCol && col.width) {
+              foundCol.style.flex = '0 0 ' + col.width;
+              foundCol.style.width = col.width;
+            }
+          });
+          processedSections.add(sectionEl);
+          return; // Structure is good, no rebuild needed
+        }
+        
+        // Check if structure is complete - all columns exist and have correct IDs
+        let allColumnsMatch = true;
+        columns.forEach(function(col) {
+          const foundCol = Array.from(existingColumns).find(function(c) {
+            return c.getAttribute('data-column-id') === col.id;
+          });
+          if (!foundCol) {
+            allColumnsMatch = false;
+          }
+        });
+        
+        if (!allColumnsMatch) {
+          // Columns exist but IDs don't match - if they're empty, rebuild, otherwise preserve
+          const allColumnsEmpty = Array.from(existingColumns).every(function(col) {
+            return col.children.length === 0;
+          });
+          if (allColumnsEmpty) {
+            needsRebuild = true;
+          } else {
+            // Columns have content but wrong IDs - just update IDs and widths, don't rebuild
+            columns.forEach(function(col, index) {
+              if (index < existingColumns.length) {
+                const colEl = existingColumns[index];
+                colEl.setAttribute('data-column-id', col.id);
+                if (col.width) {
+                  colEl.style.flex = '0 0 ' + col.width;
+                  colEl.style.width = col.width;
+                }
+              }
+            });
+            processedSections.add(sectionEl);
+            return;
+          }
+        } else {
+          // All columns match - just update widths if needed
+          columns.forEach(function(col) {
+            const foundCol = Array.from(existingColumns).find(function(c) {
+              return c.getAttribute('data-column-id') === col.id;
+            });
+            if (foundCol && col.width) {
+              foundCol.style.flex = '0 0 ' + col.width;
+              foundCol.style.width = col.width;
+            }
+          });
+          
+          // Check if there are children outside columns that need to be moved
+          const childrenOutside = Array.from(sectionEl.children).filter(function(child) {
+            return !child.classList.contains('rb-del') && 
+                   !child.classList.contains('rb-edit-section') &&
+                   !child.classList.contains('pf-section');
+          });
+          
+          // If no children outside, we're done
+          if (childrenOutside.length === 0) {
+            processedSections.add(sectionEl);
+            return;
+          }
+          
+          // If there are children outside columns, we need to move them but not rebuild
+          // Just move them to the first column
+          if (childrenOutside.length > 0 && existingColumns.length > 0) {
+            const firstColumn = existingColumns[0];
+            childrenOutside.forEach(function(child) {
+              firstColumn.appendChild(child);
+            });
+            processedSections.add(sectionEl);
+            return;
+          }
+        }
+      }
+      
+      // If structure is correct, we're done
+      if (!needsRebuild) {
+        processedSections.add(sectionEl);
+        return;
+      }
+      
+      // Collect ALL children that should be in columns (from anywhere in the section)
+      const allChildren = [];
+      
+      // First, collect children that are already in columns (preserve their order)
+      if (existingColumns.length > 0) {
+        existingColumns.forEach(function(col) {
+          Array.from(col.children).forEach(function(child) {
+            allChildren.push(child);
+          });
+        });
+      }
+      
+      // Then, collect children directly in the section container (not buttons, not wrapper)
+      Array.from(sectionEl.children).forEach(function(child) {
+        if (!child.classList.contains('rb-del') && 
+            !child.classList.contains('rb-edit-section') &&
+            !child.classList.contains('pf-section') &&
+            allChildren.indexOf(child) === -1) {
+          allChildren.push(child);
+        }
+      });
+      
+      // Also check if there are children in the body but not in columns
+      if (existingBody) {
+        Array.from(existingBody.children).forEach(function(child) {
+          if (!child.classList.contains('pf-section-column') && allChildren.indexOf(child) === -1) {
+            allChildren.push(child);
+          }
+        });
+      }
+      
+      // Remove existing structure if it exists
+      if (existingWrapper) {
+        existingWrapper.remove();
+      }
+      
+      // Create new section structure
+      const sectionWrapper = document.createElement('div');
+      sectionWrapper.className = 'pf-section';
+      
+      const sectionBody = document.createElement('div');
+      sectionBody.className = 'pf-section-body';
+      
+      // Create columns
+      columns.forEach(function(col) {
+        const column = document.createElement('div');
+        column.className = 'pf-section-column';
+        column.setAttribute('data-role', 'pf-section-column');
+        column.setAttribute('data-column-id', col.id);
+        if (col.width) {
+          column.style.flex = '0 0 ' + col.width;
+          column.style.width = col.width;
+        }
+        sectionBody.appendChild(column);
+      });
+      
+      sectionWrapper.appendChild(sectionBody);
+      
+      // Distribute children across columns, preserving original column assignments if possible
+      allChildren.forEach(function(child, index) {
+        // Try to preserve original column assignment by checking data-column-id on child
+        let targetColumn = null;
+        const childColumnId = child.getAttribute && child.getAttribute('data-original-column-id');
+        if (childColumnId) {
+          targetColumn = Array.from(sectionBody.children).find(function(col) {
+            return col.getAttribute('data-column-id') === childColumnId;
+          });
+        }
+        
+        // If no original assignment or column not found, distribute evenly
+        if (!targetColumn) {
+          const columnIndex = index % columns.length;
+          targetColumn = sectionBody.children[columnIndex];
+        }
+        
+        if (targetColumn) {
+          targetColumn.appendChild(child);
+        }
+      });
+      
+      // Add wrapper to section (after buttons but before any remaining content)
+      let insertPoint = sectionEl.firstChild;
+      while (insertPoint && (insertPoint.classList.contains('rb-del') || insertPoint.classList.contains('rb-edit-section'))) {
+        insertPoint = insertPoint.nextSibling;
+      }
+      
+      if (insertPoint) {
+        sectionEl.insertBefore(sectionWrapper, insertPoint);
+      } else {
+        sectionEl.appendChild(sectionWrapper);
+      }
+      
+      // Mark as processed
+      processedSections.add(sectionEl);
+    });
+  }
+  
+  // Run on DOM ready with multiple attempts to catch late-loading content
+  function runRebuild() {
+    rebuildSections();
+    // Also run after delays to catch any dynamically loaded content
+    setTimeout(rebuildSections, 100);
+    setTimeout(rebuildSections, 500);
+    setTimeout(rebuildSections, 1000);
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runRebuild);
+  } else {
+    runRebuild();
+  }
+  
+  // Also run on turbo:load for Turbo navigation
+  if (typeof document.addEventListener !== 'undefined') {
+    document.addEventListener('turbo:load', runRebuild);
+    document.addEventListener('turbo:render', runRebuild);
+  }
+})();
+
+// Runtime section CSS
+.pf-section-container { position: relative; margin-bottom: 1rem; }
+.pf-section { border: 1px solid #dee2e6; border-radius: 6px; background: #fff; }
+.pf-section-body { display: flex; gap: 16px; padding: 16px; background: #fff; min-height: 100px; }
+.pf-section-column { flex: 1; min-height: 50px; border: 2px dashed #dee2e6; border-radius: 4px; padding: 16px; position: relative; }
+/* Remove borders on rendered record pages */
+.record-layout-render .pf-section { border: none; }
+.record-layout-render .pf-section-column { border: none; background: transparent; }`;
+  }
+
+  try {
+    window.SectionComponent = {
+      buildWorkingSection,
+      pfGenerateId,
+      pfParseColumnsJson,
+      pfStringifyColumnsJson,
+      defineSectionComponent,
+      getRuntimeCode
+    };
+    console.log('[PF] SectionComponent registered successfully');
+  } catch(e) {
+    console.error('[PF] Error registering SectionComponent:', e);
+  }
+</script>
+

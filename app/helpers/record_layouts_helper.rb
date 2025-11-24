@@ -212,11 +212,20 @@ module RecordLayoutsHelper
 
     case table_type
     when 'Pet'
-      pet = organization.pets.order(created_at: :desc).first || organization.pets.build(name: 'Sample Pet', breed: 'Mix', age: 3, species: 'Dog', description: 'Friendly')
+      # Try to find a pet with a photo first, then fall back to any pet, then create a sample
+      # Check for pets with photos via active storage
+      pet_with_photo = organization.pets.left_joins(:photo_attachment)
+                                     .where.not(active_storage_attachments: { id: nil })
+                                     .order(created_at: :desc)
+                                     .first
+      pet = pet_with_photo ||
+            organization.pets.order(created_at: :desc).first ||
+            organization.pets.build(name: 'Sample Pet', breed: 'Mix', age: 3, species: 'Dog', description: 'Friendly')
       sample_values = pet.attributes.slice('name', 'breed', 'age', 'species', 'description', 'adopted')
       begin
-        partials['pets/pet_header'] = render('pets/pet_header', pet: pet)
-      rescue
+        partials['pets/pet_header'] = render('pets/pet_header', pet: pet, with_id: false)
+      rescue => e
+        Rails.logger.warn "Error rendering pet header preview: #{e.message}"
       end
     when 'Task'
       task = organization.tasks.order(created_at: :desc).first || organization.tasks.build(subject: 'Follow up', description: 'Sample task', status: 'Open')

@@ -79,6 +79,28 @@
 /* These rules should only apply in the builder iframe; move to injected canvas CSS. */
 /* Intentionally left empty to avoid affecting real pages */
 
+// Hide green drop indicator line when dragging to the left of sections
+.gjs-cv-canvas .gjs-sorter-placeholder,
+.gjs-cv-canvas .gjs-sorter-placeholder::before,
+.gjs-sorter-placeholder,
+.gjs-sorter-placeholder::before {
+  opacity: 0 !important;
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+// Hide drop indicator specifically when it's before a section
+.gjs-cv-canvas .pf-section-container + .gjs-sorter-placeholder,
+.gjs-cv-canvas .gjs-sorter-placeholder + .pf-section-container,
+.pf-section-container + .gjs-sorter-placeholder,
+.gjs-sorter-placeholder + .pf-section-container {
+  opacity: 0 !important;
+  display: none !important;
+  visibility: hidden !important;
+}
+
 // Inline delete control - unified approach
 .pf-interactive .rb-del {
   position: absolute;
@@ -170,6 +192,111 @@
 .pf-tab-section.dragover {
   border-color: #007bff;
   background-color: rgba(0, 123, 255, 0.1);
+}
+
+// Section component styling
+.pf-section-container {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.pf-section {
+  position: relative;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.pf-section-body {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  min-height: 100px;
+}
+
+.pf-section-column {
+  min-height: 100px;
+  border: 2px dashed #dee2e6;
+  border-radius: 4px;
+  padding: 8px;
+  background: #f8f9fa;
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.pf-section-column:hover {
+  border-color: #007bff;
+  background: #f0f7ff;
+}
+
+// Show drop zone when dragging over section columns
+.pf-section-column.dragover {
+  border-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+// Ensure section columns can receive drops
+.pf-section-column {
+  pointer-events: auto !important;
+}
+
+// Section edit button styling
+.pf-section-container .rb-edit-section {
+  position: absolute;
+  top: 4px;
+  right: 30px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border-radius: 12px;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: auto !important;
+  cursor: pointer;
+  z-index: 9999;
+  display: none;
+}
+
+.pf-section-container .rb-edit-section:hover {
+  background: rgba(13,110,253,0.9);
+}
+
+.pf-section-container:hover > .rb-edit-section,
+.pf-section-container.gjs-selected > .rb-edit-section {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+// Ensure fields and partials inside section columns show delete buttons
+.pf-section-column .record-field-placeholder,
+.pf-section-column .record-partial-placeholder {
+  position: relative;
+}
+
+.pf-section-column .pf-interactive .rb-del {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border-radius: 12px;
+  width: 22px;
+  height: 22px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: auto !important;
+  z-index: 9999;
+}
+
+.pf-section-column .pf-interactive:hover > .rb-del,
+.pf-section-column .pf-interactive.gjs-selected > .rb-del {
+  display: inline-flex !important;
 }
 
 // Ensure tab sections can receive drops
