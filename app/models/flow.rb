@@ -9,6 +9,9 @@ class Flow < ApplicationRecord
   serialize :layout_data, coder: JSON
   serialize :connections_data, coder: JSON
   
+  scope :active, -> { where(status: 'active') }
+  scope :draft, -> { where(status: 'draft') }
+  
   def active?
     status == 'active'
   end
