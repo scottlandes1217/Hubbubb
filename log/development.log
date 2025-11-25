@@ -1,0 +1,1616 @@
+Finished "/cable" [WebSocket] for 192.168.65.1 at 2025-11-24 10:20:11 +0000
+Turbo::StreamsChannel stopped streaming from pet_1
+Started GET "/cable" for 192.168.65.1 at 2025-11-24 10:20:18 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Started GET "/cable" [WebSocket] for 192.168.65.1 at 2025-11-24 10:20:18 +0000
+Successfully upgraded to WebSocket (REQUEST_METHOD: GET, HTTP_CONNECTION: Upgrade, HTTP_UPGRADE: websocket)
+Turbo::StreamsChannel is transmitting the subscription confirmation
+Turbo::StreamsChannel is streaming from pet_1
+Finished "/cable" [WebSocket] for 192.168.65.1 at 2025-11-24 19:16:56 +0000
+Turbo::StreamsChannel stopped streaming from pet_1
+Started GET "/cable" for 192.168.65.1 at 2025-11-24 20:29:45 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Started GET "/cable" [WebSocket] for 192.168.65.1 at 2025-11-24 20:29:45 +0000
+Successfully upgraded to WebSocket (REQUEST_METHOD: GET, HTTP_CONNECTION: Upgrade, HTTP_UPGRADE: websocket)
+Turbo::StreamsChannel is transmitting the subscription confirmation
+Turbo::StreamsChannel is streaming from pet_1
+Finished "/cable" [WebSocket] for 192.168.65.1 at 2025-11-25 00:20:55 +0000
+Turbo::StreamsChannel stopped streaming from pet_1
+Started GET "/cable" for 192.168.65.1 at 2025-11-25 01:34:36 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Started GET "/cable" [WebSocket] for 192.168.65.1 at 2025-11-25 01:34:36 +0000
+Successfully upgraded to WebSocket (REQUEST_METHOD: GET, HTTP_CONNECTION: Upgrade, HTTP_UPGRADE: websocket)
+Turbo::StreamsChannel is transmitting the subscription confirmation
+Turbo::StreamsChannel is streaming from pet_1
+Started GET "/organizations/1/pets/1" for 192.168.65.1 at 2025-11-25 06:04:40 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by PetsController#show as HTML
+  Parameters: {"organization_id"=>"1", "id"=>"1"}
+  [1m[36mUser Load (1.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+Completed 401 Unauthorized in 67ms (ActiveRecord: 9.9ms | Allocations: 4283)
+
+
+Started GET "/organizations/1/pets/1" for 192.168.65.1 at 2025-11-25 06:04:40 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by PetsController#show as HTML
+  Parameters: {"organization_id"=>"1", "id"=>"1"}
+Completed 401 Unauthorized in 4ms (ActiveRecord: 0.0ms | Allocations: 564)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:04:40 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.5ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 6.2ms | Allocations: 930)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 33)
+  Rendered layout layouts/application.html.erb (Duration: 19.7ms | Allocations: 3959)
+Completed 200 OK in 32ms (Views: 22.5ms | ActiveRecord: 0.0ms | Allocations: 4932)
+
+
+Finished "/cable" [WebSocket] for 192.168.65.1 at 2025-11-25 06:04:40 +0000
+Turbo::StreamsChannel stopped streaming from pet_1
+Started POST "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:08:51 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#create as HTML
+  Parameters: {"authenticity_token"=>"[FILTERED]", "user"=>{"email"=>"scottandvega@gmail.com", "password"=>"[FILTERED]", "remember_me"=>"0"}, "commit"=>"Log in"}
+=== Finding User for Authentication ===
+Conditions: {:email=>"scottandvega@gmail.com"}
+Email from conditions: scottandvega@gmail.com
+Email downcased: scottandvega@gmail.com
+Current database: hubbubb_development
+Connection config: #<ActiveRecord::DatabaseConfigurations::UrlConfig:0x0000ffff6fab6f48 @env_name="development", @name="primary", @configuration_hash={:adapter=>"postgresql", :encoding=>"unicode", :pool=>5, :timeout=>5000, :database=>"hubbubb_development", :username=>"postgres", :password=>"password", :host=>"db", :port=>5432}, @url="postgresql://postgres:password@db:5432/hubbubb_development">
+  [1m[35m (2.2ms)[0m  [1m[34mSELECT * FROM users WHERE LOWER(email) = LOWER('scottandvega@gmail.com')[0m
+  ↳ app/models/user.rb:87:in `find_for_authentication'
+Direct SQL result: [{"id"=>1, "email"=>"scottandvega@gmail.com", "encrypted_password"=>"$2a$12$d7.qkZ/OHWs8plLshuNsaeg4pKq1ZzKYgu3qR0kmz.WJ6/I1VnDPm", "reset_password_token"=>nil, "reset_password_sent_at"=>nil, "remember_created_at"=>nil, "created_at"=>2025-09-17 05:14:42.687986 +0000, "updated_at"=>2025-11-24 09:09:42.553126 +0000, "role"=>2, "organization_id"=>nil, "first_name"=>"Scott", "last_name"=>"Landes", "impersonated_by_id"=>nil, "sign_in_count"=>7, "current_sign_in_at"=>2025-11-24 09:09:42.552885 +0000, "last_sign_in_at"=>2025-11-24 02:27:53.971055 +0000, "current_sign_in_ip"=>"192.168.65.1", "last_sign_in_ip"=>"192.168.65.1", "state"=>"", "county"=>"", "city"=>"", "zip_code"=>"", "latitude"=>nil, "longitude"=>nil, "birthdate"=>nil, "gender"=>0, "can_post_as_organization"=>false}]
+  [1m[36mUser Load (0.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE (LOWER(email) = 'scottandvega@gmail.com') ORDER BY "users"."id" ASC LIMIT $1[0m  [["LIMIT", 1]]
+  ↳ app/models/user.rb:91:in `find_for_authentication'
+SQL Query: SELECT "users".* FROM "users" WHERE (LOWER(email) = 'scottandvega@gmail.com')
+Found user: #<User id: 1, email: "scottandvega@gmail.com", created_at: "2025-09-16 22:14:42.687986000 -0700", updated_at: "2025-11-24 01:09:42.553126000 -0800", role: "admin", organization_id: nil, first_name: "Scott", last_name: "Landes", impersonated_by_id: nil, state: "", county: "", city: "", zip_code: "", latitude: nil, longitude: nil, birthdate: nil, gender: "male", can_post_as_organization: false>
+User exists?: true
+User role: admin
+User email: scottandvega@gmail.com
+User encrypted password: $2a$12$d7.qkZ/OHWs8plLshuNsaeg4pKq1ZzKYgu3qR0kmz.WJ6/I1VnDPm
+=== Validating Password ===
+User: scottandvega@gmail.com
+Current encrypted password: $2a$12$d7.qkZ/OHWs8plLshuNsaeg4pKq1ZzKYgu3qR0kmz.WJ6/I1VnDPm
+Password being validated: Tootb12!&
+Password validation result: true
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mUser Update (3.0ms)[0m  [1m[33mUPDATE "users" SET "updated_at" = $1, "sign_in_count" = $2, "current_sign_in_at" = $3, "last_sign_in_at" = $4 WHERE "users"."id" = $5[0m  [["updated_at", "2025-11-25 06:08:51.888392"], ["sign_in_count", 8], ["current_sign_in_at", "2025-11-25 06:08:51.887760"], ["last_sign_in_at", "2025-11-24 09:09:42.552885"], ["id", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mTRANSACTION (3.2ms)[0m  [1m[35mCOMMIT[0m
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (1.0ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+=== Authentication Attempt ===
+Email: scottandvega@gmail.com
+Password length: 9
+Raw params: #<ActionController::Parameters {"authenticity_token"=>"Sp2mC_FLWzVOjhHGd7FJrToBdCA1KYzJxG69UGzvFpPI7IWJ62UU5VxzUEsfJqOxzj0AV6MGvcUubg3bhjglcQ", "user"=>#<ActionController::Parameters {"email"=>"scottandvega@gmail.com", "password"=>"Tootb12!&", "remember_me"=>"0"} permitted: false>, "commit"=>"Log in", "controller"=>"users/sessions", "action"=>"create"} permitted: false>
+=== Authentication Result ===
+Success: true
+Errors: 
+User attributes: {"id"=>1, "email"=>"scottandvega@gmail.com", "reset_password_token"=>nil, "reset_password_sent_at"=>nil, "remember_created_at"=>nil, "created_at"=>Tue, 16 Sep 2025 22:14:42.687986000 PDT -07:00, "updated_at"=>Mon, 24 Nov 2025 22:08:51.888392000 PST -08:00, "role"=>"admin", "organization_id"=>nil, "first_name"=>"Scott", "last_name"=>"Landes", "impersonated_by_id"=>nil, "sign_in_count"=>8, "current_sign_in_at"=>Mon, 24 Nov 2025 22:08:51.887760000 PST -08:00, "last_sign_in_at"=>Mon, 24 Nov 2025 01:09:42.552885000 PST -08:00, "current_sign_in_ip"=>"192.168.65.1", "last_sign_in_ip"=>"192.168.65.1", "state"=>"", "county"=>"", "city"=>"", "zip_code"=>"", "latitude"=>nil, "longitude"=>nil, "birthdate"=>nil, "gender"=>"male", "can_post_as_organization"=>false}
+Role: admin
+Warden authentication result: true
+Current user: #<User id: 1, email: "scottandvega@gmail.com", created_at: "2025-09-16 22:14:42.687986000 -0700", updated_at: "2025-11-24 22:08:51.888392000 -0800", role: "admin", organization_id: nil, first_name: "Scott", last_name: "Landes", impersonated_by_id: nil, state: "", county: "", city: "", zip_code: "", latitude: nil, longitude: nil, birthdate: nil, gender: "male", can_post_as_organization: false>
+=== After Sign In Path ===
+User role: admin
+User attributes: {"id"=>1, "email"=>"scottandvega@gmail.com", "reset_password_token"=>nil, "reset_password_sent_at"=>nil, "remember_created_at"=>nil, "created_at"=>Tue, 16 Sep 2025 22:14:42.687986000 PDT -07:00, "updated_at"=>Mon, 24 Nov 2025 22:08:51.888392000 PST -08:00, "role"=>"admin", "organization_id"=>nil, "first_name"=>"Scott", "last_name"=>"Landes", "impersonated_by_id"=>nil, "sign_in_count"=>8, "current_sign_in_at"=>Mon, 24 Nov 2025 22:08:51.887760000 PST -08:00, "last_sign_in_at"=>Mon, 24 Nov 2025 01:09:42.552885000 PST -08:00, "current_sign_in_ip"=>"192.168.65.1", "last_sign_in_ip"=>"192.168.65.1", "state"=>"", "county"=>"", "city"=>"", "zip_code"=>"", "latitude"=>nil, "longitude"=>nil, "birthdate"=>nil, "gender"=>"male", "can_post_as_organization"=>false}
+Impersonated?: false
+True user: 
+Redirected to http://localhost:3000/admin/home
+Completed 303 See Other in 309ms (ActiveRecord: 28.6ms | Allocations: 19063)
+
+
+Started GET "/admin/home" for 192.168.65.1 at 2025-11-25 06:08:51 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Admin::HomeController#index as HTML
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.3ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering admin/home/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.5ms | Allocations: 156)
+  [1m[36mPinnedTab Load (0.2ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1[0m  [["user_id", 1]]
+  ↳ app/views/shared/_tabbed_navigation.html.erb:5
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 2.4ms | Allocations: 840)
+  Rendered shared/_navbar_admin.html.erb (Duration: 10.3ms | Allocations: 3453)
+  Rendered admin/home/index.html.erb within layouts/application (Duration: 12.6ms | Allocations: 3953)
+  Rendered shared/_global_alert.html.erb (Duration: 0.8ms | Allocations: 263)
+  Rendered layout layouts/application.html.erb (Duration: 63.2ms | Allocations: 69645)
+Completed 200 OK in 87ms (Views: 65.7ms | ActiveRecord: 0.9ms | Allocations: 79358)
+
+
+Started GET "/organizations" for 192.168.65.1 at 2025-11-25 06:10:04 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by OrganizationsController#index as HTML
+  [1m[36mUser Load (2.5ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (1.4ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering organizations/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.1ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 7.9ms | Allocations: 1234)
+  [1m[36mOrganization Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "organizations" LIMIT $1 OFFSET $2[0m  [["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:18
+  [1m[36mOrganization Load (0.5ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" ORDER BY "organizations"."name" ASC LIMIT $1 OFFSET $2[0m  [["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:19
+  Rendered organizations/index.html.erb within layouts/application (Duration: 38.1ms | Allocations: 7670)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered layout layouts/application.html.erb (Duration: 52.9ms | Allocations: 10359)
+Completed 200 OK in 99ms (Views: 52.0ms | ActiveRecord: 12.6ms | Allocations: 13465)
+
+
+Started DELETE "/users/sign_out" for 192.168.65.1 at 2025-11-25 06:10:05 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#destroy as HTML
+  Parameters: {"authenticity_token"=>"[FILTERED]"}
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mPinnedTab Load (0.5ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+Redirected to http://localhost:3000/
+Completed 303 See Other in 13ms (ActiveRecord: 0.8ms | Allocations: 2828)
+
+
+Started GET "/" for 192.168.65.1 at 2025-11-25 06:10:05 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by HomeController#index as HTML
+Redirected to http://localhost:3000/users/sign_in
+Completed 302 Found in 6ms (ActiveRecord: 0.0ms | Allocations: 803)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:10:05 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.4ms | Allocations: 561)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 9.3ms | Allocations: 1933)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 28)
+  Rendered layout layouts/application.html.erb (Duration: 16.2ms | Allocations: 5001)
+Completed 200 OK in 22ms (Views: 18.5ms | ActiveRecord: 0.0ms | Allocations: 6515)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:10:09 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 3.6ms | Allocations: 927)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 13.0ms | Allocations: 4898)
+Completed 200 OK in 20ms (Views: 14.4ms | ActiveRecord: 0.0ms | Allocations: 5843)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:10:57 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.2ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 10.2ms | Allocations: 2575)
+  Rendered shared/_global_alert.html.erb (Duration: 3.5ms | Allocations: 270)
+  Rendered layout layouts/application.html.erb (Duration: 441.4ms | Allocations: 82610)
+Completed 200 OK in 490ms (Views: 447.2ms | ActiveRecord: 21.3ms | Allocations: 94125)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:11:18 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.6ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 16.1ms | Allocations: 1481)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 334.8ms | Allocations: 19223)
+Completed 200 OK in 355ms (Views: 337.7ms | ActiveRecord: 0.0ms | Allocations: 20186)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:11:34 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.0ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 10.6ms | Allocations: 2563)
+  Rendered shared/_global_alert.html.erb (Duration: 0.8ms | Allocations: 268)
+  Rendered layout layouts/application.html.erb (Duration: 69.2ms | Allocations: 68253)
+Completed 200 OK in 124ms (Views: 81.6ms | ActiveRecord: 13.6ms | Allocations: 79757)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:11:40 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 9.2ms | Allocations: 1483)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 14.9ms | Allocations: 4174)
+Completed 200 OK in 27ms (Views: 17.1ms | ActiveRecord: 0.0ms | Allocations: 5123)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:12:39 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 1.4ms | Allocations: 214)
+  Rendered devise/shared/_links.html.erb (Duration: 1.1ms | Allocations: 90)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 17.5ms | Allocations: 2605)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 37.3ms | Allocations: 5630)
+Completed 200 OK in 65ms (Views: 42.0ms | ActiveRecord: 0.0ms | Allocations: 7254)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:12:40 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 5.4ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 7.7ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 12.9ms | Allocations: 4638)
+Completed 200 OK in 18ms (Views: 14.8ms | ActiveRecord: 0.0ms | Allocations: 5564)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:12:41 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 4.0ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 16.7ms | Allocations: 4628)
+Completed 200 OK in 23ms (Views: 17.7ms | ActiveRecord: 0.0ms | Allocations: 5542)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:12:42 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 3.6ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 7.6ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 18.0ms | Allocations: 4602)
+Completed 200 OK in 25ms (Views: 19.2ms | ActiveRecord: 0.0ms | Allocations: 5518)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:13:53 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.3ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 1.0ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 16.5ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 29.4ms | Allocations: 4602)
+Completed 200 OK in 49ms (Views: 32.6ms | ActiveRecord: 0.0ms | Allocations: 5513)
+
+
+Started GET "/users/password/new" for 192.168.65.1 at 2025-11-25 06:13:54 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Devise::PasswordsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/passwords/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 101)
+  Rendered devise/passwords/new.html.erb within layouts/application (Duration: 4.1ms | Allocations: 862)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 15.4ms | Allocations: 3858)
+Completed 200 OK in 21ms (Views: 16.8ms | ActiveRecord: 0.0ms | Allocations: 5085)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:13:54 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 4.0ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 15.6ms | Allocations: 4602)
+Completed 200 OK in 21ms (Views: 16.7ms | ActiveRecord: 0.0ms | Allocations: 5513)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:13:55 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.8ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 24.7ms | Allocations: 4602)
+Completed 200 OK in 30ms (Views: 26.0ms | ActiveRecord: 0.0ms | Allocations: 5522)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:14:01 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 4.1ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 12.1ms | Allocations: 4602)
+Completed 200 OK in 18ms (Views: 13.1ms | ActiveRecord: 0.0ms | Allocations: 5498)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:14:03 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 2.9ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 11.8ms | Allocations: 4603)
+Completed 200 OK in 18ms (Views: 12.8ms | ActiveRecord: 0.0ms | Allocations: 5511)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:14:04 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.1ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 4.0ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 13.9ms | Allocations: 4608)
+Completed 200 OK in 20ms (Views: 14.8ms | ActiveRecord: 0.0ms | Allocations: 5516)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:14:05 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.2ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.4ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 9.6ms | Allocations: 4602)
+Completed 200 OK in 14ms (Views: 10.4ms | ActiveRecord: 0.0ms | Allocations: 5531)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:15:16 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.1ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 12.2ms | Allocations: 2572)
+  Rendered shared/_global_alert.html.erb (Duration: 0.7ms | Allocations: 268)
+  Rendered layout layouts/application.html.erb (Duration: 258.9ms | Allocations: 82348)
+Completed 200 OK in 310ms (Views: 266.2ms | ActiveRecord: 10.5ms | Allocations: 93922)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:16:31 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.4ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 8.5ms | Allocations: 2571)
+  Rendered shared/_global_alert.html.erb (Duration: 2.1ms | Allocations: 268)
+  Rendered layout layouts/application.html.erb (Duration: 245.0ms | Allocations: 82479)
+Completed 200 OK in 278ms (Views: 249.8ms | ActiveRecord: 10.9ms | Allocations: 93977)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:16:37 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 5.6ms | Allocations: 1479)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 10.1ms | Allocations: 4170)
+Completed 200 OK in 16ms (Views: 11.6ms | ActiveRecord: 0.0ms | Allocations: 5122)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:17:42 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.4ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 11.2ms | Allocations: 2559)
+  Rendered shared/_global_alert.html.erb (Duration: 1.1ms | Allocations: 270)
+  Rendered layout layouts/application.html.erb (Duration: 189.7ms | Allocations: 68411)
+Completed 200 OK in 241ms (Views: 196.2ms | ActiveRecord: 17.4ms | Allocations: 79924)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:18:39 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.0ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 30.6ms | Allocations: 1482)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 244.3ms | Allocations: 18403)
+Completed 200 OK in 258ms (Views: 246.8ms | ActiveRecord: 0.0ms | Allocations: 19340)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:19:24 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.1ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 10.6ms | Allocations: 2577)
+  Rendered shared/_global_alert.html.erb (Duration: 0.9ms | Allocations: 270)
+  Rendered layout layouts/application.html.erb (Duration: 337.9ms | Allocations: 82701)
+Completed 200 OK in 389ms (Views: 344.7ms | ActiveRecord: 20.9ms | Allocations: 94196)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:19:30 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 6.2ms | Allocations: 1489)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 9.8ms | Allocations: 4181)
+Completed 200 OK in 15ms (Views: 10.8ms | ActiveRecord: 0.0ms | Allocations: 5139)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:21:12 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.5ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 16.3ms | Allocations: 1480)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 277.1ms | Allocations: 18318)
+Completed 200 OK in 310ms (Views: 280.0ms | ActiveRecord: 0.0ms | Allocations: 19279)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:21:45 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.5ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 12.2ms | Allocations: 1479)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 224.0ms | Allocations: 18308)
+Completed 200 OK in 238ms (Views: 226.5ms | ActiveRecord: 0.0ms | Allocations: 19248)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:23:28 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 1.3ms | Allocations: 208)
+  Rendered devise/shared/_links.html.erb (Duration: 1.2ms | Allocations: 89)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 15.5ms | Allocations: 2434)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 233.1ms | Allocations: 19589)
+Completed 200 OK in 252ms (Views: 238.4ms | ActiveRecord: 0.0ms | Allocations: 21196)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:23:28 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 2.5ms | Allocations: 1658)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 11.6ms | Allocations: 4772)
+Completed 200 OK in 17ms (Views: 12.4ms | ActiveRecord: 0.0ms | Allocations: 6061)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:23:29 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 5.6ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 17.3ms | Allocations: 4602)
+Completed 200 OK in 27ms (Views: 18.7ms | ActiveRecord: 0.0ms | Allocations: 5534)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:23:30 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.5ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 10.2ms | Allocations: 4602)
+Completed 200 OK in 16ms (Views: 11.2ms | ActiveRecord: 0.0ms | Allocations: 5528)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:23:30 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.4ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 10.6ms | Allocations: 4602)
+Completed 200 OK in 16ms (Views: 11.5ms | ActiveRecord: 0.0ms | Allocations: 5501)
+
+
+Started GET "/users/password/new" for 192.168.65.1 at 2025-11-25 06:23:30 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Devise::PasswordsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/passwords/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 101)
+  Rendered devise/passwords/new.html.erb within layouts/application (Duration: 2.9ms | Allocations: 852)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 7.8ms | Allocations: 3848)
+Completed 200 OK in 14ms (Views: 9.1ms | ActiveRecord: 0.0ms | Allocations: 5080)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:23:37 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 4.9ms | Allocations: 1479)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 9.1ms | Allocations: 4148)
+Completed 200 OK in 15ms (Views: 10.4ms | ActiveRecord: 0.0ms | Allocations: 5100)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:24:39 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.6ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 15.4ms | Allocations: 1479)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 312.1ms | Allocations: 18296)
+Completed 200 OK in 330ms (Views: 315.0ms | ActiveRecord: 0.0ms | Allocations: 19263)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:24:46 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.0ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 7.1ms | Allocations: 4634)
+Completed 200 OK in 12ms (Views: 7.9ms | ActiveRecord: 0.0ms | Allocations: 5561)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:25:08 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.1ms | Allocations: 560)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 9.1ms | Allocations: 2566)
+  Rendered shared/_global_alert.html.erb (Duration: 0.8ms | Allocations: 268)
+  Rendered layout layouts/application.html.erb (Duration: 65.5ms | Allocations: 68254)
+Completed 200 OK in 111ms (Views: 71.3ms | ActiveRecord: 22.0ms | Allocations: 79763)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:25:35 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.7ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 31.3ms | Allocations: 1479)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 276.9ms | Allocations: 18299)
+Completed 200 OK in 298ms (Views: 280.9ms | ActiveRecord: 0.0ms | Allocations: 19254)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:25:41 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.9ms | Allocations: 208)
+  Rendered devise/shared/_links.html.erb (Duration: 0.6ms | Allocations: 89)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 11.0ms | Allocations: 2434)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 16.5ms | Allocations: 5431)
+Completed 200 OK in 28ms (Views: 20.1ms | ActiveRecord: 0.0ms | Allocations: 7041)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:25:43 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.6ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 9.8ms | Allocations: 4602)
+Completed 200 OK in 15ms (Views: 10.7ms | ActiveRecord: 0.0ms | Allocations: 5528)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:25:46 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 73)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.0ms | Allocations: 1609)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 10.0ms | Allocations: 4602)
+Completed 200 OK in 15ms (Views: 10.9ms | ActiveRecord: 0.0ms | Allocations: 5528)
+
+
+Started GET "/users/password/new" for 192.168.65.1 at 2025-11-25 06:25:46 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Devise::PasswordsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/passwords/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.4ms | Allocations: 101)
+  Rendered devise/passwords/new.html.erb within layouts/application (Duration: 3.9ms | Allocations: 852)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 10.0ms | Allocations: 3848)
+Completed 200 OK in 17ms (Views: 11.7ms | ActiveRecord: 0.0ms | Allocations: 5067)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:26:15 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.1ms | Allocations: 574)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 8.7ms | Allocations: 2523)
+  Rendered shared/_global_alert.html.erb (Duration: 0.8ms | Allocations: 268)
+  Rendered layout layouts/application.html.erb (Duration: 68.5ms | Allocations: 68211)
+Completed 200 OK in 123ms (Views: 78.9ms | ActiveRecord: 15.4ms | Allocations: 79691)
+
+
+Started GET "/users/password/new" for 192.168.65.1 at 2025-11-25 06:26:22 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Devise::PasswordsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/passwords/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.6ms | Allocations: 208)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 107)
+  Rendered devise/passwords/new.html.erb within layouts/application (Duration: 3.4ms | Allocations: 1125)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 7.5ms | Allocations: 4156)
+Completed 200 OK in 12ms (Views: 8.4ms | ActiveRecord: 0.0ms | Allocations: 5391)
+
+
+Started GET "/users/sign_up" for 192.168.65.1 at 2025-11-25 06:26:23 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 83)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 3.9ms | Allocations: 2163)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 26)
+  Rendered layout layouts/application.html.erb (Duration: 8.1ms | Allocations: 5159)
+Completed 200 OK in 14ms (Views: 10.3ms | ActiveRecord: 0.0ms | Allocations: 6772)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:26:42 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 3.3ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 36.5ms | Allocations: 1466)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 309.1ms | Allocations: 18309)
+Completed 200 OK in 337ms (Views: 315.0ms | ActiveRecord: 0.0ms | Allocations: 19269)
+
+
+Started POST "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:26:51 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#create as HTML
+  Parameters: {"authenticity_token"=>"[FILTERED]", "user"=>{"email"=>"scottandvega@gmail.com", "password"=>"[FILTERED]", "remember_me"=>"0"}, "commit"=>"Log in"}
+=== Finding User for Authentication ===
+Conditions: {:email=>"scottandvega@gmail.com"}
+Email from conditions: scottandvega@gmail.com
+Email downcased: scottandvega@gmail.com
+Current database: hubbubb_development
+Connection config: #<ActiveRecord::DatabaseConfigurations::UrlConfig:0x0000ffff6fab6f48 @env_name="development", @name="primary", @configuration_hash={:adapter=>"postgresql", :encoding=>"unicode", :pool=>5, :timeout=>5000, :database=>"hubbubb_development", :username=>"postgres", :password=>"password", :host=>"db", :port=>5432}, @url="postgresql://postgres:password@db:5432/hubbubb_development">
+  [1m[35m (1.6ms)[0m  [1m[34mSELECT * FROM users WHERE LOWER(email) = LOWER('scottandvega@gmail.com')[0m
+  ↳ app/models/user.rb:87:in `find_for_authentication'
+Direct SQL result: [{"id"=>1, "email"=>"scottandvega@gmail.com", "encrypted_password"=>"$2a$12$d7.qkZ/OHWs8plLshuNsaeg4pKq1ZzKYgu3qR0kmz.WJ6/I1VnDPm", "reset_password_token"=>nil, "reset_password_sent_at"=>nil, "remember_created_at"=>nil, "created_at"=>2025-09-17 05:14:42.687986 +0000, "updated_at"=>2025-11-25 06:08:51.888392 +0000, "role"=>2, "organization_id"=>nil, "first_name"=>"Scott", "last_name"=>"Landes", "impersonated_by_id"=>nil, "sign_in_count"=>8, "current_sign_in_at"=>2025-11-25 06:08:51.88776 +0000, "last_sign_in_at"=>2025-11-24 09:09:42.552885 +0000, "current_sign_in_ip"=>"192.168.65.1", "last_sign_in_ip"=>"192.168.65.1", "state"=>"", "county"=>"", "city"=>"", "zip_code"=>"", "latitude"=>nil, "longitude"=>nil, "birthdate"=>nil, "gender"=>0, "can_post_as_organization"=>false}]
+  [1m[36mUser Load (1.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE (LOWER(email) = 'scottandvega@gmail.com') ORDER BY "users"."id" ASC LIMIT $1[0m  [["LIMIT", 1]]
+  ↳ app/models/user.rb:91:in `find_for_authentication'
+SQL Query: SELECT "users".* FROM "users" WHERE (LOWER(email) = 'scottandvega@gmail.com')
+Found user: #<User id: 1, email: "scottandvega@gmail.com", created_at: "2025-09-16 22:14:42.687986000 -0700", updated_at: "2025-11-24 22:08:51.888392000 -0800", role: "admin", organization_id: nil, first_name: "Scott", last_name: "Landes", impersonated_by_id: nil, state: "", county: "", city: "", zip_code: "", latitude: nil, longitude: nil, birthdate: nil, gender: "male", can_post_as_organization: false>
+User exists?: true
+User role: admin
+User email: scottandvega@gmail.com
+User encrypted password: $2a$12$d7.qkZ/OHWs8plLshuNsaeg4pKq1ZzKYgu3qR0kmz.WJ6/I1VnDPm
+=== Validating Password ===
+User: scottandvega@gmail.com
+Current encrypted password: $2a$12$d7.qkZ/OHWs8plLshuNsaeg4pKq1ZzKYgu3qR0kmz.WJ6/I1VnDPm
+Password being validated: Tootb12!&
+Password validation result: true
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mUser Update (3.5ms)[0m  [1m[33mUPDATE "users" SET "updated_at" = $1, "sign_in_count" = $2, "current_sign_in_at" = $3, "last_sign_in_at" = $4 WHERE "users"."id" = $5[0m  [["updated_at", "2025-11-25 06:26:51.640413"], ["sign_in_count", 9], ["current_sign_in_at", "2025-11-25 06:26:51.639738"], ["last_sign_in_at", "2025-11-25 06:08:51.887760"], ["id", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT[0m
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.3ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+=== Authentication Attempt ===
+Email: scottandvega@gmail.com
+Password length: 9
+Raw params: #<ActionController::Parameters {"authenticity_token"=>"8sAxPPwvfOKR0LTyBgKJFp3kTspnjJqzkKdNmNI-KvTWKYymTnub03KfPAAeI1NCrzZBBhVjD2d6C-qTjixGLA", "user"=>#<ActionController::Parameters {"email"=>"scottandvega@gmail.com", "password"=>"Tootb12!&", "remember_me"=>"0"} permitted: false>, "commit"=>"Log in", "controller"=>"users/sessions", "action"=>"create"} permitted: false>
+=== Authentication Result ===
+Success: true
+Errors: 
+User attributes: {"id"=>1, "email"=>"scottandvega@gmail.com", "reset_password_token"=>nil, "reset_password_sent_at"=>nil, "remember_created_at"=>nil, "created_at"=>Tue, 16 Sep 2025 22:14:42.687986000 PDT -07:00, "updated_at"=>Mon, 24 Nov 2025 22:26:51.640413000 PST -08:00, "role"=>"admin", "organization_id"=>nil, "first_name"=>"Scott", "last_name"=>"Landes", "impersonated_by_id"=>nil, "sign_in_count"=>9, "current_sign_in_at"=>Mon, 24 Nov 2025 22:26:51.639738000 PST -08:00, "last_sign_in_at"=>Mon, 24 Nov 2025 22:08:51.887760000 PST -08:00, "current_sign_in_ip"=>"192.168.65.1", "last_sign_in_ip"=>"192.168.65.1", "state"=>"", "county"=>"", "city"=>"", "zip_code"=>"", "latitude"=>nil, "longitude"=>nil, "birthdate"=>nil, "gender"=>"male", "can_post_as_organization"=>false}
+Role: admin
+Warden authentication result: true
+Current user: #<User id: 1, email: "scottandvega@gmail.com", created_at: "2025-09-16 22:14:42.687986000 -0700", updated_at: "2025-11-24 22:26:51.640413000 -0800", role: "admin", organization_id: nil, first_name: "Scott", last_name: "Landes", impersonated_by_id: nil, state: "", county: "", city: "", zip_code: "", latitude: nil, longitude: nil, birthdate: nil, gender: "male", can_post_as_organization: false>
+=== After Sign In Path ===
+User role: admin
+User attributes: {"id"=>1, "email"=>"scottandvega@gmail.com", "reset_password_token"=>nil, "reset_password_sent_at"=>nil, "remember_created_at"=>nil, "created_at"=>Tue, 16 Sep 2025 22:14:42.687986000 PDT -07:00, "updated_at"=>Mon, 24 Nov 2025 22:26:51.640413000 PST -08:00, "role"=>"admin", "organization_id"=>nil, "first_name"=>"Scott", "last_name"=>"Landes", "impersonated_by_id"=>nil, "sign_in_count"=>9, "current_sign_in_at"=>Mon, 24 Nov 2025 22:26:51.639738000 PST -08:00, "last_sign_in_at"=>Mon, 24 Nov 2025 22:08:51.887760000 PST -08:00, "current_sign_in_ip"=>"192.168.65.1", "last_sign_in_ip"=>"192.168.65.1", "state"=>"", "county"=>"", "city"=>"", "zip_code"=>"", "latitude"=>nil, "longitude"=>nil, "birthdate"=>nil, "gender"=>"male", "can_post_as_organization"=>false}
+Impersonated?: false
+True user: 
+Redirected to http://localhost:3000/admin/home
+Completed 303 See Other in 293ms (ActiveRecord: 16.2ms | Allocations: 11973)
+
+
+Started GET "/admin/home" for 192.168.65.1 at 2025-11-25 06:26:51 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Admin::HomeController#index as HTML
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.3ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering admin/home/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.4ms | Allocations: 156)
+  [1m[36mPinnedTab Load (0.4ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1[0m  [["user_id", 1]]
+  ↳ app/views/shared/_tabbed_navigation.html.erb:5
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 2.0ms | Allocations: 837)
+  Rendered shared/_navbar_admin.html.erb (Duration: 8.0ms | Allocations: 3454)
+  Rendered admin/home/index.html.erb within layouts/application (Duration: 9.6ms | Allocations: 3883)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 23)
+  Rendered layout layouts/application.html.erb (Duration: 12.7ms | Allocations: 6617)
+Completed 200 OK in 33ms (Views: 14.6ms | ActiveRecord: 1.0ms | Allocations: 15946)
+
+
+Started GET "/organizations" for 192.168.65.1 at 2025-11-25 06:28:50 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by OrganizationsController#index as HTML
+  [1m[36mUser Load (2.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (1.6ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering organizations/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.1ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 6.2ms | Allocations: 1234)
+  [1m[36mOrganization Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "organizations" LIMIT $1 OFFSET $2[0m  [["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:18
+  [1m[36mOrganization Load (0.4ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" ORDER BY "organizations"."name" ASC LIMIT $1 OFFSET $2[0m  [["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:19
+  Rendered organizations/index.html.erb within layouts/application (Duration: 30.2ms | Allocations: 7668)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered layout layouts/application.html.erb (Duration: 35.5ms | Allocations: 10334)
+Completed 200 OK in 80ms (Views: 34.9ms | ActiveRecord: 9.9ms | Allocations: 13423)
+
+
+Started GET "/admin/users" for 192.168.65.1 at 2025-11-25 06:28:50 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Admin::UsersController#index as HTML
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.4ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering admin/users/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.0ms | Allocations: 20)
+  [1m[36mPinnedTab Load (0.2ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1[0m  [["user_id", 1]]
+  ↳ app/views/shared/_tabbed_navigation.html.erb:5
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 1.5ms | Allocations: 500)
+  Rendered shared/_navbar_admin.html.erb (Duration: 4.2ms | Allocations: 1743)
+  [1m[36mUser Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "users" LIMIT $1 OFFSET $2[0m  [["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/admin/users/index.html.erb:40
+  [1m[36mUser Load (0.5ms)[0m  [1m[34mSELECT "users".* FROM "users" ORDER BY "users"."email" ASC LIMIT $1 OFFSET $2[0m  [["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/admin/users/index.html.erb:41
+  Rendered admin/users/index.html.erb within layouts/application (Duration: 11.2ms | Allocations: 3735)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered layout layouts/application.html.erb (Duration: 15.0ms | Allocations: 6391)
+Completed 200 OK in 30ms (Views: 15.5ms | ActiveRecord: 1.7ms | Allocations: 9961)
+
+
+Started GET "/organizations" for 192.168.65.1 at 2025-11-25 06:28:50 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by OrganizationsController#index as HTML
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.3ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering organizations/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 3.0ms | Allocations: 1216)
+  [1m[36mOrganization Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "organizations" LIMIT $1 OFFSET $2[0m  [["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:18
+  [1m[36mOrganization Load (0.2ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" ORDER BY "organizations"."name" ASC LIMIT $1 OFFSET $2[0m  [["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:19
+  Rendered organizations/index.html.erb within layouts/application (Duration: 6.1ms | Allocations: 2516)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 19)
+  Rendered layout layouts/application.html.erb (Duration: 9.5ms | Allocations: 5179)
+Completed 200 OK in 17ms (Views: 9.7ms | ActiveRecord: 1.0ms | Allocations: 7254)
+
+
+Started GET "/organizations" for 192.168.65.1 at 2025-11-25 06:28:53 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by OrganizationsController#index as HTML
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.5ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering organizations/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.0ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 4.6ms | Allocations: 1216)
+  [1m[36mOrganization Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "organizations" LIMIT $1 OFFSET $2[0m  [["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:18
+  [1m[36mOrganization Load (0.3ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" ORDER BY "organizations"."name" ASC LIMIT $1 OFFSET $2[0m  [["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:19
+  Rendered organizations/index.html.erb within layouts/application (Duration: 10.5ms | Allocations: 2512)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 19)
+  Rendered layout layouts/application.html.erb (Duration: 15.8ms | Allocations: 5175)
+Completed 200 OK in 30ms (Views: 16.1ms | ActiveRecord: 1.5ms | Allocations: 7248)
+
+
+Started GET "/admin/ads" for 192.168.65.1 at 2025-11-25 06:28:53 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Admin::AdsController#index as HTML
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mPinnedTab Load (0.3ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering admin/ads/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.1ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 8.7ms | Allocations: 1284)
+  [1m[36mAd Exists? (2.4ms)[0m  [1m[34mSELECT 1 AS one FROM "ads" LIMIT $1[0m  [["LIMIT", 1]]
+  ↳ app/views/admin/ads/index.html.erb:25
+  Rendered admin/ads/index.html.erb within layouts/application (Duration: 14.3ms | Allocations: 2219)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 20)
+  Rendered layout layouts/application.html.erb (Duration: 17.7ms | Allocations: 4909)
+Completed 200 OK in 115ms (Views: 16.7ms | ActiveRecord: 5.4ms | Allocations: 18216)
+
+
+Started GET "/organizations" for 192.168.65.1 at 2025-11-25 06:28:53 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by OrganizationsController#index as HTML
+  [1m[36mUser Load (0.2ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.3ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering organizations/index.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.0ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 6.4ms | Allocations: 1217)
+  [1m[36mOrganization Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "organizations" LIMIT $1 OFFSET $2[0m  [["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:18
+  [1m[36mOrganization Load (0.2ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" ORDER BY "organizations"."name" ASC LIMIT $1 OFFSET $2[0m  [["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/organizations/index.html.erb:19
+  Rendered organizations/index.html.erb within layouts/application (Duration: 9.0ms | Allocations: 2516)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 19)
+  Rendered layout layouts/application.html.erb (Duration: 14.2ms | Allocations: 5179)
+Completed 200 OK in 21ms (Views: 14.4ms | ActiveRecord: 0.9ms | Allocations: 7240)
+
+
+Started GET "/organizations/1" for 192.168.65.1 at 2025-11-25 06:29:02 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by OrganizationsController#show as HTML
+  Parameters: {"id"=>"1"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.5ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  [1m[36mOrganization Load (0.3ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/organizations_controller.rb:23:in `show'
+Set session[:organization_id] to 1
+  Rendering layout layouts/application.html.erb
+  Rendering organizations/show.html.erb within layouts/application
+  Rendered shared/_search_bar.html.erb (Duration: 2.8ms | Allocations: 178)
+  [1m[36mCustomObject Load (0.8ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."add_to_navigation" = $2 AND "custom_objects"."active" = $3[0m  [["organization_id", 1], ["add_to_navigation", true], ["active", true]]
+  ↳ app/views/shared/_navbar_org.html.erb:92
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.8ms | Allocations: 336)
+  Rendered shared/_navbar_org.html.erb (Duration: 30.7ms | Allocations: 13801)
+  Rendered organizations/show.html.erb within layouts/application (Duration: 32.3ms | Allocations: 14219)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 19)
+  Rendered layout layouts/application.html.erb (Duration: 37.2ms | Allocations: 16906)
+Completed 200 OK in 84ms (Views: 34.6ms | ActiveRecord: 5.7ms | Allocations: 27944)
+
+
+Started GET "/organizations/1/pets" for 192.168.65.1 at 2025-11-25 06:29:07 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by PetsController#index as HTML
+  Parameters: {"organization_id"=>"1"}
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.4ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  [1m[36mOrganization Load (0.2ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/pets_controller.rb:234:in `set_organization'
+  [1m[36mPinnedTab Pluck (0.2ms)[0m  [1m[34mSELECT "pinned_tabs"."tabable_id" FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 AND "pinned_tabs"."tabable_type" = $2 AND "pinned_tabs"."tab_type" = $3[0m  [["user_id", 1], ["tabable_type", "Pet"], ["tab_type", "pet"]]
+  ↳ app/controllers/pets_controller.rb:17:in `index'
+  Rendering layout layouts/application.html.erb
+  Rendering pets/index.html.erb within layouts/application
+  Rendered shared/_search_bar.html.erb (Duration: 0.1ms | Allocations: 28)
+  [1m[36mCustomObject Load (0.3ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."add_to_navigation" = $2 AND "custom_objects"."active" = $3[0m  [["organization_id", 1], ["add_to_navigation", true], ["active", true]]
+  ↳ app/views/shared/_navbar_org.html.erb:92
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered shared/_navbar_org.html.erb (Duration: 4.4ms | Allocations: 2279)
+  [1m[36mPet Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "pets" WHERE "pets"."organization_id" = $1 LIMIT $2 OFFSET $3[0m  [["organization_id", 1], ["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/pets/index.html.erb:23
+  [1m[36mPet Load (0.3ms)[0m  [1m[34mSELECT "pets".* FROM "pets" WHERE "pets"."organization_id" = $1 ORDER BY "pets"."name" ASC LIMIT $2 OFFSET $3[0m  [["organization_id", 1], ["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/pets/index.html.erb:36
+  [1m[36mActiveStorage::Attachment Load (0.5ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = $1 AND "active_storage_attachments"."record_type" = $2 AND "active_storage_attachments"."name" = $3 LIMIT $4[0m  [["record_id", 4], ["record_type", "Pet"], ["name", "photo"], ["LIMIT", 1]]
+  ↳ app/views/pets/index.html.erb:39
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = $1 AND "active_storage_attachments"."record_type" = $2 AND "active_storage_attachments"."name" = $3 LIMIT $4[0m  [["record_id", 1], ["record_type", "Pet"], ["name", "photo"], ["LIMIT", 1]]
+  ↳ app/views/pets/index.html.erb:39
+  [1m[36mActiveStorage::Blob Load (0.3ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/views/pets/index.html.erb:40
+  Rendered pets/index.html.erb within layouts/application (Duration: 38.8ms | Allocations: 25875)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 20)
+  Rendered layout layouts/application.html.erb (Duration: 41.8ms | Allocations: 28546)
+Completed 200 OK in 57ms (Views: 36.5ms | ActiveRecord: 9.0ms | Allocations: 33282)
+
+
+Started GET "/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--4b6adf3a1a14207f940d561278f1ee72029e6ccf/bordercollie.webp" for 192.168.65.1 at 2025-11-25 06:29:08 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by ActiveStorage::Blobs::RedirectController#show as WEBP
+  Parameters: {"signed_id"=>"eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--4b6adf3a1a14207f940d561278f1ee72029e6ccf", "filename"=>"bordercollie"}
+  [1m[36mActiveStorage::Blob Load (0.3ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+[36m  Disk Storage (0.8ms) [0m[34mGenerated URL for file at key: c2zp4dapndpu8k77cfb3gjqzqouw (http://localhost:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJjMnpwNGRhcG5kcHU4azc3Y2ZiM2dqcXpxb3V3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImJvcmRlcmNvbGxpZS53ZWJwXCI7IGZpbGVuYW1lKj1VVEYtOCcnYm9yZGVyY29sbGllLndlYnAiLCJjb250ZW50X3R5cGUiOiJpbWFnZS93ZWJwIiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyNS0xMS0yNVQwNjozNDowOC4yMDdaIiwicHVyIjoiYmxvYl9rZXkifX0=--20d39914308785738562736d30666c28d4345405/bordercollie.webp)[0m
+Redirected to http://localhost:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJjMnpwNGRhcG5kcHU4azc3Y2ZiM2dqcXpxb3V3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImJvcmRlcmNvbGxpZS53ZWJwXCI7IGZpbGVuYW1lKj1VVEYtOCcnYm9yZGVyY29sbGllLndlYnAiLCJjb250ZW50X3R5cGUiOiJpbWFnZS93ZWJwIiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyNS0xMS0yNVQwNjozNDowOC4yMDdaIiwicHVyIjoiYmxvYl9rZXkifX0=--20d39914308785738562736d30666c28d4345405/bordercollie.webp
+Completed 302 Found in 8ms (ActiveRecord: 0.3ms | Allocations: 2220)
+
+
+Started GET "/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJjMnpwNGRhcG5kcHU4azc3Y2ZiM2dqcXpxb3V3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImJvcmRlcmNvbGxpZS53ZWJwXCI7IGZpbGVuYW1lKj1VVEYtOCcnYm9yZGVyY29sbGllLndlYnAiLCJjb250ZW50X3R5cGUiOiJpbWFnZS93ZWJwIiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyNS0xMS0yNVQwNjozNDowOC4yMDdaIiwicHVyIjoiYmxvYl9rZXkifX0=--20d39914308785738562736d30666c28d4345405/bordercollie.webp" for 192.168.65.1 at 2025-11-25 06:29:08 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by ActiveStorage::DiskController#show as WEBP
+  Parameters: {"encoded_key"=>"[FILTERED]", "filename"=>"bordercollie"}
+Completed 200 OK in 2ms (ActiveRecord: 0.0ms | Allocations: 321)
+
+
+Started GET "/organizations/1/pets/4" for 192.168.65.1 at 2025-11-25 06:29:09 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by PetsController#show as HTML
+  Parameters: {"organization_id"=>"1", "id"=>"4"}
+  [1m[36mUser Load (0.6ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.6ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  [1m[36mOrganization Load (0.3ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/pets_controller.rb:234:in `set_organization'
+  [1m[36mPet Load (0.4ms)[0m  [1m[34mSELECT "pets".* FROM "pets" WHERE "pets"."organization_id" = $1 AND "pets"."id" = $2 LIMIT $3[0m  [["organization_id", 1], ["id", 4], ["LIMIT", 1]]
+  ↳ app/controllers/pets_controller.rb:241:in `set_pet'
+  [1m[36mPinnedTab Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 AND "pinned_tabs"."tabable_type" = $2 AND "pinned_tabs"."tabable_id" = $3 AND "pinned_tabs"."tab_type" = $4 LIMIT $5[0m  [["user_id", 1], ["tabable_type", "Pet"], ["tabable_id", 4], ["tab_type", "pet"], ["LIMIT", 1]]
+  ↳ app/controllers/pets_controller.rb:22:in `show'
+  [1m[36mRecordLayout Load (1.3ms)[0m  [1m[34mSELECT "record_layouts".* FROM "record_layouts" WHERE "record_layouts"."organization_id" = $1 AND "record_layouts"."table_type" = $2 LIMIT $3[0m  [["organization_id", 1], ["table_type", "Pet"], ["LIMIT", 1]]
+  ↳ app/controllers/pets_controller.rb:23:in `show'
+[Pet show] id=4 name="TestTe"
+  Rendering layout layouts/application.html.erb
+  Rendering pets/show.html.erb within layouts/application
+  Rendered shared/_search_bar.html.erb (Duration: 0.1ms | Allocations: 28)
+  [1m[36mCustomObject Load (0.3ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."add_to_navigation" = $2 AND "custom_objects"."active" = $3[0m  [["organization_id", 1], ["add_to_navigation", true], ["active", true]]
+  ↳ app/views/shared/_navbar_org.html.erb:92
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered shared/_navbar_org.html.erb (Duration: 4.3ms | Allocations: 2347)
+Could not find layout for Pet : undefined method `record_layouts' for an instance of Organization
+  [1m[36mCustomObject Load (0.2ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:19:in `record_layout_metadata_json'
+  [1m[36mCustomField Load (0.5ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_name_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_name_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "name"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_name_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_name_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_breed_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_breed_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "breed"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_breed_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_breed_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_age_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_age_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "age"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_age_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_age_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_description_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_description_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "description"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_description_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_description_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_sex_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_sex_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "sex"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_sex_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_sex_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "species"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_color_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_color_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "color"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_color_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_color_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_coat_type_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_coat_type_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "coat_type"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_coat_type_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_coat_type_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_size_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_size_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "size"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_size_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_size_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_weight_lbs_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_weight_lbs_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "weight_lbs"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_weight_lbs_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_weight_lbs_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_weight_oz_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_weight_oz_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "weight_oz"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_weight_oz_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_weight_oz_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_entered_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_entered_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "entered_shelter"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_entered_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_entered_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_left_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_left_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "left_shelter"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_left_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_left_shelter_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_unit_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_unit_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "unit"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_unit_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_unit_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_location_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_location_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "location"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_location_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_location_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_date_of_birth_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_date_of_birth_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "date_of_birth"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_date_of_birth_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_date_of_birth_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_dob_estimated_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_dob_estimated_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "dob_estimated"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_dob_estimated_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_dob_estimated_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_microchip_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_microchip_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "microchip"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_microchip_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_microchip_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_dod_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_dod_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "dod"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_dod_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_dod_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_mother_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_mother_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "mother_id"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_mother_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_mother_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_father_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_father_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "father_id"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_father_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_father_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_flags_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_flags_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "flags"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_flags_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_flags_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_owner_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_owner_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "owner_id"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_owner_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_owner_id_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_status_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:24:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_status_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:25:in `block in record_layout_metadata_json'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "status"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:26:in `block in record_layout_metadata_json'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_status_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_status_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+RecordLayoutsHelper: No layout found for Pet 
+RecordLayoutsHelper: Created default HTML for Pet layout
+RecordLayoutsHelper: Returning metadata with keys: [:fields, :components, :organization_id, :table_type, :table_id, :layout_html, :layout_css, :layout_id]
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:172:in `ensure_builtin_pets_custom_fields!'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:188:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:189:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mCACHE CustomField Load (0.0ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "species"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:190:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN[0m
+  ↳ app/helpers/record_layouts_helper.rb:192:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mCustomField Exists? (1.3ms)[0m  [1m[34mSELECT 1 AS one FROM "custom_fields" WHERE "custom_fields"."name" = $1 AND "custom_fields"."custom_object_id" = $2 AND "custom_fields"."table_type" IS NULL AND "custom_fields"."table_id" IS NULL LIMIT $3[0m  [["name", "Species"], ["custom_object_id", 1], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:192:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mCustomField Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "custom_fields" WHERE "custom_fields"."api_name" = $1 AND "custom_fields"."custom_object_id" = $2 AND "custom_fields"."table_type" IS NULL AND "custom_fields"."table_id" IS NULL LIMIT $3[0m  [["api_name", "species"], ["custom_object_id", 1], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:192:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK[0m
+  ↳ app/helpers/record_layouts_helper.rb:192:in `block in ensure_builtin_pets_custom_fields!'
+  [1m[36mCustomObject Load (0.2ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/record_layouts_helper.rb:144:in `record_layout_options_map'
+  [1m[36mCustomField Load (0.3ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."field_type" IN ($2, $3)[0m  [["custom_object_id", 1], ["field_type", 6], ["field_type", 7]]
+  ↳ app/helpers/record_layouts_helper.rb:146:in `record_layout_options_map'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_species_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_breed_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_breed_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_color_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_color_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_flags_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_flags_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_location_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_location_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_unit_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_unit_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.2ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_coat_type_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_coat_type_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mCACHE CustomObject Load (0.0ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."api_name" = $2 LIMIT $3[0m  [["organization_id", 1], ["api_name", "pets"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:3:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pet_sex_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:7:in `get_custom_field_values'
+  [1m[36mCustomField Load (0.1ms)[0m  [1m[34mSELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."custom_object_id" = $1 AND "custom_fields"."api_name" = $2 LIMIT $3[0m  [["custom_object_id", 1], ["api_name", "pets_sex_field"], ["LIMIT", 1]]
+  ↳ app/helpers/pets_helper.rb:8:in `get_custom_field_values'
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = $1 AND "active_storage_attachments"."record_type" = $2 AND "active_storage_attachments"."name" = $3 LIMIT $4[0m  [["record_id", 4], ["record_type", "Pet"], ["name", "photo"], ["LIMIT", 1]]
+  ↳ app/views/pets/_pet_header.html.erb:5
+  Rendered pets/_pet_header.html.erb (Duration: 2.3ms | Allocations: 1125)
+  Rendered record_layouts/_render.html.erb (Duration: 175.0ms | Allocations: 110133)
+  [1m[36mActiveStorage::Attachment Load (0.2ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = $1 AND "active_storage_attachments"."record_type" = $2 AND "active_storage_attachments"."name" = $3[0m  [["record_id", 4], ["record_type", "Pet"], ["name", "gallery_photos"]]
+  ↳ app/views/pets/_gallery_items_modal.html.erb:1
+  Rendered pets/_gallery_items_modal.html.erb (Duration: 1.7ms | Allocations: 938)
+  Rendered pets/show.html.erb within layouts/application (Duration: 184.9ms | Allocations: 114637)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 19)
+  Rendered layout layouts/application.html.erb (Duration: 187.9ms | Allocations: 117330)
+Completed 200 OK in 241ms (Views: 170.4ms | ActiveRecord: 26.3ms | Allocations: 132733)
+
+
+Started GET "/organizations/1/pets" for 192.168.65.1 at 2025-11-25 06:32:11 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by PetsController#index as HTML
+  Parameters: {"organization_id"=>"1"}
+  [1m[36mUser Load (1.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (1.9ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  [1m[36mOrganization Load (0.4ms)[0m  [1m[34mSELECT "organizations".* FROM "organizations" WHERE "organizations"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/pets_controller.rb:234:in `set_organization'
+  [1m[36mPinnedTab Pluck (1.4ms)[0m  [1m[34mSELECT "pinned_tabs"."tabable_id" FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 AND "pinned_tabs"."tabable_type" = $2 AND "pinned_tabs"."tab_type" = $3[0m  [["user_id", 1], ["tabable_type", "Pet"], ["tab_type", "pet"]]
+  ↳ app/controllers/pets_controller.rb:17:in `index'
+  Rendering layout layouts/application.html.erb
+  Rendering pets/index.html.erb within layouts/application
+  Rendered shared/_search_bar.html.erb (Duration: 0.4ms | Allocations: 28)
+  [1m[36mCustomObject Load (0.7ms)[0m  [1m[34mSELECT "custom_objects".* FROM "custom_objects" WHERE "custom_objects"."organization_id" = $1 AND "custom_objects"."add_to_navigation" = $2 AND "custom_objects"."active" = $3[0m  [["organization_id", 1], ["add_to_navigation", true], ["active", true]]
+  ↳ app/views/shared/_navbar_org.html.erb:92
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.2ms | Allocations: 10)
+  Rendered shared/_navbar_org.html.erb (Duration: 19.7ms | Allocations: 2270)
+  [1m[36mPet Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "pets" WHERE "pets"."organization_id" = $1 LIMIT $2 OFFSET $3[0m  [["organization_id", 1], ["LIMIT", 1], ["OFFSET", 0]]
+  ↳ app/views/pets/index.html.erb:23
+  [1m[36mPet Load (0.4ms)[0m  [1m[34mSELECT "pets".* FROM "pets" WHERE "pets"."organization_id" = $1 ORDER BY "pets"."name" ASC LIMIT $2 OFFSET $3[0m  [["organization_id", 1], ["LIMIT", 10], ["OFFSET", 0]]
+  ↳ app/views/pets/index.html.erb:36
+  [1m[36mActiveStorage::Attachment Load (0.3ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = $1 AND "active_storage_attachments"."record_type" = $2 AND "active_storage_attachments"."name" = $3 LIMIT $4[0m  [["record_id", 4], ["record_type", "Pet"], ["name", "photo"], ["LIMIT", 1]]
+  ↳ app/views/pets/index.html.erb:39
+  [1m[36mActiveStorage::Attachment Load (0.4ms)[0m  [1m[34mSELECT "active_storage_attachments".* FROM "active_storage_attachments" WHERE "active_storage_attachments"."record_id" = $1 AND "active_storage_attachments"."record_type" = $2 AND "active_storage_attachments"."name" = $3 LIMIT $4[0m  [["record_id", 1], ["record_type", "Pet"], ["name", "photo"], ["LIMIT", 1]]
+  ↳ app/views/pets/index.html.erb:39
+  [1m[36mActiveStorage::Blob Load (0.4ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/views/pets/index.html.erb:40
+  Rendered pets/index.html.erb within layouts/application (Duration: 39.9ms | Allocations: 6996)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 19)
+  Rendered layout layouts/application.html.erb (Duration: 49.8ms | Allocations: 9683)
+Completed 200 OK in 114ms (Views: 51.6ms | ActiveRecord: 7.8ms | Allocations: 12785)
+
+
+Started GET "/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--4b6adf3a1a14207f940d561278f1ee72029e6ccf/bordercollie.webp" for 192.168.65.1 at 2025-11-25 06:32:13 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by ActiveStorage::Blobs::RedirectController#show as WEBP
+  Parameters: {"signed_id"=>"eyJfcmFpbHMiOnsiZGF0YSI6MSwicHVyIjoiYmxvYl9pZCJ9fQ==--4b6adf3a1a14207f940d561278f1ee72029e6ccf", "filename"=>"bordercollie"}
+  [1m[36mActiveStorage::Blob Load (1.0ms)[0m  [1m[34mSELECT "active_storage_blobs".* FROM "active_storage_blobs" WHERE "active_storage_blobs"."id" = $1 LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+[36m  Disk Storage (0.7ms) [0m[34mGenerated URL for file at key: c2zp4dapndpu8k77cfb3gjqzqouw (http://localhost:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJjMnpwNGRhcG5kcHU4azc3Y2ZiM2dqcXpxb3V3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImJvcmRlcmNvbGxpZS53ZWJwXCI7IGZpbGVuYW1lKj1VVEYtOCcnYm9yZGVyY29sbGllLndlYnAiLCJjb250ZW50X3R5cGUiOiJpbWFnZS93ZWJwIiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyNS0xMS0yNVQwNjozNzoxNC4yMDlaIiwicHVyIjoiYmxvYl9rZXkifX0=--30bd0d51afbe76b4d34c05df4db488eaa330c293/bordercollie.webp)[0m
+Redirected to http://localhost:3000/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJjMnpwNGRhcG5kcHU4azc3Y2ZiM2dqcXpxb3V3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImJvcmRlcmNvbGxpZS53ZWJwXCI7IGZpbGVuYW1lKj1VVEYtOCcnYm9yZGVyY29sbGllLndlYnAiLCJjb250ZW50X3R5cGUiOiJpbWFnZS93ZWJwIiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyNS0xMS0yNVQwNjozNzoxNC4yMDlaIiwicHVyIjoiYmxvYl9rZXkifX0=--30bd0d51afbe76b4d34c05df4db488eaa330c293/bordercollie.webp
+Completed 302 Found in 13ms (ActiveRecord: 1.0ms | Allocations: 1888)
+
+
+Started GET "/rails/active_storage/disk/eyJfcmFpbHMiOnsiZGF0YSI6eyJrZXkiOiJjMnpwNGRhcG5kcHU4azc3Y2ZiM2dqcXpxb3V3IiwiZGlzcG9zaXRpb24iOiJhdHRhY2htZW50OyBmaWxlbmFtZT1cImJvcmRlcmNvbGxpZS53ZWJwXCI7IGZpbGVuYW1lKj1VVEYtOCcnYm9yZGVyY29sbGllLndlYnAiLCJjb250ZW50X3R5cGUiOiJpbWFnZS93ZWJwIiwic2VydmljZV9uYW1lIjoibG9jYWwifSwiZXhwIjoiMjAyNS0xMS0yNVQwNjozNzoxNC4yMDlaIiwicHVyIjoiYmxvYl9rZXkifX0=--30bd0d51afbe76b4d34c05df4db488eaa330c293/bordercollie.webp" for 192.168.65.1 at 2025-11-25 06:32:15 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by ActiveStorage::DiskController#show as WEBP
+  Parameters: {"encoded_key"=>"[FILTERED]", "filename"=>"bordercollie"}
+Completed 200 OK in 7ms (ActiveRecord: 0.0ms | Allocations: 1052)
+
+
+Started GET "/profile" for 192.168.65.1 at 2025-11-25 06:32:16 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by ProfilesController#show as HTML
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  ↳ app/controllers/application_controller.rb:16:in `current_user'
+  [1m[36mPinnedTab Load (0.4ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+  Rendering layout layouts/application.html.erb
+  Rendering profiles/show.html.erb within layouts/application
+  Rendered shared/_search_bar_admin.html.erb (Duration: 0.1ms | Allocations: 20)
+  Rendered shared/_tabbed_navigation.html.erb (Duration: 0.0ms | Allocations: 10)
+  Rendered shared/_navbar_admin.html.erb (Duration: 2.3ms | Allocations: 1271)
+  Rendered profiles/show.html.erb within layouts/application (Duration: 5.4ms | Allocations: 2420)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 20)
+  Rendered layout layouts/application.html.erb (Duration: 8.1ms | Allocations: 5111)
+Completed 200 OK in 20ms (Views: 9.2ms | ActiveRecord: 0.7ms | Allocations: 7417)
+
+
+Started DELETE "/users/sign_out" for 192.168.65.1 at 2025-11-25 06:32:17 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#destroy as HTML
+  Parameters: {"authenticity_token"=>"[FILTERED]"}
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."id" = $1 ORDER BY "users"."id" ASC LIMIT $2[0m  [["id", 1], ["LIMIT", 1]]
+  [1m[36mPinnedTab Load (0.5ms)[0m  [1m[34mSELECT "pinned_tabs".* FROM "pinned_tabs" WHERE "pinned_tabs"."user_id" = $1 ORDER BY COALESCE(position, 999999), created_at ASC[0m  [["user_id", 1]]
+  ↳ app/controllers/application_controller.rb:49:in `map'
+Setting up navbar data - Pinned tabs: []
+Redirected to http://localhost:3000/
+Completed 303 See Other in 12ms (ActiveRecord: 0.8ms | Allocations: 2809)
+
+
+Started GET "/" for 192.168.65.1 at 2025-11-25 06:32:17 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by HomeController#index as HTML
+Redirected to http://localhost:3000/users/sign_in
+Completed 302 Found in 3ms (ActiveRecord: 0.0ms | Allocations: 798)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:32:17 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 94)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 2.8ms | Allocations: 1465)
+  Rendered shared/_global_alert.html.erb (Duration: 0.0ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 5.0ms | Allocations: 4134)
+Completed 200 OK in 9ms (Views: 5.6ms | ActiveRecord: 0.0ms | Allocations: 5084)
+
+
+Started GET "/users/password/new" for 192.168.65.1 at 2025-11-25 06:32:21 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Devise::PasswordsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/passwords/new.html.erb within layouts/application
+  Rendered devise/shared/_error_messages.html.erb (Duration: 0.0ms | Allocations: 13)
+  Rendered devise/shared/_links.html.erb (Duration: 0.2ms | Allocations: 91)
+  Rendered devise/passwords/new.html.erb within layouts/application (Duration: 1.7ms | Allocations: 593)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 7.5ms | Allocations: 3622)
+Completed 200 OK in 12ms (Views: 8.1ms | ActiveRecord: 0.0ms | Allocations: 4482)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:32:59 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.8ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 24.9ms | Allocations: 1459)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 302.5ms | Allocations: 18360)
+Completed 200 OK in 324ms (Views: 308.3ms | ActiveRecord: 0.0ms | Allocations: 19323)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:33:36 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.0ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 24.3ms | Allocations: 1471)
+  Rendered shared/_global_alert.html.erb (Duration: 0.4ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 279.4ms | Allocations: 18262)
+Completed 200 OK in 307ms (Views: 282.9ms | ActiveRecord: 0.0ms | Allocations: 19217)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:33:44 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.1ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 3.4ms | Allocations: 1459)
+  Rendered shared/_global_alert.html.erb (Duration: 0.1ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 7.6ms | Allocations: 4128)
+Completed 200 OK in 13ms (Views: 8.5ms | ActiveRecord: 0.0ms | Allocations: 5092)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:34:16 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.7ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 14.9ms | Allocations: 1459)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 240.5ms | Allocations: 18258)
+Completed 200 OK in 274ms (Views: 247.3ms | ActiveRecord: 0.0ms | Allocations: 19220)
+
+
+Started GET "/users/sign_in" for 192.168.65.1 at 2025-11-25 06:34:29 +0000
+Cannot render console from 192.168.65.1! Allowed networks: 127.0.0.0/127.255.255.255, ::1
+Processing by Users::SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.0ms | Allocations: 93)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 25.7ms | Allocations: 1466)
+  Rendered shared/_global_alert.html.erb (Duration: 0.2ms | Allocations: 25)
+  Rendered layout layouts/application.html.erb (Duration: 380.3ms | Allocations: 18324)
+Completed 200 OK in 397ms (Views: 383.6ms | ActiveRecord: 0.0ms | Allocations: 19291)
+
+
