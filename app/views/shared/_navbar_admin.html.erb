@@ -1,9 +1,9 @@
 <%# --- FLEXBOX HEADER LAYOUT: 3 columns, 2 center rows --- %>
-<div class="org-header-flex" style="position:fixed; top:0; width:100%; z-index:10; background:#212529; display:flex; align-items:stretch; min-height:87px;">
+<div class="org-header-flex" style="position:fixed; top:0; width:100%; z-index:10; background:#222222; display:flex; align-items:stretch; min-height:87px;">
   <!-- LEFT COLUMN: Admin brand -->
   <div class="org-header-left d-flex align-items-center justify-content-start px-3" style="flex:0 0 auto;">
     <%= link_to admin_home_path, class: "navbar-brand my-0 py-0" do %>
-      <%= image_tag "hubbub-logo-large.png", alt: "Hubbubb Admin", style: "height: 85px; width: auto;" %>
+      <%= image_tag "hubbub-logo-large.png", alt: "Hubbubb Admin", style: "height: 85px; width: auto;", loading: "eager", fetchpriority: "high" %>
     <% end %>
   </div>
 
@@ -43,7 +43,7 @@
             <i class="fas fa-caret-down"></i>
           </button>
 
-          <ul class="dropdown-menu main-nav-dropdown shadow-lg border-0" aria-labelledby="mainNavDropdown" style="min-width: 220px; z-index:20;">
+          <ul class="dropdown-menu main-nav-dropdown shadow-lg border-0" aria-labelledby="mainNavDropdown" style="min-width: 220px; z-index:20;padding-top:0px;">
             <li>
               <%= link_to admin_home_path, class: "dropdown-item d-flex align-items-center py-2 #{current_page?(admin_home_path) ? 'active' : ''}" do %>
                 <i class="fas fa-tachometer-alt me-3 text-muted"></i>
@@ -80,7 +80,7 @@
         <a class="btn btn-sm btn-outline-secondary dropdown-toggle px-2 py-1" href="#" id="tabMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Tab actions" role="button">
           <i class="fas fa-ellipsis-h fa-lg"></i>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end mt-1" aria-labelledby="tabMenuDropdown" style="min-width: 180px;">
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="tabMenuDropdown" style="min-width: 180px;padding-top:0px;">
           <li><hr class="tab-menu-divider"></li>
           <li><a class="dropdown-item" href="#" onclick="document.dispatchEvent(new CustomEvent('unpinAllTabs')); return false;">Unpin all tabs</a></li>
         </ul>

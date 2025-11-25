@@ -21,7 +21,7 @@
 }
 
 .main-nav-dropdown {
-  inset: -1px auto auto -107px !important;
+  inset: -2px auto auto -10px !important;
 }
 
 .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
@@ -55,7 +55,7 @@
 /* Warning Alert */
 .alert-warning {
   background-color: #ffc107; /* Yellow */
-  color: #212529; /* Dark text for contrast */
+  color: #222222; /* Dark text for contrast */
 }
 
 /* Info Alert */
@@ -252,7 +252,7 @@ input[type="file"]::file-selector-button + * {
 
 .table .status .task-status-badge.pending {
   background-color: #ffc107;
-  color: #212529;
+  color: #222222;
 }
 
 .table .status .task-status-badge.overdue {
@@ -274,7 +274,7 @@ input[type="file"]::file-selector-button + * {
 
 .badge.pending {
   background-color: #ffc107;
-  color: #212529;
+  color: #222222;
 }
 
 .badge.overdue {
@@ -377,11 +377,18 @@ input[type="file"]::file-selector-button + * {
   text-align: center;
   margin-bottom: 2rem;
   padding-top: 1rem;
+  min-height: 100px; /* Prevent layout shift while logo loads */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-logo {
   max-width: 220px;
   height: auto;
+  display: block;
+  /* Prevent layout shift */
+  aspect-ratio: attr(width) / attr(height);
 }
 
 .login-card {

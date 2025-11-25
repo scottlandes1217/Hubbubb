@@ -3,7 +3,7 @@
     <div class="card login-card">
       <div class="card-body">
         <div class="login-logo-container">
-          <%= image_tag "hubbub-logo-large.png", alt: "Hubbubb", class: "login-logo" %>
+          <%= image_tag "hubbub-logo-large.png", alt: "Hubbubb", class: "login-logo", loading: "eager", fetchpriority: "high" %>
         </div>
         <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { data: { turbo: "false" } }) do |f| %>
           <div class="form-group mb-3">

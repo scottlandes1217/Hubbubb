@@ -5,26 +5,53 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <!-- Resource hints for faster CDN loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+
+    <!-- Preload logo for faster rendering (high priority) -->
+    <%= preload_link_tag asset_path("hubbub-logo-large.png"), as: :image, fetchpriority: "high" %>
+
+    <!-- Critical CSS loaded first -->
+    <!-- Bootstrap CSS (via CDN for simplicity) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin>
+
+    <!-- FontAwesome (loaded early for icons) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" crossorigin>
+    
+    <!-- Prevent icon flash with inline critical CSS -->
+    <style>
+      /* Prevent FOUT (Flash of Unstyled Text) for FontAwesome icons */
+      .fas, .far, .fal, .fab, .fa {
+        font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "Font Awesome 6 Pro" !important;
+        font-weight: 900;
+        display: inline-block;
+        font-style: normal;
+        font-variant: normal;
+        text-rendering: auto;
+        line-height: 1;
+      }
+      /* Reserve space for icons to prevent layout shift */
+      i.fas, i.far, i.fal, i.fab, i.fa {
+        min-width: 1em;
+        text-align: center;
+      }
+    </style>
+
     <!-- Application CSS -->
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
-    <!-- Import Maps for JavaScript -->
+    <!-- Trix CSS (less critical, can load after) -->
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css" crossorigin>
+
+    <!-- Import Maps for JavaScript (defer loading) -->
     <%= javascript_importmap_tags %>
 
-    <!-- Bootstrap CSS (via CDN for simplicity) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-
-    <!-- Trix CSS -->
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
-
-    <!-- Preload logo for faster navbar rendering -->
-    <%= preload_link_tag asset_path("hubbub-logo-large.png"), as: :image %>
-
-    <!-- Bootstrap JavaScript (via CDN) - needed for modals -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JavaScript (via CDN) - defer to not block rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
 
     <%= yield :head if content_for?(:head) %>
   </head>
