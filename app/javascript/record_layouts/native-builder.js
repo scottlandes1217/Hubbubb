@@ -1,6 +1,8 @@
 // Native Record Layout Builder
 // Clean implementation without GrapesJS
 
+import { Utils } from './modules/utils.js';
+
 export class NativeRecordBuilder {
   constructor() {
     this.components = []; // Root component tree
@@ -17,8 +19,26 @@ export class NativeRecordBuilder {
     this.setupCanvas();
     this.setupSidebar();
     this.setupDragAndDrop();
+    this.setupModals();
     this.loadExistingLayout();
     console.log('[Native Builder] Initialization complete');
+  }
+
+  setupModals() {
+    // Initialize modal handlers if available
+    try {
+      // Import modal handlers dynamically
+      import('./modules/modal-handlers.js').then(module => {
+        const ModalHandlers = module.ModalHandlers;
+        this.modalHandlers = new ModalHandlers(this);
+        this.modalHandlers.setup();
+        console.log('[Native Builder] Modal handlers initialized');
+      }).catch(err => {
+        console.warn('[Native Builder] Could not load modal handlers:', err);
+      });
+    } catch (err) {
+      console.warn('[Native Builder] Error setting up modals:', err);
+    }
   }
 
   loadMetadata() {
@@ -29,9 +49,9 @@ export class NativeRecordBuilder {
   }
 
   setupCanvas() {
-    const canvasEl = document.getElementById('gjs');
+    const canvasEl = document.getElementById('record-builder-canvas');
     if (!canvasEl) {
-      console.error('[Native Builder] Canvas element #gjs not found');
+      console.error('[Native Builder] Canvas element #record-builder-canvas not found');
       return;
     }
     
@@ -84,21 +104,52 @@ export class NativeRecordBuilder {
     header.appendChild(title);
     
     const btnRow = document.createElement('div');
-    btnRow.className = 'd-flex gap-2 builder-btn-row';
+    btnRow.className = 'd-flex gap-2 align-items-center justify-content-end';
+    btnRow.style.cssText = 'padding: 8px 0;';
+    
+    // Back button
+    const backBtn = document.createElement('button');
+    backBtn.className = 'btn btn-sm btn-outline-secondary';
+    backBtn.innerHTML = '<i class="fas fa-arrow-left me-1"></i> Back';
+    backBtn.onclick = () => {
+      // Get return path from URL params or construct from metadata
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnTo = urlParams.get('return_to');
+      if (returnTo) {
+        window.location.href = returnTo;
+      } else {
+        // Construct default path based on table type
+        const orgId = this.metadata?.organization_id;
+        if (orgId) {
+          if (this.metadata?.table_type === 'Pet') {
+            // Go to pets index
+            window.location.href = `/organizations/${orgId}/pets`;
+          } else {
+            // Default to organization page
+            window.location.href = `/organizations/${orgId}`;
+          }
+        } else {
+          window.history.back();
+        }
+      }
+    };
+    btnRow.appendChild(backBtn);
     
     // Clear button
     const clearBtn = document.createElement('button');
-    clearBtn.className = 'btn btn-sm btn-link text-muted p-0';
-    clearBtn.title = 'Clear';
-    clearBtn.innerHTML = '<i class="fas fa-trash"></i>';
-    clearBtn.onclick = () => this.clear();
+    clearBtn.className = 'btn btn-sm btn-outline-danger';
+    clearBtn.innerHTML = '<i class="fas fa-trash me-1"></i> Clear';
+    clearBtn.onclick = () => {
+      if (confirm('Are you sure you want to clear all components? This cannot be undone.')) {
+        this.clear();
+      }
+    };
     btnRow.appendChild(clearBtn);
     
     // Save button
     const saveBtn = document.createElement('button');
-    saveBtn.className = 'btn btn-sm btn-link text-primary p-0';
-    saveBtn.title = 'Save';
-    saveBtn.innerHTML = '<i class="fas fa-save"></i>';
+    saveBtn.className = 'btn btn-sm btn-primary';
+    saveBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save';
     saveBtn.onclick = () => this.save();
     btnRow.appendChild(saveBtn);
     
@@ -244,10 +295,16 @@ export class NativeRecordBuilder {
     // Canvas-level drag handlers
     this.canvas.addEventListener('dragover', (e) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
+      // Allow both 'copy' (from sidebar) and 'move' (reordering) operations
+      if (this.dragPayload?.type === 'move') {
+        e.dataTransfer.dropEffect = 'move';
+      } else {
+        e.dataTransfer.dropEffect = 'copy';
+      }
     });
     
     this.canvas.addEventListener('drop', (e) => {
+      
       // Only handle if not already handled by tab-section/section-column handlers
       const tabSection = e.target.closest('[data-role="pf-tab-section"]');
       const sectionColumn = e.target.closest('[data-role="section-column"]');
@@ -259,10 +316,12 @@ export class NativeRecordBuilder {
       e.preventDefault();
       if (!this.dragPayload) return;
       
-      // For root-level drops, use findDropTarget
+      // For root-level drops (including reordering), use findDropTarget
       const target = this.findDropTarget(e.target, e.clientX, e.clientY);
+      console.log('[Native Builder] Canvas drop', { dragPayload: this.dragPayload, target });
       this.handleDrop(target, e.clientX, e.clientY);
     });
+    
     
     // Use event delegation for tab sections and section columns
     // This ensures drops work even after re-rendering
@@ -402,7 +461,38 @@ export class NativeRecordBuilder {
       current = current.parentElement;
     }
     
-    // Default to root canvas
+    // For root-level drops, check if we're dropping near another component to determine insertion point
+    if (this.dragPayload?.type === 'move' && this.dragPayload?.componentId) {
+      // Find all root-level components (not inside tabs or sections)
+      const rootComponents = Array.from(this.canvas.children).filter(child => {
+        const componentId = child.dataset.componentId;
+        if (!componentId) return false;
+        // Make sure it's not the dragged component
+        if (componentId === this.dragPayload.componentId) return false;
+        // Make sure it's a direct child (root level)
+        return child.parentElement === this.canvas;
+      });
+      
+      // Find which component we're dropping near
+      for (const comp of rootComponents) {
+        const rect = comp.getBoundingClientRect();
+        // Check if drop point is near this component (within 50px vertically)
+        if (y >= rect.top - 25 && y <= rect.bottom + 25) {
+          // Determine if dropping before or after based on vertical position
+          const midPoint = rect.top + (rect.height / 2);
+          const insertBefore = y < midPoint;
+          return { 
+            type: 'root', 
+            element: this.canvas,
+            insertBefore: insertBefore,
+            insertBeforeComponentId: insertBefore ? comp.dataset.componentId : null,
+            insertAfterComponentId: !insertBefore ? comp.dataset.componentId : null
+          };
+        }
+      }
+    }
+    
+    // Default to root canvas (append to end)
     return { type: 'root', element: this.canvas };
   }
 
@@ -492,10 +582,37 @@ export class NativeRecordBuilder {
     } else if (target.type === 'section-column') {
       // Add to section column
       const parent = this.findComponentById(target.componentId);
+      console.log('[Native Builder] addField to section-column', { 
+        target, 
+        parent, 
+        columnId: target.columnId,
+        field,
+        parentColumns: parent?.config?.columns
+      });
       if (parent) {
-        field.columnId = target.columnId;
+        // Verify the columnId exists in the section's columns
+        const columnExists = parent.config?.columns?.some(col => col.id === target.columnId);
+        if (!columnExists) {
+          console.error('[Native Builder] Column ID does not exist in section columns', {
+            columnId: target.columnId,
+            availableColumns: parent.config?.columns
+          });
+          // Use first column as fallback
+          if (parent.config?.columns?.length > 0) {
+            field.columnId = parent.config.columns[0].id;
+            console.log('[Native Builder] Using first column as fallback:', field.columnId);
+          } else {
+            console.error('[Native Builder] Section has no columns!');
+            return;
+          }
+        } else {
+          field.columnId = target.columnId;
+        }
         if (!parent.children) parent.children = [];
         parent.children.push(field);
+        console.log('[Native Builder] Field added to section, parent.children now:', parent.children);
+      } else {
+        console.error('[Native Builder] Could not find parent section component', target.componentId);
       }
     } else {
       // Fallback
@@ -513,12 +630,14 @@ export class NativeRecordBuilder {
   }
 
   addPartial(target, partialData) {
+    console.log('[Native Builder] addPartial called', { target, partialData });
     const partial = {
       id: this.generateId(),
       type: 'partial',
       partialName: partialData.partialName,
       label: partialData.label
     };
+    console.log('[Native Builder] Created partial component', partial);
     
     // Add to component tree
     if (target.type === 'root') {
@@ -628,7 +747,32 @@ export class NativeRecordBuilder {
     
     // Add to new location
     if (target.type === 'root') {
-      this.components.push(component);
+      // Check if we need to insert at a specific position for reordering
+      if (target.insertBeforeComponentId) {
+        // Insert before the specified component
+        const insertIndex = this.components.findIndex(c => c.id === target.insertBeforeComponentId);
+        if (insertIndex !== -1) {
+          this.components.splice(insertIndex, 0, component);
+          console.log('[Native Builder] Moved component to root level before', target.insertBeforeComponentId);
+        } else {
+          this.components.push(component);
+          console.log('[Native Builder] Moved component to root level (insertBeforeComponentId not found, appending)');
+        }
+      } else if (target.insertAfterComponentId) {
+        // Insert after the specified component
+        const insertIndex = this.components.findIndex(c => c.id === target.insertAfterComponentId);
+        if (insertIndex !== -1) {
+          this.components.splice(insertIndex + 1, 0, component);
+          console.log('[Native Builder] Moved component to root level after', target.insertAfterComponentId);
+        } else {
+          this.components.push(component);
+          console.log('[Native Builder] Moved component to root level (insertAfterComponentId not found, appending)');
+        }
+      } else {
+        // Append to end
+        this.components.push(component);
+        console.log('[Native Builder] Moved component to root level (appending)');
+      }
     } else if (target.type === 'tab-section') {
       const parent = this.findComponentById(target.componentId);
       if (parent) {
@@ -796,11 +940,21 @@ export class NativeRecordBuilder {
       console.warn('[Native Builder] Error loading partial preview:', e);
     }
     
-    div.innerHTML = `
-      <span class="rb-del" title="Delete">×</span>
-      <div>${component.label || component.partialName}</div>
-      ${previewHtml ? `<div style="margin-top: 8px; opacity: 0.7;">${previewHtml}</div>` : ''}
-    `;
+    // Show preview HTML if available, otherwise show nothing (no label text)
+    if (previewHtml) {
+      div.innerHTML = `
+        <span class="rb-del" title="Delete">×</span>
+        <div style="margin-top: 8px;">${previewHtml}</div>
+      `;
+    } else {
+      // Just show delete button if no preview available
+      div.innerHTML = `
+        <span class="rb-del" title="Delete">×</span>
+      `;
+      // Add a subtle indicator that this is a partial
+      div.style.border = '1px dashed #ccc';
+      div.style.minHeight = '40px';
+    }
     
     div.querySelector('.rb-del').onclick = () => this.deleteComponent(component.id);
     this.setupComponentDrag(div, component);
@@ -813,6 +967,7 @@ export class NativeRecordBuilder {
     container.className = 'pf-tabs-container pf-interactive';
     container.dataset.componentId = component.id;
     container.draggable = true;
+    container.style.position = 'relative'; // Needed for absolute positioning of buttons
     
     const tabs = component.config?.tabs || [{ id: 'tab1', title: 'Tab 1' }];
     const activeTabId = component.config?.activeTabId || tabs[0]?.id;
@@ -866,13 +1021,25 @@ export class NativeRecordBuilder {
     const editBtn = document.createElement('span');
     editBtn.className = 'rb-edit-tabs';
     editBtn.textContent = '✎';
-    editBtn.onclick = () => this.editTabs(component);
+    editBtn.title = 'Edit Tabs';
+    editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto; font-size: 14px;';
+    editBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.editTabs(component);
+    };
     container.appendChild(editBtn);
     
     const delBtn = document.createElement('span');
     delBtn.className = 'rb-del';
     delBtn.innerHTML = '×';
-    delBtn.onclick = () => this.deleteComponent(component.id);
+    delBtn.title = 'Delete';
+    delBtn.style.cssText = 'position: absolute; top: 4px; right: 4px; background: rgba(220,53,69,0.8); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto; font-size: 16px; font-weight: bold;';
+    delBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.deleteComponent(component.id);
+    };
     container.appendChild(delBtn);
     
     this.setupComponentDrag(container, component);
@@ -885,6 +1052,7 @@ export class NativeRecordBuilder {
     container.className = 'pf-section-container pf-interactive';
     container.dataset.componentId = component.id;
     container.draggable = true;
+    container.style.position = 'relative'; // Needed for absolute positioning of buttons
     
     const section = document.createElement('div');
     section.className = 'pf-section';
@@ -897,7 +1065,9 @@ export class NativeRecordBuilder {
       { id: 'col2', width: '50%' }
     ];
     
-    columns.forEach(col => {
+    console.log('[Native Builder] renderSection - columns:', columns, 'component.config:', component.config);
+    
+    columns.forEach((col, index) => {
       const column = document.createElement('div');
       column.className = 'pf-section-column';
       column.setAttribute('data-role', 'section-column');
@@ -913,11 +1083,18 @@ export class NativeRecordBuilder {
       
       // Render children for this column
       if (component.children) {
-        component.children
-          .filter(child => child.columnId === col.id)
-          .forEach(child => {
-            column.appendChild(this.renderComponent(child));
-          });
+        const columnChildren = component.children.filter(child => child.columnId === col.id);
+        console.log(`[Native Builder] Rendering ${columnChildren.length} children for column ${col.id}`, columnChildren);
+        columnChildren.forEach(child => {
+          const rendered = this.renderComponent(child);
+          if (rendered) {
+            column.appendChild(rendered);
+          } else {
+            console.warn('[Native Builder] renderComponent returned null for child', child);
+          }
+        });
+      } else {
+        console.log(`[Native Builder] No children array for section component ${component.id}`);
       }
       
       body.appendChild(column);
@@ -930,13 +1107,26 @@ export class NativeRecordBuilder {
     const editBtn = document.createElement('span');
     editBtn.className = 'rb-edit-section';
     editBtn.textContent = '✎';
-    editBtn.onclick = () => this.editSection(component);
+    editBtn.title = 'Edit Section';
+    // Don't set display inline - let CSS handle hover visibility
+    editBtn.style.cssText = 'position: absolute; top: 4px; right: 30px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 12px; width: 22px; height: 22px; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto; font-size: 14px;';
+    editBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.editSection(component);
+    };
     container.appendChild(editBtn);
     
     const delBtn = document.createElement('span');
     delBtn.className = 'rb-del';
     delBtn.innerHTML = '×';
-    delBtn.onclick = () => this.deleteComponent(component.id);
+    delBtn.title = 'Delete';
+    delBtn.style.cssText = 'position: absolute; top: 4px; right: 4px; background: rgba(220,53,69,0.8); color: #fff; border-radius: 12px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; pointer-events: auto; font-size: 16px; font-weight: bold;';
+    delBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.deleteComponent(component.id);
+    };
     container.appendChild(delBtn);
     
     this.setupComponentDrag(container, component);
@@ -1008,13 +1198,248 @@ export class NativeRecordBuilder {
   }
 
   editTabs(component) {
-    // TODO: Open tabs config modal
-    console.log('Edit tabs:', component);
+    console.log('[Native Builder] Edit tabs:', component);
+    
+    // Create an adapter object that mimics GrapesJS component interface
+    const adapter = this.createComponentAdapter(component);
+    
+    // Call the modal handler if available
+    if (window.openTabsConfigModal) {
+      window.openTabsConfigModal(adapter);
+    } else if (this.modalHandlers) {
+      // Try to call directly if modal handlers are loaded
+      this.modalHandlers.setupTabsConfigModal();
+      if (window.openTabsConfigModal) {
+        window.openTabsConfigModal(adapter);
+      }
+    } else {
+      console.warn('[Native Builder] Tabs config modal not available');
+    }
   }
 
   editSection(component) {
-    // TODO: Open section config modal
-    console.log('Edit section:', component);
+    console.log('[Native Builder] Edit section:', component);
+    
+    // Create an adapter object that mimics GrapesJS component interface
+    const adapter = this.createComponentAdapter(component);
+    if (!adapter) {
+      console.error('[Native Builder] Failed to create adapter for component', component.id);
+      return;
+    }
+    
+    // Call the modal handler if available
+    if (window.openSectionConfigModal) {
+      window.openSectionConfigModal(adapter);
+    } else if (this.modalHandlers) {
+      // Try to call directly if modal handlers are loaded
+      this.modalHandlers.setupSectionConfigModal();
+      if (window.openSectionConfigModal) {
+        window.openSectionConfigModal(adapter);
+      }
+    } else {
+      console.warn('[Native Builder] Section config modal not available');
+    }
+  }
+
+  createComponentAdapter(component) {
+    // Create an adapter that mimics GrapesJS component interface
+    // IMPORTANT: Find the actual component object from this.components to ensure we're modifying the right reference
+    const actualComponent = this.findComponentById(component.id);
+    if (!actualComponent) {
+      console.error('[Native Builder] Component not found for adapter', component.id, 'Available components:', this.components.map(c => c.id));
+      return null;
+    }
+    console.log('[Native Builder] Creating adapter for component', actualComponent.id, 'type:', actualComponent.type, 'config:', actualComponent.config);
+    const element = document.querySelector(`[data-component-id="${actualComponent.id}"]`);
+    const self = this;
+    
+    return {
+      getAttributes: () => {
+        // Return attributes from component config
+        const attrs = {};
+        if (actualComponent.type === 'tabs' && actualComponent.config?.tabs) {
+          attrs['tabs-json'] = JSON.stringify(actualComponent.config.tabs);
+          attrs['active-tab-id'] = actualComponent.config.activeTabId || actualComponent.config.tabs[0]?.id;
+        }
+        if (actualComponent.type === 'section' && actualComponent.config?.columns) {
+          attrs['columns-json'] = JSON.stringify(actualComponent.config.columns);
+        }
+        return attrs;
+      },
+      addAttributes: (newAttrs) => {
+        console.log('[Native Builder] addAttributes called', { 
+          newAttrs, 
+          componentType: actualComponent.type, 
+          componentId: actualComponent.id,
+          hasColumnsJson: !!newAttrs['columns-json'],
+          hasTabsJson: !!newAttrs['tabs-json'],
+          hasUpdatingSection: !!newAttrs['_updating-section']
+        });
+        
+        // Ignore _updating-section flag first (GrapesJS-specific)
+        if (newAttrs['_updating-section'] !== undefined) {
+          console.log('[Native Builder] Ignoring _updating-section flag');
+          return;
+        }
+        
+        // Update component config from attributes
+        if (newAttrs['tabs-json'] && actualComponent.type === 'tabs') {
+          try {
+            actualComponent.config = actualComponent.config || {};
+            actualComponent.config.tabs = JSON.parse(newAttrs['tabs-json']);
+            if (newAttrs['active-tab-id']) {
+              actualComponent.config.activeTabId = newAttrs['active-tab-id'];
+            }
+            // Preserve children when tabs change
+            // Close modal and render
+            const tabsModal = document.getElementById('pf-tabs-config-modal');
+            if (tabsModal) tabsModal.style.display = 'none';
+            console.log('[Native Builder] Rendering after tabs update');
+            self.render(); // Re-render after update
+          } catch (e) {
+            console.error('[Native Builder] Error parsing tabs-json:', e);
+          }
+        }
+        if (newAttrs['columns-json'] && actualComponent.type === 'section') {
+          console.log('[Native Builder] Processing columns-json update', { 
+            columnsJson: newAttrs['columns-json'],
+            currentColumns: actualComponent.config?.columns 
+          });
+          try {
+            actualComponent.config = actualComponent.config || {};
+            const newColumns = JSON.parse(newAttrs['columns-json']);
+            console.log('[Native Builder] Updating section columns', { 
+              oldColumns: actualComponent.config.columns, 
+              newColumns, 
+              componentId: actualComponent.id,
+              oldCount: actualComponent.config.columns?.length,
+              newCount: newColumns.length
+            });
+            
+            // Preserve children when columns change - map them to new column IDs
+            if (actualComponent.children) {
+              const oldColumns = actualComponent.config.columns || [];
+              const columnIdMap = {};
+              
+              // Map old column IDs to new ones by index
+              oldColumns.forEach((oldCol, index) => {
+                if (newColumns[index]) {
+                  columnIdMap[oldCol.id] = newColumns[index].id;
+                }
+              });
+              
+              // Update children's columnId if their column was remapped
+              actualComponent.children.forEach(child => {
+                if (child.columnId && columnIdMap[child.columnId]) {
+                  child.columnId = columnIdMap[child.columnId];
+                } else if (child.columnId && !newColumns.find(c => c.id === child.columnId)) {
+                  // Column was deleted, move to first column
+                  child.columnId = newColumns[0]?.id;
+                }
+              });
+            }
+            
+            actualComponent.config.columns = newColumns;
+            console.log('[Native Builder] Updated component.config.columns', actualComponent.config.columns);
+            
+            // Verify the component in the array is the same reference
+            const componentInArray = self.findComponentById(actualComponent.id);
+            if (componentInArray !== actualComponent) {
+              console.error('[Native Builder] Component reference mismatch!', {
+                actualComponentId: actualComponent.id,
+                arrayComponentId: componentInArray?.id,
+                sameReference: componentInArray === actualComponent
+              });
+              // Update the component in the array directly
+              if (componentInArray) {
+                componentInArray.config = componentInArray.config || {};
+                componentInArray.config.columns = newColumns;
+              }
+            } else {
+              console.log('[Native Builder] Component reference verified - same object');
+            }
+            
+            // Close modal immediately
+            const modal = document.getElementById('pf-section-config-modal');
+            if (modal) modal.style.display = 'none';
+            
+            // Render immediately - no need for GrapesJS rebuild logic
+            console.log('[Native Builder] About to render, component in array has columns:', self.findComponentById(actualComponent.id)?.config?.columns?.length);
+            self.render();
+          } catch (e) {
+            console.error('[Native Builder] Error parsing columns-json:', e);
+          }
+        }
+      },
+      getEl: () => element,
+      find: (selector) => {
+        // Mimic GrapesJS find() method - return array-like object with GrapesJS-like methods
+        // Re-query element in case it was re-rendered
+        try {
+          const currentElement = document.querySelector(`[data-component-id="${actualComponent.id}"]`);
+          if (!currentElement) {
+            console.warn('[Native Builder] find() - element not found for component', actualComponent.id);
+            return [];
+          }
+          const matches = currentElement.querySelectorAll(selector);
+          const self = this;
+          const result = Array.from(matches).map(el => ({
+          getAttributes: () => {
+            const attrs = {};
+            Array.from(el.attributes).forEach(attr => {
+              attrs[attr.name] = attr.value;
+            });
+            return attrs;
+          },
+          getAttribute: (name) => el.getAttribute(name),
+          // For section modal - components() method that returns children
+          components: (html) => {
+            // If html is provided, it means we're setting components (GrapesJS style)
+            // In native builder, we don't need to do anything here since render() handles it
+            if (html !== undefined) {
+              // This is called to clear/set components, but we handle it via render()
+              return;
+            }
+            
+            // Return children of this column element
+            const columnId = el.getAttribute('data-column-id') || el.dataset.columnId;
+            if (columnId && actualComponent.type === 'section' && actualComponent.children) {
+              // Return children that belong to this column
+              const columnChildren = actualComponent.children.filter(c => c.columnId === columnId);
+              return {
+                forEach: (callback) => {
+                  columnChildren.forEach(child => {
+                    // Create a mock component object for each child
+                    callback({
+                      toHTML: () => {
+                        // Serialize child to HTML
+                        if (child.type === 'field') {
+                          return `<div class="record-field-placeholder" field-api-name="${child.api}" field-label="${child.label}" field-type="${child.ftype || 'text'}">${child.label}</div>`;
+                        } else if (child.type === 'partial') {
+                          return `<div class="record-partial-placeholder" partial-name="${child.partialName}"></div>`;
+                        }
+                        return '';
+                      }
+                    });
+                  });
+                }
+              };
+            }
+            return { forEach: () => {} };
+          }
+          }));
+          
+          // Add array-like methods
+          result.slice = Array.prototype.slice.bind(result);
+          return result;
+        } catch (e) {
+          console.error('[Native Builder] Error in find()', e);
+          return [];
+        }
+      },
+      id: actualComponent.id,
+      type: actualComponent.type
+    };
   }
 
   generateId() {
@@ -1060,7 +1485,9 @@ export class NativeRecordBuilder {
 
   serializePartial(component) {
     // Partials need partial-name attribute for runtime rendering
-    return `<div class="record-partial-placeholder" partial-name="${this.escapeHtml(component.partialName)}">${this.escapeHtml(component.label || component.partialName)}</div>`;
+    // Don't include label text - runtime will replace entire element with actual partial content
+    console.log('[Native Builder] Serializing partial', { component, partialName: component.partialName });
+    return `<div class="record-partial-placeholder" partial-name="${this.escapeHtml(component.partialName)}"></div>`;
   }
 
   serializeTabs(component) {
@@ -1085,7 +1512,7 @@ export class NativeRecordBuilder {
             if (child.type === 'field') {
               html += `<div class="record-field-placeholder" field-api-name="${this.escapeHtml(child.api)}" field-label="${this.escapeHtml(child.label)}" field-type="${this.escapeHtml(child.ftype || 'text')}">${this.escapeHtml(child.label)}</div>`;
             } else if (child.type === 'partial') {
-              html += `<div class="record-partial-placeholder" partial-name="${this.escapeHtml(child.partialName)}">${this.escapeHtml(child.label || child.partialName)}</div>`;
+              html += `<div class="record-partial-placeholder" partial-name="${this.escapeHtml(child.partialName)}"></div>`;
             } else if (child.type === 'section') {
               html += this.serializeSection(child);
             }
@@ -1115,7 +1542,7 @@ export class NativeRecordBuilder {
             if (child.type === 'field') {
               html += `<div class="record-field-placeholder" field-api-name="${this.escapeHtml(child.api)}" field-label="${this.escapeHtml(child.label)}" field-type="${this.escapeHtml(child.ftype || 'text')}">${this.escapeHtml(child.label)}</div>`;
             } else if (child.type === 'partial') {
-              html += `<div class="record-partial-placeholder" partial-name="${this.escapeHtml(child.partialName)}">${this.escapeHtml(child.label || child.partialName)}</div>`;
+              html += `<div class="record-partial-placeholder" partial-name="${this.escapeHtml(child.partialName)}"></div>`;
             } else if (child.type === 'tabs') {
               html += this.serializeTabs(child);
             } else if (child.type === 'section') {
@@ -1161,7 +1588,7 @@ export class NativeRecordBuilder {
     return `
 (function() {
   function initTabs() {
-    const isBuilder = document.getElementById('gjs') || window.location.pathname.includes('/record_layouts/builder');
+    const isBuilder = document.getElementById('record-builder-canvas') || window.location.pathname.includes('/record_layouts/builder');
     if (isBuilder) return;
     
     document.querySelectorAll('.pf-tabs-container').forEach(container => {
@@ -1230,7 +1657,7 @@ export class NativeRecordBuilder {
     const metadataScript = document.getElementById('record-layout-metadata');
     if (!metadataScript) {
       console.error('[Native Builder] Missing metadata script');
-      alert('Save failed: Missing metadata');
+      Utils.showSaveMessage('Save failed: Missing metadata', 'error');
       return;
     }
     
@@ -1241,7 +1668,7 @@ export class NativeRecordBuilder {
     
     if (!orgId || !tableType) {
       console.error('[Native Builder] Missing orgId or tableType', { orgId, tableType });
-      alert('Save failed: Missing organization or table type');
+      Utils.showSaveMessage('Save failed: Missing organization or table type', 'error');
       return;
     }
     
@@ -1285,14 +1712,14 @@ export class NativeRecordBuilder {
           this.metadata.layout_html = html;
           this.metadata.layout_css = css;
         }
-        alert('Layout saved successfully!');
+        Utils.showSaveMessage('Layout saved successfully!', 'success');
       } else {
-        alert('Save failed: ' + (data.errors || 'Unknown error'));
+        Utils.showSaveMessage('Save failed: ' + (data.errors || 'Unknown error'), 'error');
       }
     })
     .catch(error => {
       console.error('[Native Builder] Save error:', error);
-      alert('Save failed: ' + error.message);
+      Utils.showSaveMessage('Save failed: ' + error.message, 'error');
     });
   }
 
@@ -1485,12 +1912,22 @@ let nativeBuilderInstance = null;
 let nativeBuilderInitialized = false;
 
 function initNativeRecordBuilder() {
-  console.log('[Native Builder] initNativeRecordBuilder called');
+  console.log('[Native Builder] initNativeRecordBuilder called', { pathname: window.location.pathname });
   
-  if (!document.getElementById('gjs')) {
-    console.warn('[Native Builder] Canvas element #gjs not found');
+  // Only initialize on the builder page
+  // Path can be /record_layouts/builder or /organizations/:id/record_layout/builder
+  if (!window.location.pathname.includes('/record_layout') || !window.location.pathname.includes('/builder')) {
+    console.log('[Native Builder] Not on builder page, skipping initialization');
     return;
   }
+  
+  const canvasEl = document.getElementById('record-builder-canvas');
+  if (!canvasEl) {
+    console.warn('[Native Builder] Canvas element #record-builder-canvas not found');
+    return;
+  }
+  
+  console.log('[Native Builder] Canvas found, proceeding with initialization');
   
   if (!document.getElementById('record-layout-metadata')) {
     console.warn('[Native Builder] Metadata element not found');
@@ -1503,9 +1940,16 @@ function initNativeRecordBuilder() {
   }
   
   console.log('[Native Builder] Creating new instance...');
-  nativeBuilderInitialized = true;
-  nativeBuilderInstance = new NativeRecordBuilder();
-  nativeBuilderInstance.init();
+  try {
+    nativeBuilderInitialized = true;
+    nativeBuilderInstance = new NativeRecordBuilder();
+    nativeBuilderInstance.init();
+    console.log('[Native Builder] Initialization complete');
+  } catch (error) {
+    console.error('[Native Builder] Error during initialization:', error);
+    nativeBuilderInitialized = false;
+    nativeBuilderInstance = null;
+  }
 }
 
 function destroyNativeRecordBuilder() {

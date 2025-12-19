@@ -429,7 +429,7 @@ export class ModalHandlers {
             <button type="button" id="pf-section-close" style="border:0;background:transparent;font-size:18px;line-height:1;cursor:pointer;">×</button>
           </div>
           <div style="padding:12px 16px;">
-            <div class="text-muted" style="font-size:12px;margin-bottom:6px;">Drag to reorder. Set width for each column (e.g., 50%, 33%, 25%).</div>
+            <div class="text-muted" style="font-size:12px;margin-bottom:6px;">Drag to reorder. Set width for each column (e.g., 50%, 33%, 25%). Total must equal 100%.</div>
             <ul id="pf-section-list" style="list-style:none;padding:0;margin:0;max-height:300px;overflow:auto;border:1px solid #e9ecef;border-radius:6px;">
             </ul>
             <button type="button" id="pf-section-add" class="btn btn-sm btn-outline-primary" style="margin-top:10px;">Add Column</button>
@@ -451,6 +451,12 @@ export class ModalHandlers {
       modal.style.display = 'flex';
       const list = modal.querySelector('#pf-section-list');
       list.innerHTML = '';
+      
+      // Remove any existing total display (in case it was left from previous open)
+      const existingTotal = modal.querySelector('#pf-section-total-width');
+      if (existingTotal) {
+        existingTotal.remove();
+      }
       
       // Get current columns from component attributes
       const attrs = comp.getAttributes ? comp.getAttributes() : {};
@@ -488,6 +494,33 @@ export class ModalHandlers {
         return;
       }
       
+      // Function to calculate and display total width
+      const updateTotalWidth = () => {
+        const items = Array.from(list.querySelectorAll('li'));
+        let total = 0;
+        items.forEach(li => {
+          const input = li.querySelector('input');
+          const value = input.value.trim();
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            total += num;
+          }
+        });
+        const totalDisplay = modal.querySelector('#pf-section-total-width');
+        if (totalDisplay) {
+          // Round to 1 decimal for display, but check if it's effectively 100%
+          const roundedTotal = Math.round(total * 10) / 10;
+          totalDisplay.textContent = `Total: ${roundedTotal.toFixed(1)}%`;
+          if (Math.abs(total - 100) < 0.1) {
+            totalDisplay.style.color = '#28a745';
+            totalDisplay.style.fontWeight = '600';
+          } else {
+            totalDisplay.style.color = '#dc3545';
+            totalDisplay.style.fontWeight = '600';
+          }
+        }
+      };
+
       // Populate list
       columns.forEach(col => {
         const li = document.createElement('li');
@@ -503,6 +536,32 @@ export class ModalHandlers {
           <input type="text" value="${(col.width || '50%').replace(/"/g, '&quot;')}" placeholder="Width (e.g., 50%)" style="flex:0 0 120px;border:1px solid #ddd;padding:4px 8px;border-radius:4px;" />
           <button type="button" class="pf-section-delete-btn" style="border:0;background:transparent;color:#dc3545;cursor:pointer;padding:2px 6px;font-size:14px;" title="Delete column">×</button>
         `;
+        // Add input handler to update total
+        const input = li.querySelector('input');
+        input.addEventListener('input', updateTotalWidth);
+        input.addEventListener('blur', () => {
+          // Auto-normalize on blur if total != 100%
+          const items = Array.from(list.querySelectorAll('li'));
+          let total = 0;
+          const values = [];
+          items.forEach(item => {
+            const val = parseFloat(item.querySelector('input').value.trim());
+            if (!isNaN(val)) {
+              total += val;
+              values.push(val);
+            }
+          });
+          if (total > 0 && Math.abs(total - 100) > 0.1) {
+            // Normalize to 100%
+            items.forEach((item, index) => {
+              if (values[index] !== undefined) {
+                const normalized = (values[index] / total) * 100;
+                item.querySelector('input').value = normalized.toFixed(1) + '%';
+              }
+            });
+            updateTotalWidth();
+          }
+        });
         // Add delete handler
         const deleteBtn = li.querySelector('.pf-section-delete-btn');
         deleteBtn.onclick = (e) => {
@@ -510,12 +569,39 @@ export class ModalHandlers {
           e.stopPropagation();
           if (list.children.length > 1) {
             li.remove();
+            updateTotalWidth();
+            // Auto-adjust remaining columns to total 100%
+            const remaining = Array.from(list.querySelectorAll('li'));
+            if (remaining.length > 0) {
+              // Use better rounding to avoid 99.9% issues
+              const baseWidth = Math.floor(100 / remaining.length * 10) / 10;
+              const remainder = Math.round((100 - (baseWidth * remaining.length)) * 10) / 10;
+              remaining.forEach((item, index) => {
+                if (index === 0) {
+                  // First column gets the remainder to make total exactly 100%
+                  item.querySelector('input').value = (baseWidth + remainder).toFixed(1) + '%';
+                } else {
+                  item.querySelector('input').value = baseWidth.toFixed(1) + '%';
+                }
+              });
+              updateTotalWidth();
+            }
           } else {
             alert('You must have at least one column.');
           }
         };
         list.appendChild(li);
       });
+      
+      // Add total width display (only if it doesn't exist)
+      let totalDisplay = modal.querySelector('#pf-section-total-width');
+      if (!totalDisplay) {
+        totalDisplay = document.createElement('div');
+        totalDisplay.id = 'pf-section-total-width';
+        totalDisplay.style.cssText = 'margin-top: 8px; padding: 6px 10px; background: #f8f9fa; border-radius: 4px; font-size: 13px; text-align: center;';
+        list.parentNode.insertBefore(totalDisplay, list.nextSibling);
+      }
+      updateTotalWidth();
       
       // Simple DnD within modal
       let dragEl = null;
@@ -540,6 +626,26 @@ export class ModalHandlers {
         const id = window.SectionComponent && window.SectionComponent.pfGenerateId ? 
                    window.SectionComponent.pfGenerateId('col') : 
                    `col_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+        
+        // Calculate equal width for all columns (including new one)
+        const currentItems = Array.from(list.querySelectorAll('li'));
+        const newTotal = currentItems.length + 1;
+        // Use better rounding to avoid 99.9% issues
+        // Distribute 100% as evenly as possible, with remainder going to first columns
+        const baseWidth = Math.floor(100 / newTotal * 10) / 10; // Round down to 1 decimal
+        const remainder = Math.round((100 - (baseWidth * newTotal)) * 10) / 10; // Round remainder to avoid floating point issues
+        const equalWidth = baseWidth.toFixed(1);
+        
+        // Adjust existing columns to equal width, add remainder to first column
+        currentItems.forEach((item, index) => {
+          if (index === 0) {
+            // First column gets the remainder to make total exactly 100%
+            item.querySelector('input').value = (baseWidth + remainder).toFixed(1) + '%';
+          } else {
+            item.querySelector('input').value = equalWidth + '%';
+          }
+        });
+        
         const li = document.createElement('li');
         li.draggable = true;
         li.dataset.columnId = id;
@@ -548,11 +654,40 @@ export class ModalHandlers {
         li.style.gap = '8px';
         li.style.padding = '8px 10px';
         li.style.borderBottom = '1px solid #f1f3f5';
+        // Calculate the width for the new column (same as others, or with remainder if it's the first)
+        const newColumnWidth = currentItems.length === 0 ? (baseWidth + remainder).toFixed(1) : equalWidth;
+        
         li.innerHTML = `
           <span style="cursor:grab;">☰</span>
-          <input type="text" value="50%" placeholder="Width (e.g., 50%)" style="flex:0 0 120px;border:1px solid #ddd;padding:4px 8px;border-radius:4px;" />
+          <input type="text" value="${newColumnWidth}%" placeholder="Width (e.g., 50%)" style="flex:0 0 120px;border:1px solid #ddd;padding:4px 8px;border-radius:4px;" />
           <button type="button" class="pf-section-delete-btn" style="border:0;background:transparent;color:#dc3545;cursor:pointer;padding:2px 6px;font-size:14px;" title="Delete column">×</button>
         `;
+        // Add input handler to update total
+        const input = li.querySelector('input');
+        input.addEventListener('input', updateTotalWidth);
+        input.addEventListener('blur', () => {
+          // Auto-normalize on blur if total != 100%
+          const items = Array.from(list.querySelectorAll('li'));
+          let total = 0;
+          const values = [];
+          items.forEach(item => {
+            const val = parseFloat(item.querySelector('input').value.trim());
+            if (!isNaN(val)) {
+              total += val;
+              values.push(val);
+            }
+          });
+          if (total > 0 && Math.abs(total - 100) > 0.1) {
+            // Normalize to 100%
+            items.forEach((item, index) => {
+              if (values[index] !== undefined) {
+                const normalized = (values[index] / total) * 100;
+                item.querySelector('input').value = normalized.toFixed(1) + '%';
+              }
+            });
+            updateTotalWidth();
+          }
+        });
         // Add delete handler
         const deleteBtn = li.querySelector('.pf-section-delete-btn');
         deleteBtn.onclick = (e) => {
@@ -560,11 +695,29 @@ export class ModalHandlers {
           e.stopPropagation();
           if (list.children.length > 1) {
             li.remove();
+            updateTotalWidth();
+            // Auto-adjust remaining columns to total 100%
+            const remaining = Array.from(list.querySelectorAll('li'));
+            if (remaining.length > 0) {
+              // Use better rounding to avoid 99.9% issues
+              const baseWidth = Math.floor(100 / remaining.length * 10) / 10;
+              const remainder = Math.round((100 - (baseWidth * remaining.length)) * 10) / 10;
+              remaining.forEach((item, index) => {
+                if (index === 0) {
+                  // First column gets the remainder to make total exactly 100%
+                  item.querySelector('input').value = (baseWidth + remainder).toFixed(1) + '%';
+                } else {
+                  item.querySelector('input').value = baseWidth.toFixed(1) + '%';
+                }
+              });
+              updateTotalWidth();
+            }
           } else {
             alert('You must have at least one column.');
           }
         };
         list.appendChild(li);
+        updateTotalWidth();
       };
       
       // Save handler
@@ -574,6 +727,28 @@ export class ModalHandlers {
           if (items.length === 0) {
             alert('You must have at least one column.');
             return;
+          }
+          
+          // Calculate total width
+          let total = 0;
+          const widths = [];
+          items.forEach(li => {
+            const value = li.querySelector('input').value.trim();
+            const num = parseFloat(value);
+            if (!isNaN(num)) {
+              total += num;
+              widths.push({ li, num });
+            }
+          });
+          
+          // Normalize to 100% if total doesn't equal 100%
+          if (total > 0 && Math.abs(total - 100) > 0.1) {
+            widths.forEach(({ li, num }) => {
+              const normalized = (num / total) * 100;
+              li.querySelector('input').value = normalized.toFixed(1) + '%';
+            });
+            // Recalculate after normalization
+            total = 100;
           }
           
           const newColumns = items.map(li => ({ 

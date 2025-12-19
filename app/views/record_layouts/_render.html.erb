@@ -122,10 +122,42 @@
       // Replace partial placeholders with known server-rendered partials
       var partials = {};
       <% if table_type == 'Pet' %>
-        partials['pets/pet_header'] = <%= raw((j render('pets/pet_header', pet: record, with_id: false))) %>;
+        <% begin %>
+          <% partial_html = render('pets/pet_header', pet: record, with_id: false) %>
+          <% if partial_html.present? %>
+            partials['pets/pet_header'] = <%= raw(partial_html.to_json) %>;
+            console.log('[Runtime] Rendered pet header successfully, length:', partials['pets/pet_header'] ? partials['pets/pet_header'].length : 0);
+          <% else %>
+            console.error('[Runtime] Pet header render returned empty or nil');
+            partials['pets/pet_header'] = '';
+          <% end %>
+        <% rescue => e %>
+          console.error('[Runtime] Error rendering pet header:', <%= raw(e.message.to_json) %>);
+          partials['pets/pet_header'] = '';
+        <% end %>
       <% end %>
+      console.log('[Runtime] Partials object:', partials);
+      console.log('[Runtime] Partials keys:', Object.keys(partials));
+      console.log('[Runtime] Partial value for pets/pet_header:', partials['pets/pet_header']);
+      console.log('[Runtime] Partial value type:', typeof partials['pets/pet_header']);
+      console.log('[Runtime] Looking for elements with [partial-name] attribute');
       document.querySelectorAll('[partial-name]').forEach(function(el){
         var name = el.getAttribute('partial-name');
+        var keys = Object.keys(partials);
+        var firstKey = keys[0];
+        console.log('[Runtime] Found partial element', { 
+          name: name, 
+          nameType: typeof name,
+          nameLength: name ? name.length : 0,
+          nameCharCodes: name ? Array.from(name).map(c => c.charCodeAt(0)) : [],
+          hasPartial: !!partials[name], 
+          partialsKeys: keys,
+          firstKey: firstKey,
+          firstKeyCharCodes: firstKey ? Array.from(firstKey).map(c => c.charCodeAt(0)) : [],
+          keysMatch: name === firstKey,
+          element: el,
+          elementHTML: el.outerHTML.substring(0, 200)
+        });
         if (name && partials[name]) {
           // The partials[name] is already properly escaped by the j() helper
           // Create a temporary element to parse the HTML string
@@ -135,13 +167,17 @@
           const fresh = temp.firstElementChild;
           if (fresh && el.parentNode) {
             // Replace the entire element to remove placeholder classes
+            console.log('[Runtime] Replacing partial element with content', fresh);
             el.parentNode.replaceChild(fresh, el);
           } else {
             // Fallback: if no firstElementChild (shouldn't happen), try setting innerHTML directly
+            console.log('[Runtime] Using fallback: setting innerHTML directly');
             el.innerHTML = partials[name];
             // Remove placeholder classes that might hide content
             el.classList.remove('record-partial-placeholder', 'pf-interactive', 'border', 'rounded', 'p-2', 'mb-2', 'bg-light');
           }
+        } else {
+          console.warn('[Runtime] Partial not found or name missing', { name, partialsKeys: Object.keys(partials) });
         }
       });
       // Fallback: If saved layout lacks partial-name attribute, aggressively replace any header snapshot
