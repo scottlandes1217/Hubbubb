@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
-  
+  # Load route constraint
+  require_relative '../lib/custom_object_route_constraint'
   
   get 'calendar_shares/create'
   get 'calendar_shares/destroy'
@@ -109,6 +110,20 @@ resources :organizations do
   # Unified object fields view
   get 'objects/:object_type/fields', to: 'object_fields#index', as: :organization_object_fields
   
+  # Dynamic routes for custom objects using api_name
+  # This must come after built-in routes to avoid conflicts
+  # Routes like /organizations/1/:api_name (index) and /organizations/1/:api_name/:external_id (show)
+  constraints CustomObjectRouteConstraint.new do
+    get ':api_name', to: 'custom_records#index', as: :custom_object_records_index
+    get ':api_name/new', to: 'custom_records#new', as: :new_custom_object_record
+    post ':api_name', to: 'custom_records#create', as: :custom_object_records
+    get ':api_name/:external_id', to: 'custom_records#show', as: :custom_object_record
+    get ':api_name/:external_id/edit', to: 'custom_records#edit', as: :edit_custom_object_record
+    patch ':api_name/:external_id', to: 'custom_records#update'
+    put ':api_name/:external_id', to: 'custom_records#update'
+    delete ':api_name/:external_id', to: 'custom_records#destroy'
+  end
+  
   # Record Layouts (builder per table)
   resource :record_layout, only: [:update], controller: 'record_layouts' do
     get :builder
@@ -194,4 +209,17 @@ end
   resources :comments do
     resources :comment_reactions, only: [:create, :destroy]
   end
+
+  # Global route for external_id lookup (must be last to act as catch-all)
+  # This allows URLs like hubbubb.com/{external_id} to work
+  get ':external_id', to: 'records#show', as: :record_by_external_id,
+      constraints: lambda { |req| 
+        # Only match if it looks like an external_id (base64-like string)
+        # and doesn't match other known routes
+        path = req.path[1..-1] # Remove leading slash
+        !path.include?('/') && 
+        path.length > 10 && 
+        path.match?(/\A[A-Za-z0-9_-]+\z/) &&
+        !%w[admin feed profile sidekiq cable users].include?(path)
+      }
 end

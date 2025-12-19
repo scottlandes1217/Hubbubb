@@ -91,7 +91,8 @@
               
               <% @organization.custom_objects.in_navigation.active.each do |table| %>
                 <li>
-                                      <%= link_to organization_custom_object_path(@organization, table), class: "dropdown-item d-flex align-items-center py-2 #{current_page?(organization_custom_object_path(@organization, table)) || request.path.match?(/\/organizations\/\d+\/custom_objects\/#{table.id}\//) ? 'active' : ''}" do %>
+                  <% index_path = "/organizations/#{@organization.id}/#{table.api_name}" %>
+                  <%= link_to index_path, class: "dropdown-item d-flex align-items-center py-2 #{current_page?(index_path) || request.path.match?(/\/organizations\/\d+\/#{table.api_name}(\/|$)/) ? 'active' : ''}" do %>
                     <% if table.font_awesome_icon? %>
                       <i class="<%= table.font_awesome_icon %> me-3 text-muted"></i>
                     <% elsif table.uploaded_icon? && table.icon.attached? %>
@@ -99,7 +100,7 @@
                     <% else %>
                       <i class="fas fa-database me-3 text-muted"></i>
                     <% end %>
-                                            <span><%= table.name %></span>
+                    <span><%= table.name %></span>
                   <% end %>
                 </li>
               <% end %>

@@ -1,0 +1,100 @@
+<% content_for :navbar do %>
+  <%= render 'shared/navbar_org' %>
+<% end %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Edit Record in <%= @custom_object.name %></h3>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @custom_record, url: "/organizations/#{@organization.id}/#{@custom_object.api_name}/#{@custom_record.external_id}", method: :patch, local: true do |form| %>
+            <% if @custom_record.errors.any? %>
+              <div class="alert alert-danger">
+                <h5><%= pluralize(@custom_record.errors.count, "error") %> prohibited this record from being saved:</h5>
+                <ul>
+                  <% @custom_record.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label :name, "Record Name", class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", placeholder: "Enter record name..." %>
+              <div class="form-text">A descriptive name for this record</div>
+            </div>
+
+            <% if @custom_fields.any? %>
+              <hr>
+              <h5>Field Values</h5>
+              
+              <% @custom_fields.each do |field| %>
+                <div class="mb-3">
+                  <%= label_tag "field_values[#{field.api_name}]", field.display_name, class: "form-label" %>
+                  <% if field.required? %>
+                    <span class="text-danger">*</span>
+                  <% end %>
+                  
+                  <% current_value = @custom_record.field_value(field.api_name) %>
+                  <% case field.field_type %>
+                  <% when 'text' %>
+                    <%= text_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control", placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% when 'textarea' %>
+                    <%= text_area_tag "field_values[#{field.api_name}]", current_value, class: "form-control", rows: 3, placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% when 'number', 'currency', 'percent' %>
+                    <%= number_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control", step: field.field_type == 'number' ? 'any' : '0.01', placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% when 'date' %>
+                    <%= date_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control" %>
+                  <% when 'datetime' %>
+                    <%= datetime_local_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control" %>
+                  <% when 'email' %>
+                    <%= email_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control", placeholder: "Enter email address..." %>
+                  <% when 'phone' %>
+                    <%= telephone_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control", placeholder: "Enter phone number..." %>
+                  <% when 'url' %>
+                    <%= url_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control", placeholder: "Enter URL..." %>
+                  <% when 'checkbox' %>
+                    <div class="form-check">
+                      <%= check_box_tag "field_values[#{field.api_name}]", "1", current_value.to_s == "true" || current_value.to_s == "1", class: "form-check-input" %>
+                      <%= label_tag "field_values[#{field.api_name}]", "Yes", class: "form-check-label" %>
+                    </div>
+                  <% when 'picklist' %>
+                    <%= select_tag "field_values[#{field.api_name}]", 
+                        options_for_select(field.picklist_values.map { |v| [v, v] }, current_value), 
+                        { prompt: "Select #{field.display_name.downcase}...", class: "form-select" } %>
+                  <% when 'multipicklist' %>
+                    <%= select_tag "field_values[#{field.api_name}]", 
+                        options_for_select(field.picklist_values.map { |v| [v, v] }, current_value.is_a?(Array) ? current_value : [current_value].compact), 
+                        { multiple: true, class: "form-select", size: 4 } %>
+                  <% else %>
+                    <%= text_field_tag "field_values[#{field.api_name}]", current_value, class: "form-control", placeholder: "Enter #{field.display_name.downcase}..." %>
+                  <% end %>
+                  
+                  <% if field.description.present? %>
+                    <div class="form-text"><%= field.description %></div>
+                  <% end %>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No fields have been defined for this table yet. 
+                <%= link_to "Add fields", organization_organization_object_fields_path(@organization, @custom_object.api_name) %> to start collecting data.
+              </div>
+            <% end %>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to "Cancel", custom_object_record_path(@organization, @custom_object, @custom_record), class: "btn btn-secondary" %>
+              <%= form.submit "Update Record", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

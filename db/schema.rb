@@ -210,12 +210,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_15_003131) do
   create_table "custom_records", force: :cascade do |t|
     t.bigint "custom_object_id", null: false
     t.string "name", null: false
-    t.string "external_id"
+    t.string "external_id", null: false
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["custom_object_id", "external_id"], name: "index_custom_records_on_custom_object_id_and_external_id", unique: true
     t.index ["custom_object_id"], name: "index_custom_records_on_custom_object_id"
+    t.index ["external_id"], name: "index_custom_records_on_external_id", unique: true
     t.index ["name"], name: "index_custom_records_on_name"
   end
 

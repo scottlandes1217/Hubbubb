@@ -10,7 +10,7 @@
         <%= link_to "← Back to Object", organization_custom_object_path(@organization, @custom_object) %>
       </p>
     </div>
-            <%= link_to "Add New Record", new_organization_custom_object_custom_record_path(@organization, @custom_object), class: "btn btn-primary" %>
+            <%= link_to "Add New Record", new_custom_object_record_path(@organization, @custom_object), class: "btn btn-primary" %>
   </div>
 
   <% if @custom_records.any? %>
@@ -21,7 +21,6 @@
             <thead>
               <tr>
                 <th>Name</th>
-                <th>ID</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -30,13 +29,7 @@
               <% @custom_records.each do |record| %>
                 <tr>
                   <td>
-                    <strong><%= link_to record.name, organization_custom_object_custom_record_path(@organization, @custom_object, record) %></strong>
-                    <% if record.description.present? %>
-                      <br><small class="text-muted"><%= truncate(record.description, length: 50) %></small>
-                    <% end %>
-                  </td>
-                  <td>
-                    <code><%= record.external_id %></code>
+                    <strong><%= link_to record.name, custom_object_record_path(@organization, @custom_object, record) %></strong>
                   </td>
                   <td>
                     <small class="text-muted">
@@ -45,9 +38,9 @@
                   </td>
                   <td>
                     <div class="btn-group btn-group-sm">
-                                      <%= link_to "View", organization_custom_object_custom_record_path(@organization, @custom_object, record), class: "btn btn-outline-primary" %>
-                <%= link_to "Edit", edit_organization_custom_object_custom_record_path(@organization, @custom_object, record), class: "btn btn-outline-secondary" %>
-                <%= link_to "Delete", organization_custom_object_custom_record_path(@organization, @custom_object, record), 
+                                      <%= link_to "View", custom_object_record_path(@organization, @custom_object, record), class: "btn btn-outline-primary" %>
+                <%= link_to "Edit", edit_custom_object_record_path(@organization, @custom_object, record), class: "btn btn-outline-secondary" %>
+                <%= link_to "Delete", custom_object_record_path(@organization, @custom_object, record), 
                           method: :delete, 
                           data: { confirm: "Are you sure? This action cannot be undone." },
                           class: "btn btn-outline-danger" %>
@@ -67,7 +60,7 @@
       </div>
       <h4 class="text-muted">No Records Yet</h4>
       <p class="text-muted">Start adding records to your custom table.</p>
-              <%= link_to "Add Your First Record", new_organization_custom_object_custom_record_path(@organization, @custom_object), class: "btn btn-primary" %>
+              <%= link_to "Add Your First Record", new_custom_object_record_path(@organization, @custom_object), class: "btn btn-primary" %>
     </div>
   <% end %>
 </div> 

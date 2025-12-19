@@ -24,7 +24,8 @@ class CustomRecordsController < ApplicationController
       # Set field values
       set_field_values
       
-      redirect_to organization_objects_path(@organization), 
+      # Redirect to the index page using api_name
+      redirect_to "/organizations/#{@organization.id}/#{@custom_object.api_name}", 
                   notice: 'Record was successfully created.'
     else
       @custom_fields = @custom_object.custom_fields.active.visible.order(:name)
@@ -41,7 +42,8 @@ class CustomRecordsController < ApplicationController
       # Update field values
       update_field_values
       
-      redirect_to organization_objects_path(@organization), 
+      # Redirect to the show page using api_name and external_id
+      redirect_to "/organizations/#{@organization.id}/#{@custom_object.api_name}/#{@custom_record.external_id}", 
                   notice: 'Record was successfully updated.'
     else
       @custom_fields = @custom_object.custom_fields.active.visible.order(:name)
@@ -51,7 +53,8 @@ class CustomRecordsController < ApplicationController
 
   def destroy
     @custom_record.destroy
-    redirect_to organization_objects_path(@organization), 
+    # Redirect to the index page using api_name
+    redirect_to "/organizations/#{@organization.id}/#{@custom_object.api_name}", 
                 notice: 'Record was successfully deleted.'
   end
 
@@ -62,15 +65,21 @@ class CustomRecordsController < ApplicationController
   end
 
   def set_custom_object
-    @custom_object = @organization.custom_objects.find(params[:custom_object_id])
+    # Support both api_name (new routes) and custom_object_id (old routes)
+    if params[:api_name].present?
+      @custom_object = @organization.custom_objects.find_by!(api_name: params[:api_name])
+    else
+      @custom_object = @organization.custom_objects.find(params[:custom_object_id])
+    end
   end
 
   def set_custom_record
-    @custom_record = @custom_object.custom_records.find(params[:id])
+    # Find by external_id instead of internal id
+    @custom_record = @custom_object.custom_records.find_by!(external_id: params[:external_id] || params[:id])
   end
 
   def custom_record_params
-    params.require(:custom_record).permit(:name, :external_id, :description)
+    params.require(:custom_record).permit(:name)
   end
 
   def set_field_values

@@ -4,9 +4,9 @@ class CustomRecord < ApplicationRecord
   has_many :custom_fields, through: :custom_object
 
   validates :name, presence: true
-  validates :external_id, uniqueness: { scope: :custom_object_id }, allow_nil: true
+  validates :external_id, presence: true, uniqueness: true
 
-  before_create :generate_external_id
+  before_validation :generate_external_id, if: -> { external_id.blank? }
 
   # Dynamic field value accessors
   def field_value(field_api_name)
@@ -48,17 +48,13 @@ class CustomRecord < ApplicationRecord
   def generate_external_id
     return if external_id.present?
     
-    # Generate a unique external ID based on table name and record ID
-    counter = 1
-    base_id = "#{custom_object.api_name}_#{id || 'new'}"
-    generated_id = base_id
-    
-          while self.class.exists?(external_id: generated_id, custom_object_id: custom_object_id)
-      generated_id = "#{base_id}_#{counter}"
-      counter += 1
+    # Generate a web-safe, URL-friendly external ID that's globally unique
+    # Using urlsafe_base64 for web-safe characters (A-Z, a-z, 0-9, -, _)
+    # Length of 12 gives us ~72 bits of entropy (good balance between uniqueness and brevity)
+    loop do
+      self.external_id = SecureRandom.urlsafe_base64(12).tr('=', '').tr('+', '-').tr('/', '_')
+      break unless self.class.exists?(external_id: external_id)
     end
-    
-    self.external_id = generated_id
   end
   
   # Flow triggers

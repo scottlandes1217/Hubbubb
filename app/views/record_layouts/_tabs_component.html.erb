@@ -67,15 +67,13 @@
       comp.addAttributes({ 'tabs-json': JSON.stringify(tabs), 'active-tab-id': tabs[0]?.id || 'tab1' });
     }
     
-    // Skip if structure already exists (check both DOM and component tree)
+    // Skip if structure already exists (use DOM-only check to avoid triggering ensureInList)
+    // ROOT CAUSE FIX: comp.components().find() triggers ensureInList which causes infinite recursion
+    // We only need to check DOM structure - if DOM exists, component tree will be correct
     if (!isUpdating) {
       const hasDomStructure = compEl?.querySelector('.pf-tabs')?.querySelector('.pf-tabs-header')?.querySelector('.pf-tabs-body');
-      const hasComponentStructure = comp.components().find(c => {
-        const el = c.getEl();
-        return el?.classList?.contains('pf-tabs');
-      });
       
-      if (hasDomStructure || hasComponentStructure) {
+      if (hasDomStructure) {
         if (compEl) compEl.__pf_building_tabs = false;
         // Ensure buttons exist even if structure already exists
         const compElForButtons = comp.getEl();
@@ -370,6 +368,12 @@
           'click [data-role="rb-edit-tabs"]': 'onEdit'
         },
         onRender() {
+          // ROOT CAUSE FIX: Check drag flag BEFORE calling buildWorkingTabs
+          // buildWorkingTabs calls comp.components() which triggers ensureInList recursion during drags
+          if (window.__pf_isMovingComponent === true) {
+            return; // Don't rebuild during drags - exit immediately
+          }
+          
           // Call buildWorkingTabs which will create structure and buttons
           buildWorkingTabs(this.model);
         },

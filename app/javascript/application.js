@@ -72,8 +72,8 @@ import "@rails/actiontext"
 import Rails from "@rails/ujs";
 Rails.start();
 
-// Import the record layout builder
-import "./record_layouts/builder";
+// Import the native record layout builder (no GrapesJS)
+import { NativeRecordBuilder } from "./record_layouts/native-builder";
 
 console.log("moveGlobalAlertToBody loaded");
 

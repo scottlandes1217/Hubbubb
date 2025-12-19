@@ -66,7 +66,7 @@
                                   class: 'text-decoration-none' %>
                     <% when 'CustomRecord' %>
                       <%= link_to @flow_job.trigger_record.name, 
-                                  organization_custom_object_custom_record_path(@organization, @flow_job.trigger_record.custom_object, @flow_job.trigger_record),
+                                  custom_object_record_path(@organization, @flow_job.trigger_record.custom_object, @flow_job.trigger_record),
                                   class: 'text-decoration-none' %>
                     <% else %>
                       <%= @flow_job.trigger_record_type %> #<%= @flow_job.trigger_record_id %>

@@ -30,26 +30,41 @@ export class SectionDropPrevention {
     // This prevents ensureInList from calling itself recursively on children
     window.__pf_inEnsureInListChain = false;
     
+    // ROOT CAUSE FIX: Initialize call counters to track active calls
+    // This prevents recursion by only allowing one active call at a time
+    if (window.__pf_ensureInListCallCount === undefined) {
+      window.__pf_ensureInListCallCount = 0;
+    }
+    if (window.__pf_propToParentCallCount === undefined) {
+      window.__pf_propToParentCallCount = 0;
+    }
+    
     // ROOT CAUSE FIX: Patch ensureInList and getList to skip execution during drags
     // This prevents the infinite recursion that happens when ensureInList calls itself on children
     // getList is called by ensureInList, so we need to patch both
     // Use a WeakSet to track components being processed to prevent recursion even if flag isn't set
-    // Use a depth counter to track recursion depth
+    // Use a depth counter to track recursion depth (kept for backward compatibility)
     if (!window.__pf_processingComponents) {
       window.__pf_processingComponents = new WeakSet();
     }
     if (!window.__pf_ensureInListDepth) {
       window.__pf_ensureInListDepth = 0;
     }
-    const MAX_RECURSION_DEPTH = 3; // Maximum depth before we break recursion
     // ROOT CAUSE: ensureInList recursively calls itself on children via forEach
     // The recursion happens very fast, so we need a low threshold to catch it early
     
-    // Safety mechanism: Reset depth if it gets stuck (intermittent errors suggest state accumulation)
+    // Safety mechanism: Reset call counter if it gets stuck (intermittent errors suggest state accumulation)
     setInterval(() => {
-      // If depth is stuck > 0 and we're not dragging, reset it
-      if (window.__pf_ensureInListDepth > 0 && !window.__pf_isMovingComponent) {
-        console.warn('[PF] Resetting stuck ensureInList depth:', window.__pf_ensureInListDepth);
+      // If call counters are stuck > 0 and we're not dragging, reset them
+      if (window.__pf_ensureInListCallCount !== undefined && window.__pf_ensureInListCallCount > 0 && !window.__pf_isMovingComponent) {
+        console.warn('[PF] Resetting stuck ensureInList call counter:', window.__pf_ensureInListCallCount);
+        window.__pf_ensureInListCallCount = 0;
+      }
+      if (window.__pf_propToParentCallCount !== undefined && window.__pf_propToParentCallCount > 0 && !window.__pf_isMovingComponent) {
+        console.warn('[PF] Resetting stuck __propToParent call counter:', window.__pf_propToParentCallCount);
+        window.__pf_propToParentCallCount = 0;
+      }
+      if (window.__pf_ensureInListDepth !== undefined && window.__pf_ensureInListDepth > 0 && !window.__pf_isMovingComponent) {
         window.__pf_ensureInListDepth = 0;
         window.__pf_inEnsureInListChain = false;
         if (window.__pf_processingComponents) {
@@ -73,77 +88,70 @@ export class SectionDropPrevention {
         console.log('[PF] applyPatches: getList patched:', !!Components.Component.prototype.__pf_getListPatched);
         
         // Patch ensureInList
-        // ROOT CAUSE: ensureInList recursively calls itself on children, causing infinite recursion during drags
-        // SOLUTION: Completely disable ensureInList during drags, and prevent recursion with depth check
+        // ROOT CAUSE: ensureInList recursively calls itself on children via forEach, causing infinite recursion
+        // The original function structure is: ensureInList() { this.components().forEach(child => child.ensureInList()) }
+        // SOLUTION: Use a global call counter that increments on entry and decrements on exit
+        // Any call with counter > 1 is a recursive call and should be skipped
         if (!Components.Component.prototype.__pf_ensureInListPatched) {
             const originalEnsureInList = Components.Component.prototype.ensureInList;
+            
+            // Initialize global call counter
+            if (window.__pf_ensureInListCallCount === undefined) {
+              window.__pf_ensureInListCallCount = 0;
+            }
+            
             Components.Component.prototype.ensureInList = function(...args) {
-              // Initialize state if needed
-              if (window.__pf_ensureInListDepth === undefined) {
-                window.__pf_ensureInListDepth = 0;
-              }
-              
               // PRIMARY GUARD: If dragging, completely skip ensureInList
               // This is the most important check - if we're dragging, don't run at all
               if (window.__pf_isMovingComponent === true) {
                 return this; // Skip entirely during drags
               }
               
-              // SECONDARY GUARD: If depth > 0, we're in a recursive call
-              // Return immediately to break the recursion chain
-              if (window.__pf_ensureInListDepth > 0) {
-                return this; // Already recursing - break the chain
+              // Initialize counter if needed
+              if (window.__pf_ensureInListCallCount === undefined) {
+                window.__pf_ensureInListCallCount = 0;
               }
               
-              // TERTIARY GUARD: Check if this component is already being processed
-              if (window.__pf_processingComponents && window.__pf_processingComponents.has(this)) {
-                return this; // Already processing this component
+              // SECONDARY GUARD: If counter > 0, we're already in an ensureInList call
+              // This means any new call is recursive and should be skipped
+              // This is the key to preventing recursion - we only allow ONE active call at a time
+              if (window.__pf_ensureInListCallCount > 0) {
+                return this; // Already processing - this is a recursive call, skip it
               }
               
-              // Set depth to 1 BEFORE calling original
-              // When original calls ensureInList on children, those calls will:
-              // 1. Hit our patched version (because we patched the prototype)
-              // 2. See depth=1 and return immediately (via check above)
-              // 3. This prevents the recursion
-              window.__pf_ensureInListDepth = 1;
-              
-              // Mark as processing
-              if (window.__pf_processingComponents) {
-                window.__pf_processingComponents.add(this);
-              }
+              // Increment counter BEFORE calling original
+              // This ensures that any recursive calls (from children) will see counter > 0 and skip
+              window.__pf_ensureInListCallCount = 1;
               
               try {
-                // Wrap in try-catch to catch recursion errors
-                // Use a timeout to break out of synchronous recursion if needed
+                // Call the original function
+                // When it calls ensureInList on children, those calls will hit this patched version
+                // and see counter = 1, so they'll return early (preventing recursion)
                 const result = originalEnsureInList.apply(this, args);
                 return result;
               } catch(err) {
                 // Catch recursion errors and break the loop
                 if (err && err.message && (err.message.includes('Maximum call stack') || err.message.includes('stack'))) {
                   console.error('[PF] Recursion error in ensureInList - breaking loop');
-                  // Reset everything to break the recursion
-                  window.__pf_ensureInListDepth = 0;
-                  if (window.__pf_processingComponents) {
-                    window.__pf_processingComponents = new WeakSet();
-                  }
+                  // Reset counter to break the recursion completely
+                  window.__pf_ensureInListCallCount = 0;
                   return this; // Return self to break recursion
                 }
                 throw err; // Re-throw other errors
               } finally {
-                // CRITICAL: ALWAYS reset depth in finally
+                // CRITICAL: ALWAYS reset counter in finally
                 // This must happen even if there's an error
-                window.__pf_ensureInListDepth = 0;
-                if (window.__pf_processingComponents) {
-                  try {
-                    window.__pf_processingComponents.delete(this);
-                  } catch(_) {
-                    // Ignore cleanup errors
-                  }
+                // Only reset if we're the outermost call (counter should be 1)
+                if (window.__pf_ensureInListCallCount === 1) {
+                  window.__pf_ensureInListCallCount = 0;
+                } else {
+                  // If counter is not 1, something went wrong - reset anyway
+                  window.__pf_ensureInListCallCount = 0;
                 }
               }
             };
             Components.Component.prototype.__pf_ensureInListPatched = true;
-            console.log('[PF] ensureInList patched successfully');
+            console.log('[PF] ensureInList patched successfully with call counter');
             
             // Verify patch was applied
             if (Components.Component.prototype.ensureInList === originalEnsureInList) {
@@ -159,48 +167,120 @@ export class SectionDropPrevention {
           if (!Components.Component.prototype.__pf_getListPatched) {
             const originalGetList = Components.Component.prototype.getList;
             Components.Component.prototype.getList = function(...args) {
-              // ROOT CAUSE: Skip getList during drags to prevent recursion
+              // PRIMARY GUARD: Skip getList during drags to prevent recursion
               // getList is called by ensureInList, and can trigger more ensureInList calls
-              if (window.__pf_isMovingComponent) {
+              if (window.__pf_isMovingComponent === true) {
                 // Return existing models without triggering ensureInList
+                // Try to access internal _components collection directly if available
                 try {
-                  if (this.components && typeof this.components === 'function') {
-                    const comps = this.components();
-                    if (comps && comps.models) {
-                      return comps.models;
-                    }
+                  // Backbone collections often have a models property
+                  if (this._components && Array.isArray(this._components)) {
+                    return this._components;
+                  }
+                  // Some GrapesJS components store models in components property
+                  if (this.components && Array.isArray(this.components)) {
+                    return this.components;
+                  }
+                  // Last resort: return empty array
+                  return [];
+                } catch(_) {
+                  return [];
+                }
+              }
+              
+              // SECONDARY GUARD: If call counter > 0, we're in a recursive ensureInList call
+              // Return cached models if possible to avoid further recursion
+              if (window.__pf_ensureInListCallCount !== undefined && window.__pf_ensureInListCallCount > 0) {
+                try {
+                  // Try to access internal state directly
+                  if (this._components && Array.isArray(this._components)) {
+                    return this._components;
+                  }
+                  if (this.components && Array.isArray(this.components)) {
+                    return this.components;
                   }
                   return [];
                 } catch(_) {
                   return [];
                 }
               }
+              
               return originalGetList.apply(this, args);
             };
             Components.Component.prototype.__pf_getListPatched = true;
-            console.log('[PF] getList patched successfully');
+            console.log('[PF] getList patched successfully - prevents ensureInList during drags and recursion');
           } else {
             console.log('[PF] getList already patched');
           }
           
-          // ROOT CAUSE FIX: Patch components() method to prevent comp.components('') during drags
-          // comp.components('') triggers ensureInList, which causes recursion
+          // ROOT CAUSE FIX: Patch __propToParent to prevent property propagation recursion during drags
+          // __propToParent propagates properties from child to parent, triggering events that cause recursion
+          // Use a call counter to prevent recursion without completely blocking it
+          if (!Components.Component.prototype.__pf_propToParentPatched) {
+            const originalPropToParent = Components.Component.prototype.__propToParent;
+            if (originalPropToParent && typeof originalPropToParent === 'function') {
+              // Track active __propToParent calls to prevent recursion
+              if (window.__pf_propToParentCallCount === undefined) {
+                window.__pf_propToParentCallCount = 0;
+              }
+              
+              Components.Component.prototype.__propToParent = function(...args) {
+                // PRIMARY GUARD: If dragging, skip property propagation
+                if (window.__pf_isMovingComponent === true) {
+                  return; // Skip entirely during drags
+                }
+                
+                // Initialize counter if needed
+                if (window.__pf_propToParentCallCount === undefined) {
+                  window.__pf_propToParentCallCount = 0;
+                }
+                
+                // SECONDARY GUARD: If counter > 0, we're in a recursive call - skip it
+                if (window.__pf_propToParentCallCount > 0) {
+                  return; // Skip during recursion
+                }
+                
+                // Increment counter before calling original
+                window.__pf_propToParentCallCount = 1;
+                
+                try {
+                  // Call original function
+                  return originalPropToParent.apply(this, args);
+                } finally {
+                  // Always reset counter
+                  window.__pf_propToParentCallCount = 0;
+                }
+              };
+              Components.Component.prototype.__pf_propToParentPatched = true;
+              console.log('[PF] __propToParent patched - prevents property propagation recursion');
+            } else {
+              console.warn('[PF] __propToParent not found on Component prototype');
+            }
+          } else {
+            console.log('[PF] __propToParent already patched');
+          }
+          
+          // ROOT CAUSE FIX: Patch components() method to prevent clearing during drags
+          // Only prevent clearing (components('')) during drags - let normal calls go through
+          // The ensureInList patch will handle preventing recursion
           if (!Components.Component.prototype.__pf_componentsPatched) {
             const originalComponents = Components.Component.prototype.components;
             Components.Component.prototype.components = function(...args) {
-              // If called with empty string during drags, skip it
-              // This prevents ensureInList from being triggered
+              // ONLY prevent clearing components during drags - this is the main recursion trigger
+              // For normal calls (getting components), let them go through - ensureInList patch will handle it
               if (args.length > 0 && (args[0] === '' || args[0] === null || args[0] === undefined)) {
-                if (window.__pf_isMovingComponent) {
+                if (window.__pf_isMovingComponent === true) {
                   // During drags, don't clear components - it triggers ensureInList recursion
                   return this; // Return self instead of clearing
                 }
               }
-              // For all other cases, call original
+              
+              // For all other cases (including getting components), call original
+              // The ensureInList patch will prevent recursion if needed
               return originalComponents.apply(this, args);
             };
             Components.Component.prototype.__pf_componentsPatched = true;
-            console.log('[PF] components() method patched successfully');
+            console.log('[PF] components() method patched - only prevents clearing during drags');
           } else {
             console.log('[PF] components() method already patched');
           }
@@ -261,6 +341,8 @@ export class SectionDropPrevention {
               window.__pf_isMovingComponent = true;
               window.__pf_inEnsureInListChain = false; // Also clear chain flag
               // Reset recursion guards to be safe
+              window.__pf_ensureInListCallCount = 0;
+              window.__pf_propToParentCallCount = 0;
               if (window.__pf_ensureInListDepth !== undefined) {
                 window.__pf_ensureInListDepth = 0;
               }
@@ -304,6 +386,8 @@ export class SectionDropPrevention {
     this.editor.on('component:drag:start', () => {
       // Reset everything immediately
       window.__pf_isMovingComponent = true;
+      window.__pf_ensureInListCallCount = 0;
+      window.__pf_propToParentCallCount = 0;
       window.__pf_ensureInListDepth = 0;
       window.__pf_inEnsureInListChain = false;
       if (window.__pf_processingComponents) {
@@ -317,6 +401,8 @@ export class SectionDropPrevention {
     this.editor.on('component:drag:end', () => {
       // Reset immediately
       window.__pf_isMovingComponent = false;
+      window.__pf_ensureInListCallCount = 0;
+      window.__pf_propToParentCallCount = 0;
       window.__pf_ensureInListDepth = 0;
       window.__pf_inEnsureInListChain = false;
       if (window.__pf_processingComponents) {
@@ -326,6 +412,8 @@ export class SectionDropPrevention {
       // Reset again after a very short delay (catch any queued calls)
       setTimeout(() => {
         window.__pf_isMovingComponent = false;
+        window.__pf_ensureInListCallCount = 0;
+        window.__pf_propToParentCallCount = 0;
         window.__pf_ensureInListDepth = 0;
         window.__pf_inEnsureInListChain = false;
         if (window.__pf_processingComponents) {
@@ -336,6 +424,8 @@ export class SectionDropPrevention {
       // Reset again after a longer delay (catch setTimeout-delayed calls)
       setTimeout(() => {
         window.__pf_isMovingComponent = false;
+        window.__pf_ensureInListCallCount = 0;
+        window.__pf_propToParentCallCount = 0;
         window.__pf_ensureInListDepth = 0;
         window.__pf_inEnsureInListChain = false;
         if (window.__pf_processingComponents) {
@@ -348,9 +438,28 @@ export class SectionDropPrevention {
     // The accept property on columns will handle allowing/disallowing drops
     // We only need to prevent actual drops in canvas:drop handler
     
-    // Skip component:update during drags to prevent rebuilds
+    // Skip component:update during drags to prevent rebuilds and recursion
+    // ROOT CAUSE: component:update events during drags trigger property propagation
+    // which causes __propToParent recursion
     this.editor.on('component:update', (component) => {
-      if (window.__pf_isMovingComponent) {
+      if (window.__pf_isMovingComponent === true) {
+        return; // Skip all updates during drags
+      }
+    });
+    
+    // ROOT CAUSE FIX: Prevent component:add events from triggering during drags
+    // These events can trigger property propagation and cause recursion
+    this.editor.on('component:add', (component) => {
+      if (window.__pf_isMovingComponent === true) {
+        // Don't process component:add during drags - it triggers property propagation
+        return;
+      }
+    });
+    
+    // ROOT CAUSE FIX: Prevent component:remove events from triggering during drags
+    this.editor.on('component:remove', (component) => {
+      if (window.__pf_isMovingComponent === true) {
+        // Don't process component:remove during drags - it triggers property propagation
         return;
       }
     });

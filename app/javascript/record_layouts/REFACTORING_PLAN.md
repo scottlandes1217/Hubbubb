@@ -64,3 +64,4 @@ app/javascript/record_layouts/
 3. Test thoroughly
 4. Repeat for other modules
 
+

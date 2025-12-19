@@ -21,22 +21,8 @@
   </script>
 </div>
 
-<!-- External CSS -->
-<link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.7/dist/css/grapes.min.css">
-<link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css">
+<!-- Builder CSS -->
 <%= stylesheet_link_tag 'record_builder', media: 'all' %>
-
-<!-- Include tabs component partial -->
-<%= render 'tabs_component' %>
-
-<!-- Include section component partial -->
-<%= render 'section_component' %>
-
-       <!-- Builder-specific CSS is now in _record_builder.scss -->
-
-<!-- External JavaScript -->
-<script src="https://unpkg.com/grapesjs@0.21.7/dist/grapes.min.js"></script>
-<script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/index.js"></script>
 
 <!-- Main builder JavaScript is now imported via application.js -->
 

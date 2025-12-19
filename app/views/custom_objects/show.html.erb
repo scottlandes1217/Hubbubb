@@ -29,7 +29,7 @@
     <div class="btn-group">
               <%= link_to "Edit Object", edit_organization_custom_object_path(@organization, @custom_object), class: "btn btn-outline-secondary" %>
               <%= link_to "Add Field", new_organization_custom_object_custom_field_path(@organization, @custom_object), class: "btn btn-primary" %>
-        <%= link_to "Add Record", new_organization_custom_object_custom_record_path(@organization, @custom_object), class: "btn btn-success" %>
+        <%= link_to "Add Record", new_custom_object_record_path(@organization, @custom_object), class: "btn btn-success" %>
     </div>
   </div>
 
@@ -92,13 +92,13 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">Recent Records (<%= @custom_records.count %>)</h5>
-          <%= link_to "View All Records", organization_custom_object_custom_records_path(@organization, @custom_object), class: "btn btn-sm btn-outline-primary" %>
+          <%= link_to "View All Records", custom_object_records_index_path(@organization, @custom_object), class: "btn btn-sm btn-outline-primary" %>
         </div>
         <div class="card-body">
           <% if @custom_records.any? %>
             <div class="list-group list-group-flush">
               <% @custom_records.limit(5).each do |record| %>
-                <%= link_to organization_custom_object_custom_record_path(@organization, @custom_object, record), class: "list-group-item list-group-item-action" do %>
+                <%= link_to custom_object_record_path(@organization, @custom_object, record), class: "list-group-item list-group-item-action" do %>
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <h6 class="mb-1"><%= record.name %></h6>
@@ -119,7 +119,7 @@
             
             <% if @custom_records.count > 5 %>
               <div class="text-center mt-3">
-                <%= link_to "View all #{@custom_records.count} records", organization_custom_object_custom_records_path(@organization, @custom_object), class: "btn btn-sm btn-outline-secondary" %>
+                <%= link_to "View all #{@custom_records.count} records", custom_object_records_index_path(@organization, @custom_object), class: "btn btn-sm btn-outline-secondary" %>
               </div>
             <% end %>
           <% else %>
