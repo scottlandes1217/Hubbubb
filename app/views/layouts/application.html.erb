@@ -11,6 +11,9 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <!-- Preload Bootstrap JS for faster dropdown initialization -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" as="script">
 
     <!-- Preload logo for faster rendering (high priority) -->
     <%= preload_link_tag asset_path("hubbub-logo-large.png"), as: :image, fetchpriority: "high" %>
@@ -50,8 +53,73 @@
     <!-- Import Maps for JavaScript (defer loading) -->
     <%= javascript_importmap_tags %>
 
-    <!-- Bootstrap JavaScript (via CDN) - defer to not block rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <!-- Bootstrap JavaScript (via CDN) - async for faster loading -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" async></script>
+    <script>
+      // Aggressively initialize dropdowns - check multiple times until Bootstrap is ready
+      function initializeDropdowns() {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+          // Bootstrap is ready, initialize all dropdowns
+          document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function(element) {
+            if (!bootstrap.Dropdown.getInstance(element)) {
+              try {
+                new bootstrap.Dropdown(element);
+              } catch(e) {
+                // Already initialized or error, ignore
+              }
+            }
+          });
+          return true; // Bootstrap is ready
+        }
+        return false; // Bootstrap not ready yet
+      }
+      
+      // Try to initialize immediately
+      if (!initializeDropdowns()) {
+        // Bootstrap not ready, poll until it is (max 20 attempts = ~2 seconds)
+        let attempts = 0;
+        const maxAttempts = 20;
+        const pollInterval = setInterval(function() {
+          attempts++;
+          if (initializeDropdowns() || attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+          }
+        }, 100);
+      }
+      
+      // Also try on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          if (!initializeDropdowns()) {
+            // If still not ready, poll a few more times
+            let attempts = 0;
+            const maxAttempts = 10;
+            const pollInterval = setInterval(function() {
+              attempts++;
+              if (initializeDropdowns() || attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+              }
+            }, 50);
+          }
+        });
+      }
+      
+      // Re-initialize on Turbo navigations (critical for SPA behavior)
+      document.addEventListener('turbo:load', function() {
+        // Try immediately
+        if (!initializeDropdowns()) {
+          // Poll until ready (faster polling on navigation)
+          let attempts = 0;
+          const maxAttempts = 15;
+          const pollInterval = setInterval(function() {
+            attempts++;
+            if (initializeDropdowns() || attempts >= maxAttempts) {
+              clearInterval(pollInterval);
+            }
+          }, 50);
+        }
+      });
+    </script>
 
     <%= yield :head if content_for?(:head) %>
   </head>

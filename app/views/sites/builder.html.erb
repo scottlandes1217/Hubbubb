@@ -1,15 +1,69 @@
 <% content_for :navbar do %>
   <%= render 'shared/navbar_org' %>
 <% end %>
+
 <div class="builder-container">
-  <div class="builder-body p-0">
-          <div id="site-pages-sidebar">
-        <button id="toggle-pages-sidebar" style="background: none; border: none; color: #fff; font-size: 1.2rem; padding: 8px 8px 0 8px; align-self: flex-end; cursor: pointer;">«</button>
-        <div style="font-weight:bold; font-size:1.1rem; padding:0 16px 12px 16px;">Site Pages</div>
-        <ul id="site-pages-list" style="list-style:none; padding:0 16px; margin:0;"></ul>
-        <button id="add-site-page" style="margin:16px 16px 0 16px; background:#007bff; color:#fff; border:none; border-radius:4px; padding:8px 0; font-size:1rem;">+ Add Page</button>
+  <!-- Top Menu Bar -->
+  <div class="builder-top-menu bg-dark text-white p-2">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <h5 class="mb-0 text-white"><%= @site.name %></h5>
+        <span class="badge bg-secondary" id="site-status">Draft</span>
       </div>
-    <div id="gjs">
+      <div class="btn-group" role="group">
+        <%= link_to organization_site_path(@organization, @site), class: 'btn btn-sm btn-outline-light' do %>
+          <i class="fas fa-arrow-left me-1"></i> Back
+        <% end %>
+        <button type="button" class="btn btn-sm btn-outline-light" id="preview-site">
+          <i class="fas fa-eye me-1"></i> Preview
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-light" id="publish-site">
+          <i class="fas fa-globe me-1"></i> Publish
+        </button>
+        <button type="button" class="btn btn-sm btn-primary" id="save-site">
+          <i class="fas fa-save me-1"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="builder-body p-0">
+    <!-- Left Sidebar with Tabs -->
+    <div id="site-builder-sidebar">
+      <!-- Tab Buttons -->
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-tab="pages">
+          <i class="fas fa-file-alt me-1"></i> Pages
+        </button>
+        <button class="sidebar-tab" data-tab="components">
+          <i class="fas fa-cube me-1"></i> Components
+        </button>
+      </div>
+      
+      <!-- Pages Tab Content -->
+      <div class="sidebar-tab-content active" id="pages-tab">
+        <div class="sidebar-header">
+          <h6 class="mb-0">Site Pages</h6>
+        </div>
+        <ul id="site-pages-list" class="sidebar-list"></ul>
+        <div class="sidebar-footer">
+          <button id="add-site-page" class="btn btn-sm btn-primary w-100">
+            <i class="fas fa-plus me-1"></i> Add Page
+          </button>
+        </div>
+      </div>
+      
+      <!-- Components Tab Content -->
+      <div class="sidebar-tab-content" id="components-tab">
+        <div class="sidebar-header">
+          <h6 class="mb-0">Components</h6>
+        </div>
+        <div id="block-palette-content" class="sidebar-list"></div>
+      </div>
+    </div>
+    
+    <!-- Main Canvas -->
+    <div id="site-builder-canvas">
       <div style="text-align: center; padding: 20px; color: #666;">
         Loading site builder...
       </div>
@@ -17,852 +71,245 @@
   </div>
 </div>
 
-<!-- GrapeJS CSS -->
-<link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.7/dist/css/grapes.min.css">
-<link rel="stylesheet" href="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css">
-
-<script src="https://unpkg.com/grapesjs@0.21.7/dist/grapes.min.js"></script>
-<script src="https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/index.js"></script>
-
-<script type="application/json" id="org-tables-fields">
-<%= {
-  pets: Pet.attribute_names - ["id", "created_at", "updated_at", "organization_id"],
-  tasks: Task.attribute_names - ["id", "created_at", "updated_at", "pet_id"]
-  # Add more tables as needed
-}.to_json.html_safe %>
-</script>
-
 <script type="application/json" id="org-fields-metadata">
 <%= site_builder_field_metadata_json %>
 </script>
 
-<script>
-function destroyGrapesJSEditor() {
-  if (window.gjsEditorInstance) {
-    try {
-      window.gjsEditorInstance.destroy();
-      window.gjsEditorInstance = null;
-      window.gjsEditorInitialized = false;
-      console.log('Destroyed previous GrapeJS instance');
-    } catch (e) {
-      console.warn('Error destroying previous GrapeJS instance:', e);
-    }
+<% if @site.site_data.present? && @site.site_data['pages_json'].present? %>
+<script type="application/json" id="saved-pages-data">
+<%= @site.site_data['pages_json'].to_json.html_safe %>
+</script>
+<% end %>
+
+<script type="module">
+// Import and initialize the native site builder
+import { initNativeSiteBuilder } from '<%= asset_path('sites/native-site-builder.js') %>';
+
+// Set up menu buttons
+document.addEventListener('DOMContentLoaded', () => {
+  const saveBtn = document.getElementById('save-site');
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      if (window.siteBuilderInstance) {
+        window.siteBuilderInstance.save();
+      }
+    };
   }
-}
-
-function initGrapesJSBuilder() {
-  // Retry until grapesjs is available and the container exists
-  function maybeInit() {
-    if (window.gjsEditorInitialized) return;
-    const container = document.getElementById('gjs');
-    if (!container) return;
-    if (!window.grapesjs) {
-      setTimeout(maybeInit, 100);
-      return;
-    }
-    window.gjsEditorInitialized = true;
-    try {
-      const orgId = <%= @organization.id %>;
-      const editor = grapesjs.init({
-        container: '#gjs',
-        height: '100%',
-        width: 'auto',
-        storageManager: false,
-        plugins: ['grapesjs-preset-webpage'],
-        pluginsOpts: { 'grapesjs-preset-webpage': {} },
-        assetManager: {
-          upload: `/organizations/${orgId}/organization_assets`,
-          uploadName: 'file',
-          assets: [],
-          autoAdd: true,
-          multiUpload: false,
-        },
-        canvas: {
-          styles: [
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
-            'https://unpkg.com/grapesjs-preset-webpage@1.0.3/dist/grapesjs-preset-webpage.min.css'
-          ]
-        }
-      });
-      window.gjsEditorInstance = editor;
-
-      // Remove unwanted default blocks
-      editor.BlockManager.remove('link-block');
-      editor.BlockManager.remove('quote');
-
-      // Add a custom Photo block that uses the Asset Manager
-      editor.BlockManager.add('photo-upload', {
-        label: 'Photo',
-        category: 'Basic',
-        media: '<i class="fa fa-image"></i>',
-        content: { type: 'image' }
-      });
-
-      // Type-to-icon mapping
-      const typeIcons = {
-        text: '<i class="fa fa-font"></i>',
-        number: '<i class="fa fa-hashtag"></i>',
-        picklist: '<i class="fa fa-list"></i>',
-        multiselect: '<i class="fa fa-tasks"></i>',
-        date: '<i class="fa fa-calendar"></i>',
-        checkbox: '<i class="fa fa-check-square"></i>',
-        textarea: '<i class="fa fa-align-left"></i>'
-      };
-
-      // Use the org-fields-metadata JSON for block generation
-      const fieldsMeta = JSON.parse(document.getElementById('org-fields-metadata').textContent);
-      Object.entries(fieldsMeta).forEach(([category, fields]) => {
-        const categoryLabel = category.replace('_fields', ' Fields').replace(/\b\w/g, l => l.toUpperCase());
-        fields.forEach(field => {
-          let content = '';
-          let icon = typeIcons[field.type] || '<i class="fa fa-question"></i>';
-          // Generate correct field HTML
-          switch (field.type) {
-            case 'text':
-              content = `<label>${field.label}<input type="text" name="${category}[${field.name}]" class="form-control"/></label>`;
-              break;
-            case 'number':
-              content = `<label>${field.label}<input type="number" name="${category}[${field.name}]" class="form-control"/></label>`;
-              break;
-            case 'picklist':
-              content = `<label>${field.label}<select name="${category}[${field.name}]" class="form-control">${(field.options||[]).map(opt => `<option value='${opt}'>${opt}</option>`).join('')}</select></label>`;
-              break;
-            case 'multiselect':
-              content = `<label>${field.label}<select name="${category}[${field.name}][]" class="form-control" multiple>${(field.options||[]).map(opt => `<option value='${opt}'>${opt}</option>`).join('')}</select></label>`;
-              break;
-            case 'date':
-              content = `<label>${field.label}<input type="date" name="${category}[${field.name}]" class="form-control"/></label>`;
-              break;
-            case 'checkbox':
-              content = `<label><input type="checkbox" name="${category}[${field.name}]"/> ${field.label}</label>`;
-              break;
-            case 'textarea':
-              content = `<label>${field.label}<textarea name="${category}[${field.name}]" class="form-control"></textarea></label>`;
-              break;
-            default:
-              content = `<label>${field.label}<input type="text" name="${category}[${field.name}]" class="form-control"/></label>`;
-          }
-          editor.BlockManager.add(`${category}-${field.name}`, {
-            label: field.label,
-            category: categoryLabel,
-            media: icon,
-            content: content
-          });
-        });
-      });
-
-      // --- Multi-Page Site Logic ---
-      let pages = [
-        { id: 'page-1', name: 'Page 1' }
-      ];
-      let currentPageId = pages[0].id;
-      
-      // Track if we're currently moving components to prevent infinite loops
-      let isMovingComponents = false;
-      let isPageSwitching = false;
-
-      // After pages and currentPageId are set, and after editor is initialized
-      <% if @site.site_data.present? && @site.site_data['pages_json'].present? %>
-        const loadedPages = <%= @site.site_data['pages_json'].to_json.html_safe %>;
-        console.log('Loading saved pages data:', loadedPages);
-        if (loadedPages && loadedPages.length > 0) {
-          pages = loadedPages;
-          loadedPages.forEach(page => {
-            console.log('Restoring page:', page.id, page.name, 'HTML length:', page.html ? page.html.length : 0);
-            ensurePageWrapper(page.id, page.name, page.html);
-          });
-          currentPageId = pages[0].id;
-          // Add a small delay to ensure wrappers are registered before showing the page
-          setTimeout(() => {
-            showPage(currentPageId);
-          }, 100);
-        } else {
-          pages = [{ id: 'page-1', name: 'Page 1' }];
-          ensurePageWrapper(pages[0].id, pages[0].name, '');
-          currentPageId = pages[0].id;
-          showPage(currentPageId);
-        }
-      <% else %>
-        console.log('No saved pages data found, starting with default page');
-        pages = [{ id: 'page-1', name: 'Page 1' }];
-        ensurePageWrapper(pages[0].id, pages[0].name, '');
-        currentPageId = pages[0].id;
-        showPage(currentPageId);
-      <% end %>
-      renderPagesSidebar();
-
-      // Helper to create a wrapper for a page if not present
-      function ensurePageWrapper(pageId, pageName, html) {
-        console.log('ensurePageWrapper called for:', pageId, 'with HTML length:', html ? html.length : 0);
-        let wrapper = editor.DomComponents.getWrapper().find(`#${pageId}`)[0];
-        if (!wrapper) {
-          console.log('Creating new wrapper for page:', pageId);
-          const displayStyle = (pageId === currentPageId) ? 'block' : 'none';
-          wrapper = editor.addComponents({
-            tagName: 'div',
-            attributes: { id: pageId, 'data-page': pageName },
-            components: [],
-            style: { minHeight: '400px', display: displayStyle }
-          })[0];
-          
-          console.log('Created wrapper with ID:', wrapper.getId(), 'and attributes:', wrapper.getAttributes());
-          
-          // If we have HTML content, parse it and add to the wrapper
-          if (html && html.trim()) {
-            try {
-              console.log('Parsing HTML for page:', pageId, 'HTML length:', html.length);
-              console.log('HTML content:', html.substring(0, 200) + '...');
-              // Create a temporary wrapper to parse the HTML
-              const tempWrapper = editor.addComponents({
-                tagName: 'div',
-                components: html
-              })[0];
-              
-              console.log('Temp wrapper created with', tempWrapper.components().length, 'components');
-              
-              // Move all components from temp wrapper to our page wrapper
-              const tempComponents = tempWrapper.components().slice();
-              tempComponents.forEach(component => {
-                wrapper.append(component);
-              });
-              
-              // Remove the temporary wrapper
-              tempWrapper.remove();
-              
-              console.log('Created wrapper for page:', pageId, 'with HTML content, components:', wrapper.components().length);
-            } catch (error) {
-              console.error('Error parsing HTML for page:', pageId, error);
-            }
-          } else {
-            console.log('Created empty wrapper for page:', pageId, 'components:', wrapper.components().length);
-          }
-        } else {
-          console.log('Found existing wrapper for page:', pageId, 'components:', wrapper.components().length);
-        }
-        return wrapper;
-      }
-
-      // Show only the selected page
-      function showPage(pageId) {
-        console.log('showPage called with:', pageId, 'currentPageId was:', currentPageId);
-        isPageSwitching = true;
-        console.log('isPageSwitching set to true');
-        currentPageId = pageId;
-        console.log('Processing', pages.length, 'pages');
-        
-        // Show/hide wrappers based on current page
-        pages.forEach(page => {
-          try {
-            const wrapper = editor.DomComponents.getWrapper().find(`#${page.id}`)[0];
-            if (wrapper) {
-              if (page.id === pageId) {
-                wrapper.setStyle({ ...wrapper.getStyle(), display: 'block' });
-                // Make this wrapper the only valid drop target
-                wrapper.set('droppable', true);
-                console.log('Showing page:', page.id, 'with display: block');
-              } else {
-                wrapper.setStyle({ ...wrapper.getStyle(), display: 'none' });
-                // Disable drops on hidden wrappers
-                wrapper.set('droppable', false);
-                console.log('Hiding page:', page.id);
-              }
-            }
-          } catch (error) {
-            console.log('Error accessing wrapper for page:', page.id, error);
-          }
-        });
-        
-        // Configure drop targets - only allow drops on the current page wrapper
-        if (editor.DomComponents) {
-          const rootWrapper = editor.DomComponents.getWrapper();
-          
-          // First, disable drops on all page wrappers
-          pages.forEach(page => {
-            const wrapper = rootWrapper.find(`#${page.id}`)[0];
-            if (wrapper) {
-              wrapper.set('droppable', false);
-            }
-          });
-          
-          // Then enable drops only on the current page wrapper
-          const currentWrapper = rootWrapper.find(`#${pageId}`)[0];
-          if (currentWrapper) {
-            currentWrapper.set('droppable', true);
-            console.log('Set droppable true for page:', pageId);
-          }
-        }
-        
-        // Reset the page switching flag after a delay
-        setTimeout(() => {
-          isPageSwitching = false;
-          console.log('isPageSwitching reset to false');
-        }, 200);
-        
-        // Open the blocks panel and set the active button when switching pages
-        setTimeout(() => {
-          const blocksBtn = document.querySelector('.gjs-pn-btn[title="Open Blocks"]');
-          // Only click if not already active
-          if (blocksBtn && !blocksBtn.classList.contains('gjs-pn-active')) {
-            blocksBtn.click();
-          } else if (!blocksBtn) {
-            editor.Commands.run('open-blocks');
-          }
-        }, 100);
-      }
-
-      // Render sidebar pages list
-      function renderPagesSidebar() {
-        console.log('renderPagesSidebar called, currentPageId:', currentPageId);
-        const list = document.getElementById('site-pages-list');
-        list.innerHTML = '';
-        pages.forEach((page, idx) => {
-          const li = document.createElement('li');
-          li.style.marginBottom = '8px';
-          li.style.cursor = 'pointer';
-          li.style.background = page.id === currentPageId ? '#007bff' : '#23272b';
-          li.style.color = page.id === currentPageId ? '#fff' : '#ccc';
-          li.style.padding = '8px 12px';
-          li.style.borderRadius = '4px';
-          // Page name span
-          const nameSpan = document.createElement('span');
-          nameSpan.textContent = page.name;
-          nameSpan.style.marginRight = '8px';
-          li.appendChild(nameSpan);
-          
-          // Make the entire list item clickable
-          li.onclick = () => {
-            console.log('Sidebar clicked for page:', page.id);
-            showPage(page.id);
-            renderPagesSidebar();
-          };
-          // Edit icon or checkmark
-          if (page._editing) {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = page.name;
-            input.style.width = '80px';
-            input.style.marginRight = '8px';
-            input.onblur = save;
-            input.onkeydown = (ev) => {
-              if (ev.key === 'Enter') {
-                save();
-              }
-            };
-            function save() {
-              page.name = input.value.trim() || page.name;
-              page._editing = false;
-              renderPagesSidebar();
-            }
-            li.replaceChild(input, nameSpan);
-            // Checkmark icon
-            const checkIcon = document.createElement('span');
-            checkIcon.innerHTML = '✔️';
-            checkIcon.style.marginLeft = '4px';
-            checkIcon.style.cursor = 'pointer';
-            checkIcon.title = 'Save page name';
-            checkIcon.onclick = (e) => {
-              e.stopPropagation();
-              save();
-            };
-            li.appendChild(checkIcon);
-            input.focus();
-          } else {
-            // Solid black pencil SVG
-            const editIcon = document.createElement('span');
-            editIcon.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" fill="black" xmlns="http://www.w3.org/2000/svg"><path d="M14.69 2.86a2.1 2.1 0 0 1 2.97 2.97l-1.13 1.13-2.97-2.97 1.13-1.13zm-2.12 2.12l2.97 2.97-8.49 8.49c-.18.18-.4.31-.65.36l-3.18.64a.5.5 0 0 1-.59-.59l.64-3.18c.05-.25.18-.47.36-.65l8.49-8.49z"/></svg>';
-            editIcon.style.marginLeft = '4px';
-            editIcon.style.cursor = 'pointer';
-            editIcon.title = 'Rename page';
-            editIcon.onclick = (e) => {
-              e.stopPropagation();
-              page._editing = true;
-              renderPagesSidebar();
-            };
-            li.appendChild(editIcon);
-          }
-          // Remove button
-          if (pages.length > 1) {
-            const removeBtn = document.createElement('span');
-            removeBtn.textContent = ' ×';
-            removeBtn.style.color = '#dc3545';
-            removeBtn.style.marginLeft = '8px';
-            removeBtn.style.cursor = 'pointer';
-            removeBtn.onclick = (e) => {
-              e.stopPropagation();
-              showGlobalConfirm('Are you sure you want to delete this page?', () => {
-                removePage(page.id);
-              });
-            };
-            li.appendChild(removeBtn);
-          }
-          list.appendChild(li);
-        });
-      }
-
-      // Add page
-      function addPage() {
-        console.log('addPage called');
-        const newId = `page-${Date.now()}`;
-        const newName = `Page ${pages.length + 1}`;
-        pages.push({ id: newId, name: newName });
-        const wrapper = ensurePageWrapper(newId, newName, '');
-        showPage(newId);
-        renderPagesSidebar();
-        // Ensure the new wrapper is visible and droppable
-        setTimeout(() => {
-          if (wrapper) {
-            wrapper.setStyle({ ...wrapper.getStyle(), display: '' });
-            wrapper.set('droppable', true);
-            if (window.gjsEditorInstance) {
-              window.gjsEditorInstance.select(wrapper);
-              console.log('Explicitly selected new wrapper:', newId);
-            }
-          }
-        }, 0);
-      }
-
-      // Remove page
-      function removePage(pageId) {
-        if (pages.length === 1) return;
-        const idx = pages.findIndex(p => p.id === pageId);
-        if (idx !== -1) {
-          // Remove wrapper/component
-          const wrapper = editor.DomComponents.getWrapper().find(`#${pageId}`)[0];
-          if (wrapper) wrapper.remove();
-          pages.splice(idx, 1);
-          // Show previous or first page
-          const nextPage = pages[idx - 1] || pages[0];
-          showPage(nextPage.id);
-          renderPagesSidebar();
-        }
-      }
-
-      // Add page button handler
-      document.getElementById('add-site-page').onclick = addPage;
-
-      // Track if a block is being dragged
-      let isDraggingBlock = false;
-      
-      // Handle block drag start
-      editor.on('block:drag:start', (block) => {
-        console.log('block:drag:start triggered');
-        isDraggingBlock = true;
-        
-        // Store current components to compare later
-        if (editor.DomComponents) {
-          const rootWrapper = editor.DomComponents.getWrapper();
-          componentsBeforeDrop = rootWrapper.components().slice();
-        }
-      });
-      
-      // Handle block drops to ensure they go to the current page
-      editor.on('canvas:drop', (event) => {
-        console.log('canvas:drop triggered');
-        
-        // Use a timeout to let GrapeJS finish adding the component
-        setTimeout(() => {
-          const currentWrapper = editor.DomComponents.getWrapper().find(`#${currentPageId}`)[0];
-          if (!currentWrapper) return;
-          
-          // Find any components that were just added to the root wrapper
-          const rootWrapper = editor.DomComponents.getWrapper();
-          const rootComponents = rootWrapper.components();
-          
-          // Find new components by comparing with components before drop
-          const newComponents = rootComponents.filter(component => 
-            !componentsBeforeDrop.includes(component) && 
-            component.parent() === rootWrapper && 
-            component !== currentWrapper
-          );
-          
-          // Move only the new components to the current page wrapper
-          newComponents.forEach(component => {
-            try {
-              isMovingComponents = true;
-              currentWrapper.append(component);
-              console.log('Moved new block to current page wrapper:', currentPageId, 'component:', component.get('tagName'));
-            } catch (error) {
-              console.error('Error moving component:', error);
-            }
-          });
-          
-          // Reset the flag after a delay
-          if (newComponents.length > 0) {
-            setTimeout(() => {
-              isMovingComponents = false;
-            }, 50);
-          } else {
-            isMovingComponents = false;
-          }
-        }, 100);
-      });
-
-      // Block type for custom button
-      editor.DomComponents.addType('site-button', {
-        model: {
-          defaults: {
-            tagName: 'button',
-            attributes: { class: 'btn btn-primary', type: 'button' },
-            traits: [
-              {
-                type: 'text',
-                label: 'Label',
-                name: 'button-label',
-                changeProp: 1
-              },
-              {
-                type: 'select',
-                label: 'Action',
-                name: 'button-action',
-                options: [
-                  { value: 'submit', name: 'Submit Site' },
-                  { value: 'navigate', name: 'Navigate to URL' }
-                ],
-                changeProp: 1
-              },
-              {
-                type: 'text',
-                label: 'URL',
-                name: 'button-url',
-                placeholder: 'https://...',
-                changeProp: 1,
-                condition: { 'button-action': 'navigate' }
-              }
-            ],
-            'button-label': 'Submit',
-            'button-action': 'submit',
-            'button-url': ''
-          },
-          init() {
-            this.on('change:button-label', this.handleLabelChange);
-            this.on('change:button-action', this.handleActionChange);
-            this.on('change:button-url', this.handleUrlChange);
-          },
-          handleLabelChange() {
-            this.set('content', this.get('button-label'));
-          },
-          handleActionChange() {
-            if (this.get('button-action') === 'navigate') {
-              this.addAttributes({ type: 'button' });
-            } else {
-              this.addAttributes({ type: 'submit' });
-            }
-          },
-          handleUrlChange() {
-            // No-op for now, handled on click
-          }
-        },
-        view: {
-          events: {
-            click: 'handleClick'
-          },
-          handleClick(e) {
-            const model = this.model;
-            const action = model.get('button-action');
-            if (action === 'navigate') {
-              const url = model.get('button-url');
-              if (url) window.location.href = url;
-            } else if (action === 'submit') {
-              // Find the parent site and submit it
-              let el = this.el;
-              while (el && el.tagName !== 'FORM') el = el.parentElement;
-              if (el) el.submit();
-            }
-          }
-        }
-      });
-
-      // Configure Asset Manager for org-specific assets
-      // Fetch and load org assets
-      fetch(`/organizations/${orgId}/organization_assets.json`)
-        .then(res => res.ok ? res.json() : [])
-        .then(urls => {
-          urls.forEach(url => editor.AssetManager.add(url));
-        })
-        .catch(() => {});
-
-      // Set min-height on the canvas iframe and its body
-      const setCanvasMinHeight = () => {
-        const iframe = editor.Canvas.getFrameEl();
-        if (iframe) {
-          iframe.style.minHeight = '600px';
-          iframe.style.height = '100%';
-          if (iframe.contentDocument && iframe.contentDocument.body) {
-            iframe.contentDocument.body.style.minHeight = '600px';
-            iframe.contentDocument.body.style.height = '100%';
-            iframe.contentDocument.body.style.overflow = 'hidden'; // Prevent scrolling
-          }
-        }
-      };
-      setCanvasMinHeight();
-      // Use MutationObserver to keep min-height if GrapeJS changes it
-      const iframe = editor.Canvas.getFrameEl();
-      if (iframe && iframe.contentDocument) {
-        const observer = new MutationObserver(setCanvasMinHeight);
-        observer.observe(iframe.contentDocument.body, { attributes: true, childList: true, subtree: true });
-      }
-      editor.Commands.run('open-blocks');
-
-      // Collapse all categories except 'Basic' on load (after all blocks are added)
-      setTimeout(() => {
-        if (editor.BlockManager && typeof editor.BlockManager.getCategories === 'function') {
-          const cats = editor.BlockManager.getCategories();
-          if (cats && cats.forEach) {
-            cats.forEach(cat => {
-              if (cat.get('id') !== 'Basic') {
-                cat.set('open', false);
-              }
-            });
-          }
-        }
-      }, 0);
-
-      // Add Save, Back, and Pages buttons to the options panel
-      editor.Panels.addButton('options', [
-        {
-          id: 'save-site',
-          className: 'fa fa-save gjs-custom-btn',
-          label: '',
-          command: 'save-site',
-          attributes: { title: 'Save Site', style: 'font-weight: bold; padding: 0 8px;' }
-        },
-        {
-          id: 'back-to-site',
-          className: 'fa fa-arrow-left gjs-custom-btn',
-          label: '',
-          command: 'back-to-site',
-          attributes: { title: 'Back to Sites', style: 'font-weight: bold; padding: 0 8px;' }
-        },
-        {
-          id: 'toggle-pages-sidebar-btn',
-          className: 'fa fa-list gjs-custom-btn',
-          label: '',
-          command: 'toggle-pages-sidebar',
-          attributes: { title: 'Toggle Pages Sidebar', style: 'font-weight: bold; padding: 0 8px;' }
-        }
-      ]);
-
-      function getPagesData() {
-        const pagesData = pages.map(page => {
-          const wrapper = editor.DomComponents.getWrapper().find(`#${page.id}`)[0];
-          let html = '';
-          if (wrapper) {
-            // Only get the content inside the wrapper, not the wrapper itself
-            const components = wrapper.components();
-            console.log(`Page ${page.id} has ${components.length} components before filtering`);
-            
-            // Filter out placeholders and only get real user content
-            const realComponents = components.filter(comp => {
-              const classes = comp.get('classes');
-              const isPlaceholder = classes && classes.includes('page-placeholder');
-              return !isPlaceholder;
-            });
-            
-            console.log(`Page ${page.id} has ${realComponents.length} real components`);
-            
-            if (realComponents.length > 0) {
-              html = realComponents.map(comp => comp.toHTML()).join('');
-            }
-          }
-          console.log(`Saving page ${page.id}:`, page.name, 'HTML length:', html.length);
-          return {
-            id: page.id,
-            name: page.name,
-            html: html
-          };
-        });
-        console.log('Saving pages data:', pagesData);
-        return pagesData;
-      }
-
-      // --- Global Alert Helpers ---
-      function showGlobalSuccess(message) {
-        if (typeof window.showGlobalSuccess === 'function') {
-          window.showGlobalSuccess(message);
-        } else {
-          // fallback: create a simple alert div
-          const alertDiv = document.createElement('div');
-          alertDiv.className = 'global-top-alert alert alert-success';
-          alertDiv.textContent = message;
-          document.body.appendChild(alertDiv);
-          setTimeout(() => alertDiv.remove(), 3000);
-        }
-      }
-      function showGlobalError(message) {
-        if (typeof window.showGlobalError === 'function') {
-          window.showGlobalError(message);
-        } else {
-          const alertDiv = document.createElement('div');
-          alertDiv.className = 'global-top-alert alert alert-danger';
-          alertDiv.textContent = message;
-          document.body.appendChild(alertDiv);
-          setTimeout(() => alertDiv.remove(), 3000);
-        }
-      }
-      function showGlobalConfirm(message, onConfirm) {
-        // Simple custom confirm dialog
-        const overlay = document.createElement('div');
-        overlay.className = 'global-alert-overlay';
-        overlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:3000;background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;';
-        const box = document.createElement('div');
-        box.className = 'global-top-alert alert alert-warning';
-        box.style = 'min-width:320px;max-width:420px;padding:1.5rem 2rem;text-align:center;box-shadow:0 2px 16px rgba(0,0,0,0.08);background:#fff;';
-        box.innerHTML = `<div style="font-size:1.1rem;margin-bottom:1rem;">${message}</div>` +
-          '<button class="btn btn-danger me-2">Yes</button><button class="btn btn-secondary">No</button>';
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
-        box.querySelector('.btn-danger').onclick = () => { overlay.remove(); onConfirm(); };
-        box.querySelector('.btn-secondary').onclick = () => { overlay.remove(); };
-      }
-
-      // --- Commands ---
-      editor.Commands.add('save-site', {
-        run(editor, sender) {
-          console.log('save-site command triggered');
-          if (sender && typeof sender.set === 'function') {
-            sender.set('active', 0);
-          }
-          const pagesData = getPagesData();
-          const css = editor.getCss();
-          const js = editor.getJs();
-          fetch('<%= organization_site_path(@organization, @site, format: :json) %>', {
-            method: 'PATCH',
-            headers: {
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-              site: {
-                site_data: {
-                  pages_json: pagesData,
-                  css: css,
-                  js: js
-                }
-              }
-            })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showGlobalSuccess('Site saved successfully!');
-            } else {
-              showGlobalError('Error saving site: ' + data.errors);
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            showGlobalError('Error saving site');
-          });
-        }
-      });
-
-      editor.Commands.add('back-to-site', {
-        run(editor, sender) {
-          window.location.href = '<%= organization_site_path(@organization, @site) %>';
-        }
-      });
-
-      editor.Commands.add('toggle-pages-sidebar', {
-        run(editor, sender) {
-          document.body.classList.toggle('sidebar-collapsed');
-          const toggleBtn = document.getElementById('toggle-pages-sidebar');
-          if (toggleBtn) {
-            toggleBtn.textContent = document.body.classList.contains('sidebar-collapsed') ? '»' : '«';
-          }
-        }
-      });
-
-      // Add debug log to panel button registration
-      console.log('Registering Save, Back, and Pages buttons');
-      editor.Panels.addButton('options', [
-        {
-          id: 'save-site',
-          className: 'fa fa-save gjs-custom-btn',
-          label: '',
-          command: 'save-site',
-          attributes: { title: 'Save Site', style: 'font-weight: bold; padding: 0 8px;' }
-        },
-        {
-          id: 'back-to-site',
-          className: 'fa fa-arrow-left gjs-custom-btn',
-          label: '',
-          command: 'back-to-site',
-          attributes: { title: 'Back to Sites', style: 'font-weight: bold; padding: 0 8px;' }
-        },
-        {
-          id: 'toggle-pages-sidebar-btn',
-          className: 'fa fa-list gjs-custom-btn',
-          label: '',
-          command: 'toggle-pages-sidebar',
-          attributes: { title: 'Toggle Pages Sidebar', style: 'font-weight: bold; padding: 0 8px;' }
-        }
-      ]);
-
-    } catch (error) {
-      console.error('Error initializing GrapeJS:', error);
-      document.getElementById('gjs').innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error loading site builder: ' + error.message + '</div>';
-    }
+  
+  const previewBtn = document.getElementById('preview-site');
+  if (previewBtn) {
+    previewBtn.onclick = () => {
+      // TODO: Implement preview functionality
+      alert('Preview functionality coming soon!');
+    };
   }
-  maybeInit();
-}
-
-document.addEventListener('turbo:before-cache', function() {
-  destroyGrapesJSEditor();
-});
-document.addEventListener('turbo:load', function() {
-  destroyGrapesJSEditor();
-  initGrapesJSBuilder();
-});
-document.addEventListener('DOMContentLoaded', function() {
-  destroyGrapesJSEditor();
-  initGrapesJSBuilder();
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-  var toggleBtn = document.getElementById('toggle-pages-sidebar');
-  if (toggleBtn) {
-    toggleBtn.onclick = function() {
-      document.body.classList.toggle('sidebar-collapsed');
-      toggleBtn.textContent = document.body.classList.contains('sidebar-collapsed') ? '»' : '«';
+  
+  const publishBtn = document.getElementById('publish-site');
+  if (publishBtn) {
+    publishBtn.onclick = () => {
+      // TODO: Implement publish functionality
+      if (confirm('Are you sure you want to publish this site? It will be visible to users.')) {
+        alert('Publish functionality coming soon!');
+      }
     };
   }
 });
+
+// Legacy cleanup functions (kept for backwards compatibility, but no longer needed)
 </script>
 
 <style>
-  .sidebar-collapsed #site-pages-sidebar {
-    left: -180px;
+  .builder-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 87px);
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    margin-top: 87px; /* Account for fixed navbar */
+    width: 100%;
   }
-  .sidebar-collapsed .builder-body {
-    margin-left: 0 !important;
+  
+  .builder-top-menu {
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
   }
+  
   .builder-body {
-    height: calc(100vh - 92px);
+    flex: 1;
     overflow: hidden;
     display: flex;
+    height: calc(100vh - 87px - 60px);
+    margin: 0;
+    padding: 0;
   }
-  #site-pages-sidebar {
-    height: 100%;
+  
+  #site-builder-sidebar {
+    width: 280px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 0;
+    padding: 0;
+  }
+  
+  .sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1a252f;
+  }
+  
+  .sidebar-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #bdc3c7;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    border-bottom: 2px solid transparent;
+  }
+  
+  .sidebar-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+  }
+  
+  .sidebar-tab.active {
+    color: white;
+    background: #2c3e50;
+    border-bottom-color: #007bff;
+  }
+  
+  .sidebar-tab-content {
+    display: none;
+    flex: 1;
     overflow-y: auto;
+    flex-direction: column;
   }
-  #gjs {
-    height: 100%;
-    min-height: 0;
-    flex: 1 1 0;
-    overflow: auto;
+  
+  .sidebar-tab-content.active {
+    display: flex;
   }
-  .gjs-custom-btn {
-    color: #fff !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 8px !important;
-    margin: 0 2px !important;
-    border-radius: 3px !important;
-    transition: background-color 0.2s !important;
+  
+  .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #34495e;
   }
-  .gjs-custom-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
+  
+  .sidebar-header h6 {
+    color: white;
+    font-weight: 600;
+  }
+  
+  .sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    padding: 8px;
+    margin: 0;
+  }
+  
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: #34495e;
+  }
+  
+  #site-pages-list li {
+    margin-bottom: 8px;
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  
+  #site-pages-list li:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  #site-builder-canvas {
+    flex: 1;
+    overflow-y: auto;
+    background: #f8f9fa;
+    padding: 20px;
+    min-height: 100%;
+  }
+  
+  .block-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 6px;
+    background: #34495e;
+    border-radius: 4px;
+    cursor: move;
+    transition: background 0.2s;
+    user-select: none;
+  }
+  
+  .block-item:hover {
+    background: #3d566e;
+  }
+  
+  .block-item i {
+    width: 20px;
+    text-align: center;
+  }
+  
+  .block-category {
+    margin-bottom: 16px;
+  }
+  
+  .block-category-title {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #95a5a6;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+  }
+  
+  .site-builder-canvas.dragover {
+    background: #e3f2fd !important;
+  }
+  
+  .site-component {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  
+  .site-component:hover {
+    outline: 2px dashed #007bff;
+  }
+  
+  .delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    font-size: 16px;
+    line-height: 1;
+    transition: background 0.2s;
+  }
+  
+  .delete-btn:hover {
+    background: rgba(220, 53, 69, 1);
   }
 </style>
-

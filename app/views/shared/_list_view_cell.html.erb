@@ -1,0 +1,56 @@
+<%# 
+  Renders a cell for a specific column in the list view
+  Required locals:
+    - record: The record instance
+    - column: Hash with :api_name, :display_name, :type
+    - organization: Organization instance
+    - object_type: String
+    - object_id: Integer (optional)
+    - record_path_proc: Proc (takes a record and returns its show path)
+-%>
+<% record_path_proc ||= ->(r) { "#" } %>
+
+<% case column[:type] %>
+<% when 'image' %>
+  <% if record.respond_to?(:photo) && record.photo.attached? %>
+    <%= link_to image_tag(record.photo, class: "img-thumbnail", size: "50x50"), record_path_proc.call(record) %>
+  <% else %>
+    <span class="text-muted">No image</span>
+  <% end %>
+<% when 'association' %>
+  <% if column[:api_name] == 'pet' && record.respond_to?(:pet) %>
+    <% if record.pet.present? %>
+      <%= link_to record.pet.name, organization_pet_path(organization, record.pet), class: "list-view-name-link" %>
+    <% else %>
+      <span class="list-view-text-muted">Organization Task</span>
+    <% end %>
+  <% end %>
+<% when 'datetime' %>
+  <% value = record.send(column[:api_name]) if record.respond_to?(column[:api_name]) %>
+  <%= value&.strftime("%B %d, %Y %H:%M") || "N/A" %>
+<% when 'string', 'text' %>
+  <% value = record.send(column[:api_name]) if record.respond_to?(column[:api_name]) %>
+  <% if column[:api_name] == 'name' %>
+    <%= link_to (value || "-"), record_path_proc.call(record), class: "list-view-name-link" %>
+  <% else %>
+    <span class="list-view-text"><%= value || "-" %></span>
+  <% end %>
+<% when 'integer' %>
+  <% value = record.send(column[:api_name]) if record.respond_to?(column[:api_name]) %>
+  <%= value || "-" %>
+<% else %>
+  <%# For custom fields or unknown types, try to get the value %>
+  <% if record.respond_to?(column[:api_name]) %>
+    <% value = record.send(column[:api_name]) %>
+    <% if column[:api_name] == 'breed' && value.is_a?(Array) %>
+      <%= value.map(&:titleize).join(", ") %>
+    <% else %>
+      <%= value || "-" %>
+    <% end %>
+  <% elsif object_type == 'CustomObject' && record.respond_to?(:field_value) %>
+    <%= record.field_value(column[:api_name]) || "-" %>
+  <% else %>
+    -
+  <% end %>
+<% end %>
+

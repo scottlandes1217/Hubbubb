@@ -106,10 +106,10 @@
             delBtn.onclick = (e) => {
               e.preventDefault();
               e.stopPropagation();
-              const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-              const view = editor?.Components?.getView(comp);
-              if (view?.onDelete) view.onDelete(e);
-              else comp.remove();
+              // Native builder handles deletion through its own system
+              if (comp && typeof comp.remove === 'function') {
+                comp.remove();
+              }
             };
             compElForButtons.insertBefore(delBtn, compElForButtons.firstChild);
           }
@@ -197,10 +197,10 @@
         delBtn.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
-          const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-          const view = editor?.Components?.getView(comp);
-          if (view?.onDelete) view.onDelete(e);
-          else comp.remove();
+          // Native builder handles deletion through its own system
+          if (comp && typeof comp.remove === 'function') {
+            comp.remove();
+          }
         };
         compElForButtons.insertBefore(delBtn, compElForButtons.firstChild);
       }
@@ -411,7 +411,7 @@
 // Runtime tabs functionality - ONLY runs on rendered pages, not in builder
 (function() {
   function initTabs() {
-    const isBuilder = (window.parent !== window && window.parent.grapesjs) || document.getElementById('gjs') || window.location.pathname.includes('/record_layouts/builder');
+    const isBuilder = document.getElementById('record-builder-canvas') || window.location.pathname.includes('/record_layouts/builder');
     if (isBuilder) return;
     document.querySelectorAll('.pf-tabs-container').forEach(container => {
       if (container.__pf_tabs_initialized) return;

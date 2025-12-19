@@ -1,0 +1,159 @@
+<%# 
+  Shared list view component
+  Required locals:
+    - organization: Organization instance
+    - object_type: String (e.g., 'Pet', 'Task', 'CustomObject')
+    - object_id: Integer (optional, for custom objects)
+    - records: ActiveRecord::Relation (the records to display)
+    - new_record_path: String (path to create new record)
+    - record_path_proc: Proc (takes a record and returns its show path)
+    - columns: Array of column definitions
+    - current_view: ListView instance (optional)
+    - custom_actions: Proc (optional, takes a record and returns HTML for custom actions)
+-%>
+<% record_path_proc ||= ->(r) { "#" } %>
+
+<div data-controller="list-view" 
+     data-list-view-object-type-value="<%= object_type %>"
+     data-list-view-object-id-value="<%= object_id %>"
+     data-list-view-organization-id-value="<%= organization.id %>"
+     class="list-view-container">
+  
+  <!-- Header Section -->
+  <div class="list-view-header">
+    <div class="list-view-title-section">
+      <h1 class="list-view-title" data-action="click->list-view#showViewSelector">
+        <%= current_view&.name || "All #{object_type.pluralize}" %>
+        <i class="fas fa-chevron-down"></i>
+      </h1>
+      
+      <!-- View Selector Dropdown (hidden by default) -->
+      <div data-list-view-target="viewSelector" class="list-view-selector" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="input-group">
+              <input type="text" 
+                     data-list-view-target="viewSearch" 
+                     data-action="input->list-view#filterViews"
+                     placeholder="Search views..." 
+                     class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="card-body">
+            <div data-list-view-target="viewList" class="list-group list-group-flush">
+              <!-- Views will be loaded here via AJAX -->
+            </div>
+          </div>
+          <div class="card-footer">
+            <%= link_to "Create New View", 
+                new_organization_list_view_path(organization, object_type: object_type, object_id: object_id),
+                class: "btn btn-sm btn-primary w-100" %>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="list-view-actions">
+      <% if current_view.present? %>
+        <%= link_to "Edit View", 
+            edit_organization_list_view_path(organization, current_view),
+            class: "btn btn-outline-secondary btn-sm" %>
+      <% end %>
+      <%= link_to "Create New #{object_type.singularize}", new_record_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <!-- Search form -->
+  <div class="list-view-search">
+    <%= form_with url: request.path, method: :get, local: true, data: { list_view_target: "searchForm" } do %>
+      <div class="input-group">
+        <%= text_field_tag :query, params[:query], 
+            placeholder: "Search #{object_type.pluralize.downcase}...", 
+            class: "form-control",
+            data: { list_view_target: "searchInput" } %>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-search me-1"></i>Search
+        </button>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Filters (if current view has filters) -->
+  <% if current_view&.filters&.any? %>
+    <div class="list-view-filters">
+      <div class="filter-badges">
+        <strong><i class="fas fa-filter me-1"></i>Active Filters:</strong>
+        <% current_view.filters.each do |filter| %>
+          <span class="badge bg-primary">
+            <%= filter['field'] %> <%= filter['operator'] %> <%= filter['value'] %>
+          </span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Records Table -->
+  <div id="<%= object_type.downcase.pluralize %>" class="list-view-table-container">
+    <% if records.any? %>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <% columns.each do |column| %>
+                <th>
+                  <%= column[:display_name] || column[:api_name] %>
+                  <% if current_view&.sort_by == column[:api_name] %>
+                    <i class="fas fa-sort-<%= current_view.sort_direction == 'desc' ? 'down' : 'up' %>"></i>
+                  <% end %>
+                </th>
+              <% end %>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% records.each do |record| %>
+              <tr>
+                <% columns.each do |column| %>
+                  <td>
+                    <%= render partial: 'shared/list_view_cell', 
+                               locals: { 
+                                 record: record, 
+                                 column: column,
+                                 organization: organization,
+                                 object_type: object_type,
+                                 object_id: object_id,
+                                 record_path_proc: record_path_proc
+                               } %>
+                  </td>
+                <% end %>
+                <td>
+                  <div class="btn-group" role="group">
+                    <%= link_to "View", record_path_proc.call(record), class: "btn btn-primary btn-sm" %>
+                    <% if defined?(custom_actions) && custom_actions.present? %>
+                      <%= custom_actions.call(record) %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <% if records.respond_to?(:current_page) %>
+        <div class="list-view-pagination">
+          <%= paginate records %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="list-view-empty">
+        <i class="fas fa-inbox"></i>
+        <h4>No <%= object_type.pluralize.downcase %> found</h4>
+        <p>Try adjusting your filters or create a new <%= object_type.singularize.downcase %>.</p>
+        <%= link_to "Create New #{object_type.singularize}", new_record_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+

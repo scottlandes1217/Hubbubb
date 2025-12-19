@@ -12,6 +12,7 @@ class Organization < ApplicationRecord
     has_many :flows, dependent: :destroy
     has_many :flow_jobs, dependent: :destroy
     has_many :tasks, dependent: :destroy
+    has_many :list_views, dependent: :destroy
   
     validates :name, :street_address, :city, :state, :zip, :country, presence: true
     validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }

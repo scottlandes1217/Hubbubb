@@ -5,6 +5,7 @@
 @import "components/buttons";
 @import "components/tabbed_navigation";
 @import "components/search_bar";
+@import "components/list_view";
 @import "views/pets";
 @import "views/posts";
 @import "views/profile";
@@ -18,11 +19,26 @@
 
 .main-content {
   margin: 87px 0px 0px 0px;
+  padding-top: 1.5rem;
 }
 
-.main-nav-dropdown {
-  inset: -2px auto auto -10px !important;
+// Exclude builder pages from extra top spacing
+.builder-container,
+.builder-body,
+.flow-builder-container {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
+
+// Remove padding-top if main-content contains a builder
+.main-content:has(.builder-container),
+.main-content:has(.builder-body),
+.main-content:has(.flow-builder-container) {
+  padding-top: 0;
+}
+
+// Main nav dropdown positioning now handled in _navbar.scss
+// Removing conflicting rule to allow proper positioning
 
 .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
   max-width: 100% !important;

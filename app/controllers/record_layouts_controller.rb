@@ -5,7 +5,7 @@ class RecordLayoutsController < ApplicationController
   before_action :set_layout, only: [:builder, :update]
 
   def builder
-    # Renders GrapesJS-based builder for a record page layout
+    # Renders native builder for a record page layout
   end
 
   def update

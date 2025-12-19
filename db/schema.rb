@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_15_003131) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_19_082249) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -333,6 +333,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_15_003131) do
     t.index ["status"], name: "index_flows_on_status"
   end
 
+  create_table "list_views", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "organization_id", null: false
+    t.string "object_type", null: false
+    t.integer "object_id"
+    t.bigint "user_id"
+    t.jsonb "filters", default: {}
+    t.jsonb "columns", default: []
+    t.string "sort_by"
+    t.string "sort_direction", default: "asc"
+    t.boolean "is_default", default: false
+    t.boolean "is_public", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "is_default"], name: "index_list_views_on_organization_id_and_is_default"
+    t.index ["organization_id", "object_type", "object_id"], name: "idx_on_organization_id_object_type_object_id_e883b794dd"
+    t.index ["organization_id"], name: "index_list_views_on_organization_id"
+    t.index ["user_id", "object_type", "object_id"], name: "index_list_views_on_user_id_and_object_type_and_object_id"
+    t.index ["user_id"], name: "index_list_views_on_user_id"
+  end
+
   create_table "organization_assets", force: :cascade do |t|
     t.bigint "organization_id", null: false
     t.datetime "created_at", null: false
@@ -616,6 +637,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_15_003131) do
   add_foreign_key "flow_executions", "users"
   add_foreign_key "flow_jobs", "organizations"
   add_foreign_key "flows", "organizations"
+  add_foreign_key "list_views", "organizations"
+  add_foreign_key "list_views", "users"
   add_foreign_key "organization_assets", "organizations"
   add_foreign_key "organization_users", "organizations"
   add_foreign_key "organization_users", "users"

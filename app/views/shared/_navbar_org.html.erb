@@ -1,5 +1,5 @@
 <%# --- FLEXBOX HEADER LAYOUT: 3 columns, 2 center rows --- %>
-<div class="org-header-flex" style="position:fixed; top:0; width:100%; z-index:10; background:#222222; display:flex; align-items:stretch; min-height:87px;">
+<div class="org-header-flex" style="position:fixed; top:0; width:100%; z-index:10; display:flex; align-items:stretch; min-height:87px;">
   <!-- LEFT COLUMN: Org name/logo -->
   <div class="org-header-left d-flex align-items-center justify-content-start px-3" style="flex:0 0 auto;">
     <% if @organization.present? %>
@@ -25,9 +25,21 @@
       <div class="navbar-nav align-items-center my-0 py-0">
         <div class="nav-item dropdown d-flex align-items-center" id="mainNavDropdownWrapper">
           <%# Determine current section and icon %>
-          <% current_section = nil; current_icon = nil; current_path = nil %>
+          <% current_section = nil; current_icon = nil; current_path = nil; current_icon_html = nil %>
           <% if @organization.present? %>
-            <% if current_page?(organization_path(@organization)) %>
+            <%# Check for custom object pages first %>
+            <% if defined?(@custom_object) && @custom_object.present? %>
+              <% current_section = @custom_object.name %>
+              <% current_path = "/organizations/#{@organization.id}/#{@custom_object.api_name}" %>
+              <% if @custom_object.font_awesome_icon? %>
+                <% current_icon_html = content_tag(:i, '', class: "#{@custom_object.font_awesome_icon}") %>
+              <% elsif @custom_object.uploaded_icon? && @custom_object.icon.attached? %>
+                <% current_icon_html = image_tag(url_for(@custom_object.icon), alt: @custom_object.name, style: "max-width: 20px; max-height: 20px;") %>
+              <% else %>
+                <% current_icon = 'fas fa-database' %>
+                <% current_icon_html = content_tag(:i, '', class: current_icon) %>
+              <% end %>
+            <% elsif current_page?(organization_path(@organization)) %>
               <% current_section = 'Home'; current_icon = 'fas fa-home'; current_path = organization_path(@organization) %>
             <% elsif current_page?(organization_pets_path(@organization)) || (request.path.match?(/\/organizations\/\d+\/pets\/\d+/) && !request.path.match?(/\/pets\/\d+\/(edit|new)/)) %>
               <% current_section = 'Pets'; current_icon = 'fas fa-paw'; current_path = organization_pets_path(@organization) %>
@@ -51,7 +63,11 @@
 
           <%# Icon+name link to section index %>
           <%= link_to current_path, class: "main-nav-link d-flex align-items-center px-2 py-1", style: "text-decoration:none; color:#fff; font-size:1.15rem;" do %>
-            <i class="<%= current_icon %> me-2"></i>
+            <% if current_icon_html.present? %>
+              <span class="me-2" style="display: inline-flex; align-items: center;"><%= current_icon_html %></span>
+            <% elsif current_icon.present? %>
+              <i class="<%= current_icon %> me-2"></i>
+            <% end %>
             <span><%= current_section %></span>
           <% end %>
 

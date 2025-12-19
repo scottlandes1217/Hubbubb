@@ -1,0 +1,40 @@
+<div class="filter-row mb-2">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <select name="list_view[filters][<%= index %>][field]" class="form-select form-select-sm" required>
+        <option value="">Select Field</option>
+        <% available_columns.each do |column| %>
+          <option value="<%= column[:api_name] %>" <%= 'selected' if filter['field'] == column[:api_name] %>>
+            <%= column[:display_name] %>
+          </option>
+        <% end %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="list_view[filters][<%= index %>][operator]" class="form-select form-select-sm" required>
+        <option value="equals" <%= 'selected' if filter['operator'] == 'equals' %>>Equals</option>
+        <option value="not_equals" <%= 'selected' if filter['operator'] == 'not_equals' %>>Not Equals</option>
+        <option value="contains" <%= 'selected' if filter['operator'] == 'contains' %>>Contains</option>
+        <option value="not_contains" <%= 'selected' if filter['operator'] == 'not_contains' %>>Not Contains</option>
+        <option value="starts_with" <%= 'selected' if filter['operator'] == 'starts_with' %>>Starts With</option>
+        <option value="greater_than" <%= 'selected' if filter['operator'] == 'greater_than' %>>Greater Than</option>
+        <option value="less_than" <%= 'selected' if filter['operator'] == 'less_than' %>>Less Than</option>
+        <option value="is_null" <%= 'selected' if filter['operator'] == 'is_null' %>>Is Null</option>
+        <option value="is_not_null" <%= 'selected' if filter['operator'] == 'is_not_null' %>>Is Not Null</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <input type="text" 
+             name="list_view[filters][<%= index %>][value]" 
+             class="form-control form-control-sm" 
+             placeholder="Value"
+             value="<%= filter['value'] %>">
+    </div>
+    <div class="col-md-1">
+      <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.filter-row').remove()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+</div>
+

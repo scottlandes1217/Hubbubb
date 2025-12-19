@@ -4,7 +4,38 @@ class CustomRecordsController < ApplicationController
   before_action :set_custom_record, only: [:show, :edit, :update, :destroy]
 
   def index
-    @custom_records = @custom_object.custom_records.includes(:custom_field_values).order(:name)
+    # Get or create default list view
+    @current_view = if params[:view_id].present?
+      @organization.list_views.find_by(id: params[:view_id])
+    else
+      @organization.list_views.for_object_type('CustomObject', @custom_object.id).default_view.first ||
+      @organization.list_views.for_object_type('CustomObject', @custom_object.id).public_or_user(current_user).first
+    end
+    
+    # Start with base query
+    @custom_records = @custom_object.custom_records.includes(:custom_field_values)
+    
+    # Apply list view filters if present
+    if @current_view.present?
+      @custom_records = @current_view.apply_filters(@custom_records)
+      @custom_records = @current_view.apply_sorting(@custom_records)
+    else
+      @custom_records = @custom_records.order(:name)
+    end
+    
+    @custom_records = @custom_records.page(params[:page]).per(20)
+    
+    # Define columns for the list view
+    @columns = if @current_view&.columns&.any?
+      # Use columns from the view
+      available_columns = ListView.available_columns_for('CustomObject', @organization, @custom_object.id)
+      available_columns.select { |col| @current_view.columns.include?(col[:api_name]) }
+    else
+      # Default columns
+      ListView.available_columns_for('CustomObject', @organization, @custom_object.id).select { |col| 
+        ['name', 'created_at'].include?(col[:api_name])
+      }
+    end
   end
 
   def show

@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  organization: one
+  object_type: MyString
+  object_id: 1
+  user: one
+  filters: 
+  columns: 
+  sort_by: MyString
+  sort_direction: MyString
+  is_default: false
+  is_public: false
+
+two:
+  name: MyString
+  organization: two
+  object_type: MyString
+  object_id: 1
+  user: two
+  filters: 
+  columns: 
+  sort_by: MyString
+  sort_direction: MyString
+  is_default: false
+  is_public: false

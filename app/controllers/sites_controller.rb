@@ -48,7 +48,7 @@ class SitesController < ApplicationController
   end
 
   def builder
-    # This will render the GrapeJS form builder
+    # This will render the native site builder
   end
 
   def display

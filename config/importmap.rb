@@ -7,4 +7,3 @@ pin "@popperjs/core", to: "https://ga.jspm.io/npm:@popperjs/core@2.11.8/lib/inde
 pin "trix", to: "https://unpkg.com/trix@2.0.0/dist/trix.esm.js"
 pin "@rails/actiontext", to: "actiontext.esm.js"
 pin "@rails/ujs", to: "@rails--ujs.js" # @7.1.3
-pin "record_layouts/builder", to: "record_layouts/builder.js"

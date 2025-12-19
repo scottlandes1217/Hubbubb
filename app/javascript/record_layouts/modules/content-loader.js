@@ -396,28 +396,14 @@ export class ContentLoader {
                         e.preventDefault();
                         e.stopPropagation();
                         try {
-                          // tab is the model, so try to get the view from the editor
-                          const editor = window.recordLayoutBuilderInstance?.editor;
-                          if (editor) {
-                            // Get the view from the component manager
-                            const view = editor.Components.getView(tab);
-                            if (view && typeof view.onDelete === 'function') {
-                              view.onDelete(e);
-                            } else if (tab && typeof tab.remove === 'function') {
-                              tab.remove();
-                            } else {
-                              console.warn('[PF] Could not remove tabs component - view.onDelete not available (manual)', { tab, view });
-                            }
+                          // Native builder handles deletion through its own system
+                          if (tab && typeof tab.remove === 'function') {
+                            tab.remove();
                           } else {
-                            // Fallback: try direct remove
-                            if (tab && typeof tab.remove === 'function') {
-                              tab.remove();
-                            } else {
-                              console.warn('[PF] No editor and no remove method (manual)', { tab });
-                            }
+                            console.warn('[PF] Could not remove tabs component - no remove method available', { tab });
                           }
                         } catch (err) {
-                          console.error('[PF] Error removing tabs component (manual):', err);
+                          console.error('[PF] Error removing tabs component:', err);
                         }
                       };
                       deleteBtn.addEventListener('click', deleteHandler);
@@ -436,25 +422,11 @@ export class ContentLoader {
                         e.preventDefault();
                         e.stopPropagation();
                         try {
-                          // tab is the model, so try to get the view from the editor
-                          const editor = window.recordLayoutBuilderInstance?.editor;
-                          if (editor) {
-                            // Get the view from the component manager
-                            const view = editor.Components.getView(tab);
-                            if (view && typeof view.onDelete === 'function') {
-                              view.onDelete(e);
-                            } else if (tab && typeof tab.remove === 'function') {
-                              tab.remove();
-                            } else {
-                              console.warn('[PF] Could not remove - no remove method', { tab, view });
-                            }
+                          // Native builder handles deletion through its own system
+                          if (tab && typeof tab.remove === 'function') {
+                            tab.remove();
                           } else {
-                            // Fallback: try direct remove
-                            if (tab && typeof tab.remove === 'function') {
-                              tab.remove();
-                            } else {
-                              console.warn('[PF] No editor and no remove method', { tab });
-                            }
+                            console.warn('[PF] Could not remove tabs component - no remove method available', { tab });
                           }
                         } catch (err) {
                           console.error('[PF] Error removing tabs component (existing):', err);
@@ -494,16 +466,11 @@ export class ContentLoader {
                       e.preventDefault();
                       e.stopPropagation();
                       try {
-                        const editor = window.recordLayoutBuilderInstance?.editor;
-                        if (editor) {
-                          const view = editor.Components.getView(tab);
-                          if (view && typeof view.onDelete === 'function') {
-                            view.onDelete(e);
-                          } else if (tab && typeof tab.remove === 'function') {
-                            tab.remove();
-                          }
-                        } else if (tab && typeof tab.remove === 'function') {
+                        // Native builder handles deletion through its own system
+                        if (tab && typeof tab.remove === 'function') {
                           tab.remove();
+                        } else {
+                          console.warn('[PF] Could not remove tabs component - no remove method available', { tab });
                         }
                       } catch (err) {
                         console.error('[PF] Error removing tabs component (final pass):', err);

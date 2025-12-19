@@ -1,4 +1,4 @@
-/* Site Builder (GrapeJS) custom styles */
+/* Site Builder custom styles */
 .builder-body {
   margin-left: 180px;
   transition: margin-left 0.2s;
@@ -55,7 +55,7 @@
 html, body {
   overflow-x: hidden;
 }
-/* Make GrapeJS blocks panel a vertical list (single column in all categories, white text, no blank column) */
+/* Make blocks panel a vertical list (single column in all categories, white text, no blank column) */
 #gjs .gjs-blocks-cs {
   display: flex !important;
   flex-direction: column !important;

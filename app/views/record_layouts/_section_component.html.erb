@@ -250,10 +250,10 @@
       btn.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-        const view = editor?.Components?.getView(comp);
-        if (view?.onDelete) view.onDelete(e);
-        else comp.remove();
+        // Native builder handles deletion through its own system
+        if (comp && typeof comp.remove === 'function') {
+          comp.remove();
+        }
       };
       compEl.insertBefore(btn, compEl.firstChild);
       if (window.getComputedStyle(compEl).position === 'static') compEl.style.position = 'relative';
@@ -326,7 +326,7 @@
           // Serialize the section wrapper and all its children (columns and their contents)
           const sectionWrapperComp = this.components().find(c => c.getEl()?.classList?.contains('pf-section'));
           if (sectionWrapperComp) {
-            // Use GrapesJS's toHTML to properly serialize all nested components
+            // Serialize nested components
             html += sectionWrapperComp.toHTML(opts);
           } else if (sectionWrapper) {
             // Fallback: use outerHTML if component not found

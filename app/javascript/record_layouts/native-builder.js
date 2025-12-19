@@ -1912,14 +1912,14 @@ let nativeBuilderInstance = null;
 let nativeBuilderInitialized = false;
 
 function initNativeRecordBuilder() {
-  console.log('[Native Builder] initNativeRecordBuilder called', { pathname: window.location.pathname });
-  
-  // Only initialize on the builder page
+  // Early exit check - only initialize on the builder page
   // Path can be /record_layouts/builder or /organizations/:id/record_layout/builder
-  if (!window.location.pathname.includes('/record_layout') || !window.location.pathname.includes('/builder')) {
-    console.log('[Native Builder] Not on builder page, skipping initialization');
-    return;
+  const pathname = window.location.pathname;
+  if (!pathname.includes('/record_layout') || !pathname.includes('/builder')) {
+    return; // Exit early, no logging to reduce overhead
   }
+  
+  console.log('[Native Builder] initNativeRecordBuilder called', { pathname });
   
   const canvasEl = document.getElementById('record-builder-canvas');
   if (!canvasEl) {
@@ -1944,6 +1944,8 @@ function initNativeRecordBuilder() {
     nativeBuilderInitialized = true;
     nativeBuilderInstance = new NativeRecordBuilder();
     nativeBuilderInstance.init();
+    // Expose globally for compatibility with view files
+    window.recordLayoutBuilderInstance = nativeBuilderInstance;
     console.log('[Native Builder] Initialization complete');
   } catch (error) {
     console.error('[Native Builder] Error during initialization:', error);
@@ -1963,7 +1965,10 @@ function destroyNativeRecordBuilder() {
 // Event listeners
 document.addEventListener('turbo:before-cache', destroyNativeRecordBuilder);
 document.addEventListener('turbo:load', function() {
-  console.log('[Native Builder] turbo:load event');
+  // Early exit if not on builder page - avoid unnecessary work
+  if (!window.location.pathname.includes('/record_layout') || !window.location.pathname.includes('/builder')) {
+    return;
+  }
   destroyNativeRecordBuilder();
   setTimeout(initNativeRecordBuilder, 100); // Small delay to ensure DOM is ready
 });

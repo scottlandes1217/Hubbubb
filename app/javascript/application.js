@@ -58,6 +58,9 @@ application.register("organization-tasks-index", OrganizationTasksIndexControlle
 import SearchController from "./controllers/search_controller";
 application.register("search", SearchController);
 
+import ListViewController from "./controllers/list_view_controller";
+application.register("list-view", ListViewController);
+
 // Other imports
 // Bootstrap is loaded via CDN in the layout to ensure global availability
 // import "bootstrap";

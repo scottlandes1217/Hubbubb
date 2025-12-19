@@ -85,6 +85,9 @@ resources :organizations do
                   # Objects (both custom and built-in)
   get 'objects', to: 'objects#index'
   
+  # List Views
+  resources :list_views, only: [:index, :show, :new, :create, :edit, :update, :destroy]
+  
   # Custom Objects and Fields
   resources :custom_objects do
     resources :custom_fields, only: [:index, :show, :new, :create, :edit, :update, :destroy]

@@ -745,14 +745,8 @@ export class ComponentLocking {
             } else if (comp && comp.model && typeof comp.model.remove === 'function') {
               comp.model.remove();
             } else {
-              // Fallback: get view and call onDelete
-              const editor = window.recordLayoutBuilderInstance?.editor || window.grapesjs;
-              if (editor && editor.Components) {
-                const view = editor.Components.getView(comp);
-                if (view && typeof view.onDelete === 'function') {
-                  view.onDelete(e);
-                }
-              }
+              // Native builder handles deletion through its own system
+              console.warn('[PF] Could not remove component - no remove method available');
             }
           } catch (err) {
             console.error('[PF] Error removing component:', err);

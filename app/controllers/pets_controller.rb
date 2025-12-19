@@ -6,15 +6,47 @@ class PetsController < ApplicationController
 
   def index
     @query = params[:query]
-    @pets = if @query.present?
-              @organization.pets.where("name ILIKE :query OR breed ILIKE :query OR description ILIKE :query", query: "%#{@query}%")
-            else
-              @organization.pets
-            end
-    @pets = @pets.order(:name).page(params[:page]).per(10)
+    
+    # Get or create default list view
+    @current_view = if params[:view_id].present?
+      @organization.list_views.find_by(id: params[:view_id])
+    else
+      @organization.list_views.for_object_type('Pet').default_view.first ||
+      @organization.list_views.for_object_type('Pet').public_or_user(current_user).first
+    end
+    
+    # Start with base query
+    @pets = @organization.pets
+    
+    # Apply list view filters if present
+    if @current_view.present?
+      @pets = @current_view.apply_filters(@pets)
+      @pets = @current_view.apply_sorting(@pets)
+    else
+      @pets = @pets.order(:name)
+    end
+    
+    # Apply search query if present
+    if @query.present?
+      @pets = @pets.where("name ILIKE :query OR breed::text ILIKE :query OR description ILIKE :query", query: "%#{@query}%")
+    end
+    
+    @pets = @pets.page(params[:page]).per(10)
     
     # Get pinned status for all pets
     @pinned_pet_ids = current_user.pinned_tabs.where(tabable_type: 'Pet', tab_type: 'pet').pluck(:tabable_id)
+    
+    # Define columns for the list view
+    @columns = if @current_view&.columns&.any?
+      # Use columns from the view
+      available_columns = ListView.available_columns_for('Pet', @organization)
+      available_columns.select { |col| @current_view.columns.include?(col[:api_name]) }
+    else
+      # Default columns
+      ListView.available_columns_for('Pet', @organization).select { |col| 
+        ['photo', 'name', 'breed', 'age', 'description'].include?(col[:api_name])
+      }
+    end
   end
 
   def show
