@@ -15,13 +15,16 @@ export class ComponentRegistry {
 
   setupComponentTypes() {
     // Record Field Component
+    // ROOT CAUSE FIX: Fields should NEVER accept drops (can't nest fields inside fields)
+    // This prevents invalid structures that trigger ensureInList recursion
     this.editor.DomComponents.addType('record-field', {
       model: {
         defaults: {
           tagName: 'div',
-          attributes: { class: 'record-field-placeholder pf-interactive border rounded p-2 mb-2 bg-white' },
+          attributes: { class: 'record-field-placeholder pf-interactive rounded p-2 mb-2 bg-white' },
           draggable: true,
-          droppable: false,
+          droppable: false, // Never accept drops
+          accept: [], // Explicitly reject all component types
           selectable: true,
           hoverable: true,
           highlightable: true,
@@ -38,13 +41,16 @@ export class ComponentRegistry {
     });
 
     // Record Partial Component
+    // ROOT CAUSE FIX: Partials should NEVER accept drops (can't nest components inside partials)
+    // This prevents invalid structures that trigger ensureInList recursion
     this.editor.DomComponents.addType('record-partial', {
       model: {
         defaults: {
           tagName: 'div',
-          attributes: { class: 'record-partial-placeholder pf-interactive border rounded p-2 mb-2 bg-light' },
+          attributes: { class: 'record-partial-placeholder pf-interactive rounded p-2 mb-2 bg-light' },
           draggable: true,
-          droppable: false,
+          droppable: false, // Never accept drops
+          accept: [], // Explicitly reject all component types
           selectable: true,
           hoverable: true,
           highlightable: true,

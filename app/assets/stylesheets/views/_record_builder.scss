@@ -25,10 +25,14 @@
 }
 .record-field-placeholder {
   background: #fff;
+  border: 1px solid #dee2e6 !important;
+  border-style: solid !important;
 }
 
 .record-partial-placeholder {
   background: #f8f9fa;
+  border: 1px solid #dee2e6 !important;
+  border-style: solid !important;
 }
 
 // Hide drag hover UI and element tags on hover
@@ -222,6 +226,16 @@
   background: #f8f9fa;
   position: relative;
   flex: 1 1 auto;
+}
+
+/* Ensure fields and partials inside section columns don't inherit dashed borders */
+.pf-section-column > .record-field-placeholder,
+.pf-section-column > .record-partial-placeholder,
+.pf-section-column .record-field-placeholder,
+.pf-section-column .record-partial-placeholder {
+  border: 1px solid #dee2e6 !important;
+  border-style: solid !important;
+  border-width: 1px !important;
 }
 
 .pf-section-column:hover {
@@ -504,11 +518,22 @@
 }
 
 /* Ensure tab sections are properly configured for drops */
-.pf-tab-section {
+/* Only apply dashed border to tab sections, not to fields/partials inside them */
+.pf-tab-section:not(.record-field-placeholder):not(.record-partial-placeholder) {
   min-height: 40px !important;
   padding: 6px !important;
   border: 1px dashed #ced4da !important;
   border-radius: 4px !important;
+}
+
+/* Ensure fields and partials inside tab sections don't inherit dashed borders */
+.pf-tab-section > .record-field-placeholder,
+.pf-tab-section > .record-partial-placeholder,
+.pf-tab-section .record-field-placeholder,
+.pf-tab-section .record-partial-placeholder {
+  border: 1px solid #dee2e6 !important;
+  border-style: solid !important;
+  border-width: 1px !important;
 }
 
 /* Left sidebar styling */

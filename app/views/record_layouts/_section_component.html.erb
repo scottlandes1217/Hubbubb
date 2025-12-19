@@ -3,6 +3,12 @@
   console.log('[PF] Section component script loading...');
   
   function buildWorkingSection(comp) {
+    // ROOT CAUSE FIX: Check drag flag FIRST, before ANY calls to comp.components()
+    // comp.components() triggers ensureInList which causes infinite recursion during drags
+    if (window.__pf_isMovingComponent === true) {
+      return; // Don't do anything during drags - exit immediately
+    }
+    
     const isUpdating = comp.getAttributes()?.['_updating-section'] === 'true';
     const isMovingComponent = comp.getAttributes()?.['_moving-component'] === 'true';
     const compEl = comp.getEl();
@@ -23,7 +29,7 @@
       return;
     }
     
-    // Check global move flag
+    // Double-check global move flag (in case it changed)
     if (window.__pf_isMovingComponent === true) {
       if (compEl) compEl.__pf_building_section = false;
       return;
@@ -84,32 +90,16 @@
     }
     
     // Skip if structure already exists
+    // ROOT CAUSE FIX: Use DOM-only checks - comp.components() triggers ensureInList recursion
     if (!isUpdating) {
       const hasDomStructure = compEl?.querySelector('.pf-section')?.querySelector('.pf-section-body');
-      const hasComponentStructure = comp.components().find(c => {
-        const el = c.getEl();
-        return el?.classList?.contains('pf-section');
-      });
       
-      if (hasDomStructure || hasComponentStructure) {
+      if (hasDomStructure) {
         // CRITICAL: Check if columns exist with content - if so, never clear them
+        // ROOT CAUSE FIX: Use DOM-only check - comp.components() triggers ensureInList recursion
         const existingCols = compEl?.querySelectorAll('.pf-section-column');
         const hasColsContent2 = existingCols && existingCols.length > 0 && 
-          Array.from(existingCols).some(col => {
-            // Check DOM children
-            if (col.children.length > 0) return true;
-            // Also check for any components that might be in this column
-            try {
-              const allComps = comp.components();
-              for (let c of allComps) {
-                const cEl = c.getEl && c.getEl();
-                if (cEl && col.contains && col.contains(cEl)) {
-                  return true;
-                }
-              }
-            } catch(_) {}
-            return false;
-          });
+          Array.from(existingCols).some(col => col.children.length > 0);
         
         if (hasColsContent2) {
           // Columns exist with content - just ensure buttons are there, don't rebuild
@@ -126,33 +116,17 @@
     }
     
     // CRITICAL: Check if columns have content BEFORE doing anything destructive
+    // ROOT CAUSE FIX: Use DOM-only check - comp.components() triggers ensureInList recursion
     const existingColsCheck = compEl?.querySelectorAll('.pf-section-column');
     const hasColsContent3 = existingColsCheck && existingColsCheck.length > 0 && 
-      Array.from(existingColsCheck).some(col => {
-        // Check both DOM children and GrapesJS component children
-        const domChildren = col.children.length;
-        // Try to find component children
-        let componentChildren = 0;
-        try {
-          const colComp = comp.components().find(c => {
-            const el = c.getEl();
-            return el === col || (el && col.contains && col.contains(el));
-          });
-          if (colComp) {
-            componentChildren = colComp.components().length;
-          }
-        } catch(_) {}
-        return domChildren > 0 || componentChildren > 0;
-      });
+      Array.from(existingColsCheck).some(col => col.children.length > 0);
     
     // ABSOLUTE RULE: If columns have content, NEVER clear components
+    // ROOT CAUSE FIX: Use DOM-only check - comp.components() triggers ensureInList recursion
     if (hasColsContent3) {
       // Columns have content - preserve everything, just ensure structure is correct
-      const existingSection = comp.components().find(c => {
-        const el = c.getEl();
-        return el?.classList?.contains('pf-section');
-      });
-      if (existingSection) {
+      const hasDomSection = compEl?.querySelector('.pf-section');
+      if (hasDomSection) {
         // Structure exists in component tree - good, just return
         if (compEl) compEl.__pf_building_section = false;
         addButtons(comp);
@@ -165,19 +139,19 @@
       return;
     }
     
-    // Only clear if columns don't have content
-    const existingSection = comp.components().find(c => {
-      const el = c.getEl();
-      return el?.classList?.contains('pf-section');
-    });
-    
+    // ROOT CAUSE FIX: Use DOM check instead of comp.components() - it triggers ensureInList recursion
     // Only clear if we're updating OR if structure doesn't exist AND columns don't have content
-    if (isUpdating || (!compEl?.querySelector('.pf-section') && !hasColsContent3)) {
-      // Only clear if existingSection exists but we're updating, or if no structure exists
-      if (existingSection && isUpdating) {
-        comp.components('');
-      } else if (!compEl?.querySelector('.pf-section') && !hasColsContent3) {
-        comp.components('');
+    // ROOT CAUSE FIX: Check drag flag before calling comp.components('') - it triggers ensureInList recursion
+    const hasDomSection = compEl?.querySelector('.pf-section');
+    if (isUpdating || (!hasDomSection && !hasColsContent3)) {
+      // Only clear if DOM structure exists but we're updating, or if no structure exists
+      // But NEVER clear during drags - it causes ensureInList recursion
+      if (!window.__pf_isMovingComponent) {
+        if (hasDomSection && isUpdating) {
+          comp.components('');
+        } else if (!hasDomSection && !hasColsContent3) {
+          comp.components('');
+        }
       }
     }
     
@@ -370,36 +344,24 @@
           'click [data-role="rb-edit-section"]': 'onEdit'
         },
         onRender() {
+          // ROOT CAUSE FIX: Check drag flag FIRST, before ANY calls to this.model.components()
+          // this.model.components() triggers ensureInList which causes infinite recursion during drags
+          if (window.__pf_isMovingComponent === true) {
+            return; // Don't do anything during drags - exit immediately
+          }
+          
           // CRITICAL: Check for move flag FIRST before doing anything
           if (this.model.getAttributes()?.['_updating-section'] === 'true') return;
           if (this.model.getAttributes()?.['_moving-component'] === 'true') return;
-          
-          // Also check global move flag
-          if (window.__pf_isMovingComponent === true) {
-            return;
-          }
           
           const compEl = this.model.getEl();
           if (!compEl) return;
           
           // CRITICAL: Check if columns exist with content - if so, NEVER rebuild
+          // Use DOM-only check to avoid calling this.model.components() during drags
           const existingColumns = compEl.querySelectorAll('.pf-section-column');
           const hasColumnsWithContent = existingColumns && existingColumns.length > 0 && 
-            Array.from(existingColumns).some(col => {
-              // Check both DOM children and any nested components
-              if (col.children.length > 0) return true;
-              // Also check if there are any GrapesJS components in this column
-              try {
-                const allComponents = this.model.components();
-                for (let comp of allComponents) {
-                  const compEl = comp.getEl && comp.getEl();
-                  if (compEl && col.contains && col.contains(compEl)) {
-                    return true;
-                  }
-                }
-              } catch(_) {}
-              return false;
-            });
+            Array.from(existingColumns).some(col => col.children.length > 0);
           
           if (hasColumnsWithContent) {
             // Columns have content - just ensure buttons exist, NEVER rebuild
@@ -407,38 +369,17 @@
             return;
           }
           
-          // Check if section is already built in component tree
-          const existingSection = this.model.components().find(c => {
-            const el = c.getEl();
-            return el?.classList?.contains('pf-section');
-          });
-          if (existingSection) {
-            // Structure exists - ensure buttons exist
-            addButtons(this.model);
-            return;
-          }
-          
-          // Also check DOM structure
-          const hasDomStructure = compEl.querySelector('.pf-section')?.querySelector('.pf-section-body');
+          // Check if section is already built - use DOM check instead of components()
+          // ROOT CAUSE FIX: Don't call this.model.components() - it triggers ensureInList recursion
+          const hasDomStructure = compEl.querySelector('.pf-section') && 
+                                 compEl.querySelector('.pf-section-body');
           if (hasDomStructure) {
-            // DOM structure exists - ensure buttons exist
+            // DOM structure exists - ensure buttons exist, don't rebuild
             addButtons(this.model);
             return;
           }
           
-          // CRITICAL: Only build if structure truly doesn't exist AND no columns with content
-          // But also check one more time if DOM structure exists (even if component structure doesn't)
-          const finalCheck = compEl.querySelector('.pf-section') && 
-                            compEl.querySelector('.pf-section-body') &&
-                            compEl.querySelectorAll('.pf-section-column').length > 0;
-          
-          if (finalCheck) {
-            // DOM structure exists - don't rebuild, just ensure buttons
-            addButtons(this.model);
-            return;
-          }
-          
-          // Only build if we're absolutely sure structure doesn't exist
+          // Only build if structure truly doesn't exist
           buildWorkingSection(this.model);
         },
         onDelete(e) { 
@@ -466,7 +407,7 @@
 .pf-section-container { position: relative; }
 .pf-section { border: 1px solid #dee2e6; border-radius: 6px; background: #fff; margin-bottom: 1rem; }
 .pf-section-body { display: flex; gap: 16px; padding: 16px; background: #fff; min-height: 100px; }
-.pf-section-column { flex: 1; min-height: 50px; border: 2px dashed #dee2e6; border-radius: 4px; padding: 16px; position: relative; }
+.pf-section-column { flex: 1; min-height: 50px; padding: 16px; position: relative; }
 `;
     document.head.appendChild(style);
   }
@@ -784,7 +725,7 @@
 .pf-section-container { position: relative; margin-bottom: 1rem; }
 .pf-section { border: 1px solid #dee2e6; border-radius: 6px; background: #fff; }
 .pf-section-body { display: flex; gap: 16px; padding: 16px; background: #fff; min-height: 100px; }
-.pf-section-column { flex: 1; min-height: 50px; border: 2px dashed #dee2e6; border-radius: 4px; padding: 16px; position: relative; }
+.pf-section-column { flex: 1; min-height: 50px; padding: 16px; position: relative; }
 /* Remove borders on rendered record pages */
 .record-layout-render .pf-section { border: none; }
 .record-layout-render .pf-section-column { border: none; background: transparent; }`;

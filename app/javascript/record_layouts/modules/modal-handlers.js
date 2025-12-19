@@ -304,7 +304,10 @@ export class ModalHandlers {
                     // New tabs won't have an entry, so they'll remain empty
                     if (tabId && childrenByTabId.hasOwnProperty(tabId) && childrenByTabId[tabId]) {
                       // Clear section first to avoid duplicates
-                      section.components('');
+                      // ROOT CAUSE FIX: Check drag flag - comp.components('') triggers ensureInList recursion
+                      if (!window.__pf_isMovingComponent) {
+                        section.components('');
+                      }
                       
                       // Append HTML - GrapesJS will parse it into components
                       const storedHtml = childrenByTabId[tabId];
@@ -326,7 +329,8 @@ export class ModalHandlers {
                       }
                     } else {
                       // New tab - ensure it's empty
-                      if (section.components().length > 0) {
+                      // ROOT CAUSE FIX: Check drag flag - comp.components('') triggers ensureInList recursion
+                      if (!window.__pf_isMovingComponent && section.components().length > 0) {
                         section.components('');
                       }
                     }
@@ -639,9 +643,12 @@ export class ModalHandlers {
                       // Only restore children if this column ID exists in our stored children
                       if (columnId && childrenByColumnId.hasOwnProperty(columnId) && childrenByColumnId[columnId]) {
                         // Clear column first to avoid duplicates
-                        column.components('');
-                        // Append the stored HTML - GrapesJS will parse it
-                        column.components(childrenByColumnId[columnId]);
+                        // ROOT CAUSE FIX: Check drag flag - comp.components('') triggers ensureInList recursion
+                        if (!window.__pf_isMovingComponent) {
+                          column.components('');
+                          // Append the stored HTML - GrapesJS will parse it
+                          column.components(childrenByColumnId[columnId]);
+                        }
                       }
                     });
                   }

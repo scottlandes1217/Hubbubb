@@ -1,7 +1,7 @@
 <% content_for :navbar do %>
   <%= render 'shared/navbar_admin' %>
 <% end %>
-
+<div class="container">
 <h1>Organizations</h1>
 <%= link_to 'Create Organization', new_organization_path, class: 'btn btn-secondary mb-3' %>
 
@@ -39,4 +39,5 @@
   <% else %>
     <p>No organizations found.</p>
   <% end %>
+</div>
 </div>

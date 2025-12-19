@@ -6,4 +6,6 @@
   cursor: pointer;
 }
 
-
+.gjs-dashed *[data-gjs-highlightable] {
+  outline: none !important;
+}

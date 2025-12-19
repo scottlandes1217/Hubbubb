@@ -67,18 +67,33 @@ export class ComponentLocking {
     });
 
     // Also lock when components are updated
+    // ROOT CAUSE: component:update fires during drags, causing buildWorkingSection to run,
+    // which calls comp.components('') and triggers ensureInList recursively
+    // SOLUTION: Completely skip ALL component:update handlers during drags
     this.editor.on('component:update', (component) => {
       // CRITICAL: Skip ALL updates during drag operations to prevent recursion
+      // This must be checked FIRST, before any other logic
       if (window.__pf_isMovingComponent === true) {
-        return;
+        return; // Exit immediately - don't process any updates during drags
       }
       
       const attrs = component.getAttributes ? component.getAttributes() : {};
       if (attrs['field-api-name'] || attrs['partial-name']) {
         setTimeout(() => {
+          // Double-check flag in setTimeout - it might have changed
+          if (window.__pf_isMovingComponent === true) {
+            return;
+          }
           this.addDeleteButton(component);
-          // Ensure fields/partials are not droppable (can't drop components into them)
-          component.set({ droppable: false });
+          // ROOT CAUSE FIX: Ensure fields/partials are NEVER droppable and reject all drops
+          // This prevents invalid nesting (fields inside fields) that causes ensureInList recursion
+          // Only set if not currently dragging
+          if (!window.__pf_isMovingComponent) {
+            component.set({ 
+              droppable: false, // Never accept drops
+              accept: [] // Explicitly reject all component types
+            });
+          }
           this.lockInnerComponents(component);
         }, 10);
       } else if (attrs['data-comp-kind'] === 'record-tabs' || component.get('type') === 'record-tabs') {
@@ -97,6 +112,18 @@ export class ComponentLocking {
           return;
         }
         setTimeout(() => {
+          // ROOT CAUSE: Check drag flag AND depth counter - recursion can happen even after drag ends
+          // if setTimeout fires after drag ends but ensureInList is still processing
+          if (window.__pf_isMovingComponent === true) {
+            return; // Don't do anything during drags
+          }
+          
+          // Also check depth counter - if it's high, we're in a recursion loop
+          if (window.__pf_ensureInListDepth && window.__pf_ensureInListDepth > 5) {
+            console.warn('[PF] Skipping buildWorkingTabs - depth too high:', window.__pf_ensureInListDepth);
+            return; // Don't rebuild if we're in a recursion loop
+          }
+          
           this.lockTabsInnerComponents(component);
           // Only call buildWorkingTabs if structure doesn't exist or needs update
           // Don't call it on every update to prevent loops
@@ -104,6 +131,18 @@ export class ComponentLocking {
           const hasStructure = el && el.querySelector('.pf-tabs') && 
                                el.querySelector('.pf-tabs-header') && 
                                el.querySelector('.pf-tabs-body');
+          
+          // ROOT CAUSE: Double-check drag flag AND depth before calling buildWorkingTabs
+          // buildWorkingTabs calls comp.components('') which triggers ensureInList recursion
+          if (window.__pf_isMovingComponent === true) {
+            return; // Don't rebuild during drags
+          }
+          
+          // Check depth again before calling buildWorkingTabs
+          if (window.__pf_ensureInListDepth && window.__pf_ensureInListDepth > 5) {
+            return; // Don't rebuild if we're in a recursion loop
+          }
+          
           if (!hasStructure && window.TabsComponent && window.TabsComponent.buildWorkingTabs) {
             try {
               window.TabsComponent.buildWorkingTabs(component);
@@ -130,6 +169,18 @@ export class ComponentLocking {
           return;
         }
         setTimeout(() => {
+          // ROOT CAUSE: Check drag flag AND depth counter - recursion can happen even after drag ends
+          // if setTimeout fires after drag ends but ensureInList is still processing
+          if (window.__pf_isMovingComponent === true) {
+            return; // Don't do anything during drags
+          }
+          
+          // Also check depth counter - if it's high, we're in a recursion loop
+          if (window.__pf_ensureInListDepth && window.__pf_ensureInListDepth > 5) {
+            console.warn('[PF] Skipping section update - depth too high:', window.__pf_ensureInListDepth);
+            return; // Don't process if we're in a recursion loop
+          }
+          
           // DON'T call component.set() here - it triggers updates during drags which cause recursion!
           // These properties should be set in component definition or on initial creation only
           // Also ensure the DOM element has the right attributes
@@ -160,6 +211,17 @@ export class ComponentLocking {
               }
             }, true);
           }
+          // ROOT CAUSE: buildWorkingSection calls comp.components('') which triggers ensureInList recursively
+          // NEVER call buildWorkingSection during drags - it causes infinite recursion
+          if (window.__pf_isMovingComponent === true) {
+            return; // Don't rebuild during drags - exit immediately
+          }
+          
+          // Check depth again before calling buildWorkingSection
+          if (window.__pf_ensureInListDepth && window.__pf_ensureInListDepth > 5) {
+            return; // Don't rebuild if we're in a recursion loop
+          }
+          
           // Only call buildWorkingSection if structure doesn't exist or needs update
           // Don't call it on every update to prevent loops
           const hasStructure = el && el.querySelector('.pf-section') && 
@@ -170,8 +232,9 @@ export class ComponentLocking {
           const hasColumnsWithContent = existingColumns && existingColumns.length > 0 && 
             Array.from(existingColumns).some(col => col.children.length > 0);
           
-          // Only rebuild if structure is missing AND columns don't have content
-          // This prevents accidental deletion when moving fields between columns
+          // ROOT CAUSE: Only rebuild if structure is COMPLETELY missing AND columns don't have content
+          // If structure exists OR columns have content, NEVER rebuild - it causes ensureInList recursion
+          // During drags, the structure might temporarily not be in the component tree but exists in DOM
           if (!hasStructure && !hasColumnsWithContent && window.SectionComponent && window.SectionComponent.buildWorkingSection) {
             try {
               window.SectionComponent.buildWorkingSection(component);
@@ -186,14 +249,68 @@ export class ComponentLocking {
 
   lockInnerComponents(comp) {
     try {
+      // ROOT CAUSE FIX: Skip if dragging - comp.set() triggers ensureInList recursion
+      if (window.__pf_isMovingComponent) {
+        return; // Don't modify components during drags
+      }
+      
+      // ROOT CAUSE FIX: Skip if component is being processed to prevent recursion
+      if (window.__pf_processingComponents && window.__pf_processingComponents.has(comp)) {
+        return; // Already processing - prevent recursion
+      }
+      
       const stack = Array.isArray(comp) ? comp.slice() : [comp];
       while (stack.length) {
         const node = stack.pop();
         if (!node || !node.components) continue;
-        const children = node.components().models || [];
+        
+        // ROOT CAUSE FIX: Skip if node is being processed
+        if (window.__pf_processingComponents && window.__pf_processingComponents.has(node)) {
+          continue; // Skip this node - already processing
+        }
+        
+        // ROOT CAUSE FIX: Mark node as processing BEFORE calling components() to prevent recursion
+        // comp.components() internally calls ensureInList, which can trigger recursion
+        if (window.__pf_processingComponents) {
+          window.__pf_processingComponents.add(node);
+        }
+        
+        // ROOT CAUSE: comp.components() triggers ensureInList - but our patch should prevent recursion
+        // However, we mark as processing first to be safe
+        let children = [];
+        try {
+          const comps = node.components();
+          children = comps && comps.models ? comps.models : [];
+        } catch(err) {
+          console.warn('[PF] Error getting components in lockInnerComponents:', err);
+          // Remove from processing set on error
+          if (window.__pf_processingComponents) {
+            window.__pf_processingComponents.delete(node);
+          }
+          continue;
+        }
         children.forEach(ch => {
+          // ROOT CAUSE FIX: Skip if child is being processed
+          if (window.__pf_processingComponents && window.__pf_processingComponents.has(ch)) {
+            return; // Skip this child - already processing
+          }
+          
+          // CRITICAL: Don't lock section columns or tab sections - they need to accept drops!
+          const chAttrs = ch.getAttributes ? ch.getAttributes() : {};
+          const chEl = ch.getEl && ch.getEl();
+          const isSectionColumn = chAttrs['data-role'] === 'pf-section-column' ||
+                                 (chEl && chEl.classList && chEl.classList.contains('pf-section-column'));
+          const isTabSection = chAttrs['data-role'] === 'pf-tab-section' ||
+                             (chEl && chEl.classList && chEl.classList.contains('pf-tab-section'));
+          
+          if (isSectionColumn || isTabSection) {
+            // Don't lock columns/sections - they need droppable: true and accept property
+            // Just continue to next child
+            return;
+          }
+          
           // Don't lock the delete button - it needs to be clickable
-          const attrs = ch.getAttributes ? ch.getAttributes() : {};
+          const attrs = chAttrs;
           const isDeleteButton = attrs.class && attrs.class.includes('rb-del');
           
           // Check if this child is itself a field/partial component (not just inner content)
@@ -203,50 +320,76 @@ export class ComponentLocking {
           // Check if this child is inside a section/tab
           const isInsideSection = this.builder.modules?.componentRegistry?.isInsideSectionOrTab(ch) || false;
           
+          // ROOT CAUSE FIX: Mark child as processing before calling set() to prevent recursion
+          if (window.__pf_processingComponents) {
+            window.__pf_processingComponents.add(ch);
+          }
+          
           if (isDeleteButton) {
             // Ensure delete button is clickable and visible
-            ch.set({ 
-              selectable: false, 
-              hoverable: false, 
-              draggable: false, 
-              droppable: false, 
-              editable: false, 
-              copyable: false, 
-              highlightable: false, 
-              badgable: false, 
-              layerable: false,
-              // But keep it clickable via pointer events
-              pointerEvents: 'auto'
-            });
+            // ROOT CAUSE FIX: Only set if values actually need to change
+            const needsUpdate = ch.get('selectable') !== false || ch.get('hoverable') !== false ||
+                                ch.get('draggable') !== false || ch.get('droppable') !== false ||
+                                ch.get('editable') !== false || ch.get('copyable') !== false ||
+                                ch.get('highlightable') !== false;
+            if (needsUpdate) {
+              ch.set({ 
+                selectable: false, 
+                hoverable: false, 
+                draggable: false, 
+                droppable: false, 
+                editable: false, 
+                copyable: false, 
+                highlightable: false, 
+                badgable: false, 
+                layerable: false,
+                // But keep it clickable via pointer events
+                pointerEvents: 'auto'
+              });
+            }
           } else if (isFieldOrPartial && isInsideSection) {
             // This is a field/partial component inside a section/tab - make it draggable
             // But still lock its inner children (they will be processed in the next iteration)
-            ch.set({
-              selectable: true,
-              hoverable: true,
-              draggable: true,
-              droppable: false,
-              editable: false,
-              copyable: false,
-              highlightable: true
-            });
+            // ROOT CAUSE FIX: Only set if values actually need to change
+            const needsUpdate = ch.get('selectable') !== true || ch.get('hoverable') !== true ||
+                                ch.get('draggable') !== true || ch.get('droppable') !== false ||
+                                ch.get('editable') !== false || ch.get('copyable') !== false ||
+                                ch.get('highlightable') !== true;
+            if (needsUpdate) {
+              ch.set({
+                selectable: true,
+                hoverable: true,
+                draggable: true,
+                droppable: false,
+                editable: false,
+                copyable: false,
+                highlightable: true
+              });
+            }
             // Continue to lock inner children
             if (ch.components && ch.components().length) {
               stack.push(ch);
             }
           } else {
             // This is inner content (not a field/partial component itself) - always lock it
-            ch.set({
-              selectable: false,
-              hoverable: false,
-              draggable: false,
-              droppable: false,
-              editable: false,
-              copyable: false,
-              highlightable: false,
-              badgable: false,
-              layerable: false 
-            });
+            // ROOT CAUSE FIX: Only set if values actually need to change
+            const needsUpdate = ch.get('selectable') !== false || ch.get('hoverable') !== false ||
+                                ch.get('draggable') !== false || ch.get('droppable') !== false ||
+                                ch.get('editable') !== false || ch.get('copyable') !== false ||
+                                ch.get('highlightable') !== false;
+            if (needsUpdate) {
+              ch.set({
+                selectable: false,
+                hoverable: false,
+                draggable: false,
+                droppable: false,
+                editable: false,
+                copyable: false,
+                highlightable: false,
+                badgable: false,
+                layerable: false 
+              });
+            }
             
             // Set pointer-events to none so drag events bubble up to parent
             // This allows dragging the field/partial by clicking anywhere on it (including labels)
@@ -273,21 +416,59 @@ export class ComponentLocking {
 
   lockTabsInnerComponents(comp) {
     try {
+      // ROOT CAUSE FIX: Skip if dragging - comp.set() triggers ensureInList recursion
+      if (window.__pf_isMovingComponent) {
+        return; // Don't modify components during drags
+      }
+      
+      // ROOT CAUSE FIX: Check if component is being processed to prevent recursion
+      if (window.__pf_processingComponents && window.__pf_processingComponents.has(comp)) {
+        return; // Already processing - prevent recursion
+      }
+      
+      // ROOT CAUSE FIX: Mark component as processing BEFORE any set() calls
+      if (window.__pf_processingComponents) {
+        window.__pf_processingComponents.add(comp);
+      }
+      
       const el = comp.getEl();
-      if (!el) return;
+      if (!el) {
+        // Remove from processing set if we're exiting early
+        if (window.__pf_processingComponents) {
+          window.__pf_processingComponents.delete(comp);
+        }
+        return;
+      }
       
       // First, ensure the main tabs container is draggable (so the whole component can be moved)
       // CRITICAL: Set type first, then draggable
-      if (comp.get('type') !== 'record-tabs') {
+      // ROOT CAUSE FIX: Only set if values actually need to change to avoid triggering updates
+      const currentType = comp.get('type');
+      const currentDraggable = comp.get('draggable');
+      
+      if (currentType !== 'record-tabs') {
         comp.set('type', 'record-tabs');
       }
-      comp.set({
-        draggable: true,
-        selectable: true,
-        hoverable: true,
-        highlightable: true,
-        droppable: false
-      });
+      
+      // Only set if values are different to avoid unnecessary updates
+      if (currentDraggable !== true || comp.get('selectable') !== true || 
+          comp.get('hoverable') !== true || comp.get('highlightable') !== true || 
+          comp.get('droppable') !== false) {
+        comp.set({
+          draggable: true,
+          selectable: true,
+          hoverable: true,
+          highlightable: true,
+          droppable: false
+        });
+      }
+      
+      // Remove from processing set after a short delay
+      setTimeout(() => {
+        if (window.__pf_processingComponents) {
+          window.__pf_processingComponents.delete(comp);
+        }
+      }, 50);
       
       // Ensure the main container element allows pointer events and has draggable attribute
       if (el) {
@@ -325,8 +506,23 @@ export class ComponentLocking {
       // Find all inner components using GrapesJS
       // We need to find the component by traversing from the main component
       // The tabs wrapper is a child of the main component
+      // ROOT CAUSE FIX: Mark as processing before calling components() to prevent recursion
+      if (window.__pf_processingComponents) {
+        window.__pf_processingComponents.add(comp);
+      }
+      
       let tabsWrapperComp = null;
-      const compChildren = comp.components().models || [];
+      let compChildren = [];
+      try {
+        const comps = comp.components();
+        compChildren = comps && comps.models ? comps.models : [];
+      } catch(err) {
+        console.warn('[PF] Error getting components in lockTabsInnerComponents:', err);
+        if (window.__pf_processingComponents) {
+          window.__pf_processingComponents.delete(comp);
+        }
+        return;
+      }
       for (const child of compChildren) {
         const childEl = child.getEl();
         if (childEl && childEl.classList.contains('pf-tabs')) {
@@ -389,7 +585,21 @@ export class ComponentLocking {
         });
         
         // Lock all children of header EXCEPT tab buttons (tab buttons should be draggable for reordering)
-        const headerChildren = header.components().models || [];
+        // ROOT CAUSE FIX: Mark header as processing before calling components()
+        if (window.__pf_processingComponents) {
+          window.__pf_processingComponents.add(header);
+        }
+        let headerChildren = [];
+        try {
+          const comps = header.components();
+          headerChildren = comps && comps.models ? comps.models : [];
+        } catch(err) {
+          console.warn('[PF] Error getting header children:', err);
+          if (window.__pf_processingComponents) {
+            window.__pf_processingComponents.delete(header);
+          }
+          headerChildren = [];
+        }
         headerChildren.forEach(ch => {
           const chAttrs = ch.getAttributes ? ch.getAttributes() : {};
           const isTabButton = chAttrs.class && chAttrs.class.includes('pf-tab-btn');
@@ -433,7 +643,21 @@ export class ComponentLocking {
         });
         
         // Tab sections should not be draggable, but components inside them should be
-        const bodyChildren = body.components().models || [];
+        // ROOT CAUSE FIX: Mark body as processing before calling components()
+        if (window.__pf_processingComponents) {
+          window.__pf_processingComponents.add(body);
+        }
+        let bodyChildren = [];
+        try {
+          const comps = body.components();
+          bodyChildren = comps && comps.models ? comps.models : [];
+        } catch(err) {
+          console.warn('[PF] Error getting body children:', err);
+          if (window.__pf_processingComponents) {
+            window.__pf_processingComponents.delete(body);
+          }
+          bodyChildren = [];
+        }
         bodyChildren.forEach(ch => {
           const chAttrs = ch.getAttributes ? ch.getAttributes() : {};
           const isTabSection = chAttrs.class && chAttrs.class.includes('pf-tab-section');

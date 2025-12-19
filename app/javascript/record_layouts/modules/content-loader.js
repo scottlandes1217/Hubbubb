@@ -124,10 +124,18 @@ export class ContentLoader {
                         // EXACTLY match the drag-from-sidebar behavior
                         // Just set the new content directly - GrapesJS will handle clearing
                         // Don't try to clear first as it can cause errors if component structure is incomplete
+                        // ROOT CAUSE FIX: Skip if dragging - comp.components() triggers ensureInList recursion
+                        if (window.__pf_isMovingComponent) {
+                          return; // Don't modify components during drags
+                        }
                         try {
                           partial.components(html);
                         } catch(setErr) {
                           // If setting fails, try clearing first then setting
+                          // ROOT CAUSE FIX: Double-check flag - comp.components() triggers ensureInList recursion
+                          if (window.__pf_isMovingComponent) {
+                            return; // Don't modify components during drags
+                          }
                           try {
                             // Only try to clear if setting failed
                             if (partial.components && typeof partial.components === 'function') {

@@ -3,6 +3,12 @@
   console.log('[PF] Tabs component partial loaded');
   
   function buildWorkingTabs(comp) {
+    // ROOT CAUSE FIX: Check drag flag FIRST, before ANY calls to comp.components()
+    // comp.components() triggers ensureInList which causes infinite recursion during drags
+    if (window.__pf_isMovingComponent === true) {
+      return; // Don't do anything during drags - exit immediately
+    }
+    
     const isUpdating = comp.getAttributes()?.['_updating-tabs'] === 'true';
     const compEl = comp.getEl();
     
@@ -118,12 +124,13 @@
     }
     
     // Clear existing components before rebuilding
-    const existingTabsWrapper = comp.components().find(c => {
-      const el = c.getEl();
-      return el?.classList?.contains('pf-tabs');
-    });
-    if (existingTabsWrapper || isUpdating || !compEl?.querySelector('.pf-tabs')) {
-      comp.components('');
+    // ROOT CAUSE FIX: Use DOM check instead of comp.components() - it triggers ensureInList recursion
+    const hasDomTabs = compEl?.querySelector('.pf-tabs');
+    // ROOT CAUSE FIX: Check drag flag before calling comp.components('') - it triggers ensureInList recursion
+    if ((hasDomTabs && isUpdating) || (!hasDomTabs && !isUpdating)) {
+      if (!window.__pf_isMovingComponent) {
+        comp.components('');
+      }
     }
     
     // Create structure
