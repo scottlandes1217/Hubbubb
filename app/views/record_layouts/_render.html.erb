@@ -86,37 +86,36 @@
         const instanceId = 'field-instance-' + api + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         let inputHtml = '';
         if (ftype === 'textarea') {
-          inputHtml = '<textarea class="edit-input form-control mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + safeVal.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>';
+          inputHtml = '<textarea class="edit-input form-control" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + safeVal.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</textarea>';
         } else if (ftype === 'checkbox') {
           const checked = (safeVal === 'true' || safeVal === '1') ? 'checked' : '';
-          inputHtml = '<div class="form-check mt-2" style="display:none;"><input type="checkbox" class="form-check-input edit-input" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" ' + checked + ' /></div>';
+          inputHtml = '<div class="form-check" style="display:none;"><input type="checkbox" class="form-check-input edit-input" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" ' + checked + ' /></div>';
         } else if (ftype === 'date') {
-          inputHtml = '<input type="date" class="edit-input form-control mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" value="' + safeVal + '" style="display:none;" />';
+          inputHtml = '<input type="date" class="edit-input form-control" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" value="' + safeVal + '" style="display:none;" />';
         } else if (ftype === 'picklist') {
           const opts = (el.getAttribute('data-options') || '').split('|').filter(Boolean);
           if (opts.length === 0) {
             opts.push('None');
           }
-          inputHtml = '<select class="edit-input form-select mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (o===safeVal?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
+          inputHtml = '<select class="edit-input form-select" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (o===safeVal?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
         } else if (ftype === 'multipicklist') {
           const opts = (el.getAttribute('data-options') || '').split('|').filter(Boolean);
           if (opts.length === 0) {
             opts.push('None');
           }
           const selected = Array.isArray(val) ? val : String(safeVal).split(',').map(function(s){ return s.trim(); });
-          inputHtml = '<select multiple class="edit-input form-select mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (selected.includes(o)?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
+          inputHtml = '<select multiple class="edit-input form-select" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" style="display:none;">' + opts.map(function(o){ return '<option value="' + o.replace(/"/g,'&quot;') + '" ' + (selected.includes(o)?'selected':'') + '>' + o + '</option>'; }).join('') + '</select>';
         } else {
-          inputHtml = '<input type="text" class="edit-input form-control mt-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" value="' + safeVal.replace(/"/g, '&quot;') + '" style="display:none;" />';
+          // Remove mt-2 class that adds top margin and pushes input to new line
+          inputHtml = '<input type="text" class="edit-input form-control" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="input" value="' + safeVal.replace(/"/g, '&quot;') + '" style="display:none;" />';
         }
         el.innerHTML =
-          '<div class="d-flex justify-content-between align-items-start w-100">' +
-            '<div class="flex-grow-1">' +
-              '<strong>' + (label || '') + ':</strong> ' +
-              '<span class="value" data-edit-field-target="value" data-field="' + api + '" data-instance-id="' + instanceId + '">' + safeVal + '</span>' +
-            '</div>' +
-            '<button class="edit-button btn btn-link p-0 ms-2" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="editButton" data-action="click->edit-field#edit" title="Edit ' + (label || api) + '"><i class="fas fa-pencil-alt"></i></button>' +
-          '</div>' +
-          inputHtml;
+          '<div class="record-field-display">' +
+            '<strong class="field-label">' + (label || '') + ':</strong> ' +
+            '<span class="field-value" data-edit-field-target="value" data-field="' + api + '" data-instance-id="' + instanceId + '">' + safeVal + '</span>' +
+            '<button class="edit-button" data-field="' + api + '" data-instance-id="' + instanceId + '" data-edit-field-target="editButton" data-action="click->edit-field#edit" title="Edit ' + (label || api) + '" aria-label="Edit ' + (label || api) + '"><i class="fas fa-pencil-alt"></i></button>' +
+            inputHtml +
+          '</div>';
       });
 
       // Replace partial placeholders with known server-rendered partials

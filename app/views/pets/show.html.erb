@@ -4,7 +4,7 @@
 
 <%= turbo_stream_from "pet_#{@pet.id}" %>
 
-<div class="container mt-4" 
+<div class="record-container mt-4" 
      data-controller="pet edit-field turbo-stream"
      data-pet-id="<%= @pet.id %>"
      data-pet-name="<%= @pet.name %>"

@@ -1,0 +1,252 @@
+// Record Display Page Styles
+// Professional styling for record fields on the display page (not builder)
+// Only apply these styles to record layout renders, not the builder
+
+.record-layout-render {
+  // Record field display container
+  .record-field-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: #fafafa;
+      border-radius: 4px;
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  // Field label
+  .field-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: fit-content;
+    flex-shrink: 0;
+    margin: 0;
+  }
+
+  // Field value
+  .field-value {
+    color: #212529;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    
+    // Style "Not Set" values
+    &:empty::before,
+    &[data-value=""]::before {
+      content: "Not Set";
+      color: #6c757d;
+      font-style: italic;
+    }
+  }
+
+  // Edit button - positioned right next to the value
+  .edit-button {
+    background: transparent !important;
+    border: none !important;
+    padding: 0.25rem 0.375rem !important;
+    margin-left: 0.375rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.7 !important;
+    transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    color: #6c757d !important;
+    border-radius: 4px;
+    line-height: 1;
+    vertical-align: middle;
+    visibility: visible !important;
+    
+    i {
+      font-size: 0.8125rem;
+      pointer-events: none;
+      display: inline-block !important;
+    }
+    
+    &:hover {
+      opacity: 1 !important;
+      color: #007bff !important;
+      background-color: #f0f7ff !important;
+    }
+    
+    &:focus {
+      outline: 2px solid #007bff;
+      outline-offset: 2px;
+      opacity: 1 !important;
+    }
+    
+    // Show more prominently on hover of parent
+    .record-field-display:hover & {
+      opacity: 1 !important;
+    }
+  }
+
+// Section columns - reduce spacing
+.pf-section-body {
+  gap: 1rem !important; // Reduced from 16px to 1rem (16px)
+  padding: 1rem !important; // Reduced padding
+}
+
+.pf-section-column {
+  padding: 0.75rem !important; // Reduced from 8px to 0.75rem (12px)
+  gap: 0; // No gap between fields in columns
+}
+
+// Record field placeholders on display page (not builder)
+.record-field-placeholder {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  margin-bottom: 0 !important;
+  
+  // Remove builder-specific styling
+  &:hover {
+    background: transparent !important;
+  }
+}
+
+// Section styling on display page
+.pf-section {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.pf-section-body {
+  background: transparent;
+  border: none;
+  padding: 1.25rem !important;
+}
+
+.pf-section-column {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  
+  // Remove builder hover effects
+  &:hover {
+    background: transparent !important;
+    border: none !important;
+  }
+}
+
+// Tab section styling on display page
+.pf-tab-section {
+  background: transparent !important;
+  border: none !important;
+  padding: 1rem 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  
+  &:hover {
+    background: transparent !important;
+  }
+}
+
+  // Edit input styling - make it appear inline
+  .edit-input {
+    display: none !important; // Hidden by default
+    margin-left: 0.5rem;
+    margin-top: 0 !important; // Remove any top margin
+    padding: 0.375rem 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9375rem;
+    min-width: 200px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    vertical-align: baseline;
+    
+    // When shown (via inline style from controller)
+    &[style*="inline-block"],
+    &[style*="block"] {
+      display: inline-block !important;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+  }
+  
+  // Textarea should appear on new line but styled nicely
+  textarea.edit-input {
+    display: none !important;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+    min-height: 80px;
+    
+    &[style*="inline-block"],
+    &[style*="block"] {
+      display: block !important;
+    }
+  }
+  
+  // Checkbox container
+  .form-check {
+    display: none !important;
+    margin-left: 0.5rem;
+    
+    &[style*="inline-block"],
+    &[style*="block"],
+    &[style*="flex"] {
+      display: inline-flex !important;
+      align-items: center;
+    }
+  }
+  
+  // Hide edit button and value when input is visible
+  .record-field-display:has(.edit-input[style*="inline-block"]),
+  .record-field-display:has(.edit-input[style*="block"]),
+  .record-field-display:has(.form-check[style*="inline-block"]),
+  .record-field-display:has(.form-check[style*="block"]),
+  .record-field-display:has(.form-check[style*="flex"]) {
+    .edit-button {
+      display: none !important;
+    }
+    
+    .field-value {
+      display: none !important;
+    }
+  }
+  
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .pf-section-body {
+      flex-direction: column;
+      gap: 0 !important;
+    }
+    
+    .pf-section-column {
+      width: 100%;
+      margin-bottom: 1rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    
+    .record-field-display {
+      padding: 0.625rem 0;
+    }
+    
+    .edit-button {
+      opacity: 1; // Always show on mobile
+    }
+  }
+}
+

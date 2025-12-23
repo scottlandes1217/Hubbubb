@@ -333,13 +333,31 @@ export default class extends Controller {
     const data = {};
     this.inputTargets.forEach((input) => {
       const field = input.dataset.field;
+      let value;
 
       if (input.type === "checkbox") {
-        data[field] = input.checked;
+        value = input.checked;
       } else if (input.tagName === "SELECT" && input.multiple) {
-        data[field] = Array.from(input.selectedOptions).map((o) => o.value);
+        value = Array.from(input.selectedOptions).map((o) => o.value);
+        // For breed/color, always keep as array (even if empty) - server expects arrays
+        // For other multi-selects, convert empty array to null
+        if (value.length === 0 && field !== 'breed' && field !== 'color' && field !== 'flags') {
+          value = null;
+        }
       } else {
-        data[field] = input.value; // includes single <select>, text, date...
+        value = input.value; // includes single <select>, text, date...
+        // Convert empty strings to null for optional fields (but keep required fields as empty string)
+        if (value === "" && field !== 'name' && field !== 'status') {
+          value = null;
+        }
+      }
+      
+      // Always include breed, color, and flags (even if empty arrays)
+      // For other fields, only include if they have a value (not undefined or null)
+      if (field === 'breed' || field === 'color' || field === 'flags') {
+        data[field] = value;
+      } else if (value !== undefined && value !== null) {
+        data[field] = value;
       }
     });
 
@@ -361,18 +379,108 @@ export default class extends Controller {
         delete finalData.current_password;
       }
     } else {
-      // For pet, ensure required fields are present
+      // For pet, ensure required fields are present and clean up undefined values
       const requiredFields = {
-        name: data.name || this.currentValues.get('name'),
-        species_id: data.species_id || this.currentValues.get('species_id'),
-        breed: data.breed || this.currentValues.get('breed') || [],
-        description: data.description || this.currentValues.get('description'),
+        name: data.name || this.currentValues.get('name') || '',
         status: data.status || this.currentValues.get('status') || 'available'
       };
-      finalData = { ...requiredFields, ...data };
+      
+      // Handle species (server expects 'species' not 'species_id')
+      if (data.species !== undefined && data.species !== null && data.species !== '') {
+        requiredFields.species = data.species;
+      } else if (data.species_id !== undefined && data.species_id !== null && data.species_id !== '') {
+        requiredFields.species = data.species_id;
+      }
+      
+      // Handle breed - must ALWAYS be an array (even if empty)
+      // Server expects breed: [] format, never null or undefined
+      if (data.breed !== undefined) {
+        if (Array.isArray(data.breed)) {
+          requiredFields.breed = data.breed;
+        } else if (data.breed === null || data.breed === '') {
+          requiredFields.breed = [];
+        } else {
+          requiredFields.breed = [data.breed];
+        }
+      } else {
+        // If not in data, get from current values or default to empty array
+        const currentBreed = this.currentValues.get('breed');
+        if (Array.isArray(currentBreed)) {
+          requiredFields.breed = currentBreed;
+        } else if (currentBreed !== undefined && currentBreed !== null && currentBreed !== '') {
+          requiredFields.breed = [currentBreed];
+        } else {
+          requiredFields.breed = [];
+        }
+      }
+      
+      // Handle color - must ALWAYS be an array (even if empty)
+      // Server expects color: [] format, never null or undefined
+      if (data.color !== undefined) {
+        if (Array.isArray(data.color)) {
+          requiredFields.color = data.color;
+        } else if (data.color === null || data.color === '') {
+          requiredFields.color = [];
+        } else {
+          requiredFields.color = [data.color];
+        }
+      } else {
+        // If not in data, get from current values or default to empty array
+        const currentColor = this.currentValues.get('color');
+        if (Array.isArray(currentColor)) {
+          requiredFields.color = currentColor;
+        } else if (currentColor !== undefined && currentColor !== null && currentColor !== '') {
+          requiredFields.color = [currentColor];
+        } else {
+          requiredFields.color = [];
+        }
+      }
+      
+      // Handle other optional fields
+      if (data.description !== undefined && data.description !== null && data.description !== '') {
+        requiredFields.description = data.description;
+      }
+      if (data.sex !== undefined && data.sex !== null && data.sex !== '') {
+        requiredFields.sex = data.sex;
+      }
+      
+      // Include any other fields from data that aren't undefined
+      Object.keys(data).forEach(key => {
+        if (data[key] !== undefined && !['species_id'].includes(key)) {
+          // Don't include species_id if we already have species
+          if (key === 'species_id' && requiredFields.species) {
+            return;
+          }
+          requiredFields[key] = data[key];
+        }
+      });
+      
+      finalData = requiredFields;
+      
+      // Remove any undefined values, but keep breed/color even if empty arrays
+      Object.keys(finalData).forEach(key => {
+        if (finalData[key] === undefined) {
+          delete finalData[key];
+        }
+        // Ensure breed and color are always arrays (never null or undefined)
+        if (key === 'breed' && !Array.isArray(finalData[key])) {
+          finalData[key] = [];
+        }
+        if (key === 'color' && !Array.isArray(finalData[key])) {
+          finalData[key] = [];
+        }
+      });
+      
+      // Always ensure breed and color are present as arrays
+      if (!finalData.hasOwnProperty('breed')) {
+        finalData.breed = [];
+      }
+      if (!finalData.hasOwnProperty('color')) {
+        finalData.color = [];
+      }
     }
 
-    console.log("Sending data to server:", finalData);
+    console.log("Sending data to server:", JSON.stringify(finalData, null, 2));
 
     fetch(this.url, {
       method: "PATCH",
@@ -387,9 +495,19 @@ export default class extends Controller {
       .then((response) => {
         console.log("Fetch response. Status:", response.status);
         if (!response.ok) {
-          return response.json().then(err => {
-            throw new Error(`Response not ok. Status: ${response.status}. Errors: ${JSON.stringify(err)}`);
-          });
+          // Check if response is JSON before trying to parse
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            return response.json().then(err => {
+              throw new Error(`Response not ok. Status: ${response.status}. Errors: ${JSON.stringify(err)}`);
+            });
+          } else {
+            // Response is HTML (error page), get text and show generic error
+            return response.text().then(html => {
+              console.error("Server returned HTML error page:", html.substring(0, 200));
+              throw new Error(`Server error (${response.status}). Please check the server logs for details.`);
+            });
+          }
         }
         return response.json();
       })
@@ -710,17 +828,75 @@ export default class extends Controller {
    * SUCCESS/ERROR Messages
    * ------------------------------------------------------------ */
   showSuccessMessage(msg) {
+    // Remove any existing toast
+    const existing = document.querySelector('.global-toast');
+    if (existing) existing.remove();
+
     const el = document.createElement("div");
-    el.className = "alert alert-success";
-    el.textContent = msg;
+    el.className = "global-toast alert alert-success alert-dismissible fade show";
+    el.setAttribute("role", "alert");
+    el.innerHTML = `
+      <div>${msg}</div>
+      <button type="button" class="btn-close" aria-label="Close"></button>
+    `;
+
+    // Close handler
+    el.querySelector(".btn-close").addEventListener("click", () => {
+      el.classList.remove("show");
+      setTimeout(() => {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 250);
+    });
+
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (el.parentNode) {
+        el.classList.remove("show");
+        setTimeout(() => {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, 250);
+      }
+    }, 5000);
   }
   showErrorMessage(msg) {
+    // Normalize technical JSON parse errors into a friendlier message
+    let friendlyMsg = msg || "Something went wrong while saving. Please try again.";
+    if (friendlyMsg.includes("Unexpected token") || friendlyMsg.includes("valid JSON")) {
+      friendlyMsg = "Something went wrong while saving. Please try again, and check the server logs if it continues.";
+    }
+
+    // Remove any existing toast
+    const existing = document.querySelector('.global-toast');
+    if (existing) existing.remove();
+
     const el = document.createElement("div");
-    el.className = "alert alert-danger";
-    el.textContent = msg;
+    el.className = "global-toast alert alert-danger alert-dismissible fade show";
+    el.setAttribute("role", "alert");
+    el.innerHTML = `
+      <div>${friendlyMsg}</div>
+      <button type="button" class="btn-close" aria-label="Close"></button>
+    `;
+
+    // Close handler
+    el.querySelector(".btn-close").addEventListener("click", () => {
+      el.classList.remove("show");
+      setTimeout(() => {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, 250);
+    });
+
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
+
+    // Auto-remove after 8 seconds (errors linger a bit longer)
+    setTimeout(() => {
+      if (el.parentNode) {
+        el.classList.remove("show");
+        setTimeout(() => {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, 250);
+      }
+    }, 8000);
   }
 }
