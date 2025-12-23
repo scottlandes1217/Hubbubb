@@ -496,13 +496,13 @@ export class CanvasDragDrop {
         
         if (comp) {
           comp.addAttributes({ 'data-comp-id': `c_${Date.now()}_${Math.random().toString(36).slice(2,8)}` });
-          // CRITICAL: Ensure it's draggable immediately
+          // CRITICAL: Ensure it's draggable immediately, even when inside tabs
           comp.set({
-            draggable: true,
+            draggable: true,  // Always draggable, even inside tabs
             selectable: true,
             hoverable: true,
             highlightable: true,
-            droppable: false
+            droppable: false  // Sections themselves are not droppable, only their columns
           });
           // Also set DOM attributes
           setTimeout(() => {
@@ -510,6 +510,30 @@ export class CanvasDragDrop {
             if (el) {
               el.setAttribute('draggable', 'true');
               el.style.cursor = 'move';
+              el.style.pointerEvents = 'auto';
+              
+              // CRITICAL: Ensure section columns are droppable, especially when inside tabs
+              // This fixes the issue where fields can't be added to sections inside tabs
+              setTimeout(() => {
+                const sectionColumns = el.querySelectorAll('[data-role="pf-section-column"]');
+                sectionColumns.forEach(col => {
+                  // Find the GrapesJS component for this column
+                  const root = this.editor.DomComponents.getWrapper();
+                  const columns = root.find('[data-role="pf-section-column"]');
+                  const columnComp = columns.find(c => c.getEl() === col);
+                  if (columnComp) {
+                    // Ensure column is droppable and accepts the right component types
+                    columnComp.set({
+                      droppable: true,
+                      accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+                      selectable: false,
+                      hoverable: false,
+                      highlightable: false,
+                      draggable: false
+                    });
+                  }
+                });
+              }, 100); // Wait a bit for section structure to be built
             }
           }, 10);
         }

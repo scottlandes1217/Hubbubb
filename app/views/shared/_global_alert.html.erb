@@ -1,8 +1,7 @@
 <% if flash[:alert] || (defined?(resource) && resource&.errors&.any?) %>
   <div
-    class="global-top-alert alert alert-danger fade show shadow-sm rounded-3"
+    class="global-top-alert alert alert-danger fade show alert-dismissible"
     role="alert"
-    style="position: fixed; top: 32px; left: 50%; transform: translateX(-50%); z-index: 2000; min-width: 320px; max-width: 420px; font-size: 1rem; padding: 0.75rem 1.25rem; text-align: left;"
     data-controller="global-alert"
   >
     <div>
@@ -20,10 +19,9 @@
     </div>
     <button
       type="button"
-      class="btn-close p-2"
+      class="btn-close"
       data-action="global-alert#close"
       aria-label="Close"
-      style="position: absolute; top: 0.5rem; right: 0.75rem; font-size: 1.25rem; box-shadow: none; outline: none;"
     ></button>
   </div>
 <% end %> 

@@ -71,20 +71,39 @@ export default class extends Controller {
   }
 
   showNotification(message, type) {
+    // Remove any existing notifications
+    const existing = document.querySelector('.global-toast')
+    if (existing) existing.remove()
+    
     const alert = document.createElement('div')
-    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`
-    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;'
+    alert.className = `global-toast alert alert-${type} alert-dismissible fade show`
+    alert.setAttribute('role', 'alert')
     alert.innerHTML = `
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <div>${message}</div>
+      <button type="button" class="btn-close" aria-label="Close"></button>
     `
+    
+    // Add close button handler
+    alert.querySelector('.btn-close').addEventListener('click', () => {
+      alert.classList.remove('show')
+      setTimeout(() => {
+        if (alert.parentNode) {
+          alert.parentNode.removeChild(alert)
+        }
+      }, 250)
+    })
     
     document.body.appendChild(alert)
     
     // Auto-remove after 5 seconds
     setTimeout(() => {
       if (alert.parentNode) {
-        alert.parentNode.removeChild(alert)
+        alert.classList.remove('show')
+        setTimeout(() => {
+          if (alert.parentNode) {
+            alert.parentNode.removeChild(alert)
+          }
+        }, 250)
       }
     }, 5000)
   }

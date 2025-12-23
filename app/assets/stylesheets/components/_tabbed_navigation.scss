@@ -426,6 +426,11 @@
   margin: 0px 0px 2px 0px;
 }
 
+// Override Popper.js transform for tab menu dropdown
+ul.dropdown-menu[aria-labelledby="tabMenuDropdown"] {
+  transform: translate3d(4px, 30px, 0px) !important; 
+}
+
 // Center the tabbed navigation
 .tabbed-navigation-center-wrapper {
   display: flex;

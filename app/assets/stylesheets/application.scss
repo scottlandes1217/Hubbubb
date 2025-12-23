@@ -6,6 +6,7 @@
 @import "components/tabbed_navigation";
 @import "components/search_bar";
 @import "components/list_view";
+@import "components/toast_alerts";
 @import "views/pets";
 @import "views/posts";
 @import "views/profile";
@@ -350,24 +351,7 @@ input[type="file"]::file-selector-button + * {
   justify-content: flex-end;
 }
 
-.global-top-alert {
-  min-width: 350px;
-  max-width: 90vw;
-  width: 600px;
-  padding: 1rem 2rem !important;
-  font-size: 1.1rem;
-  box-sizing: border-box;
-}
-
-@media (max-width: 600px) {
-  .global-top-alert {
-    width: 95vw;
-    min-width: 0;
-    max-width: 98vw;
-    padding: 1rem 0.5rem !important;
-    font-size: 1rem;
-  }
-}
+// Global toast alert styles moved to components/_toast_alerts.scss
 
 /* Login Page Styles */
 .login-container {
@@ -378,7 +362,7 @@ input[type="file"]::file-selector-button + * {
   align-items: center;
   justify-content: center;
   position: relative;
-  margin: -87px 0 0 0; /* Offset the main-content margin */
+  margin: 0; /* No negative margin needed with minimal layout */
 }
 
 .login-wrapper {
@@ -433,21 +417,25 @@ input[type="file"]::file-selector-button + * {
 }
 
 .login-card .form-label {
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: 500;
   margin-bottom: 0.75rem;
   font-size: 0.95rem;
 }
 
-.login-card .form-control {
+.login-card .form-control,
+.login-card .form-select {
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 0.875rem;
   font-size: 1rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #fff;
+  color: #000;
 }
 
-.login-card .form-control:focus {
+.login-card .form-control:focus,
+.login-card .form-select:focus {
   border-color: #9DD5F7;
   box-shadow: 0 0 0 0.2rem rgba(135, 206, 235, 0.25);
   outline: none;
@@ -476,13 +464,38 @@ input[type="file"]::file-selector-button + * {
   transform: translateY(0);
 }
 
-.login-card .form-check {
-  margin-bottom: 1.5rem;
+.login-card .form-group .form-check {
+  margin-bottom: 0; // form-group already has margin-bottom
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  // Override list_view styles that add background/padding
+  padding: 0 !important;
+  // Align checkbox with form-control inputs - form-control has padding: 0.875rem
+  // So we need to align the checkbox with where the text starts in inputs
+  margin-left: 0;
+  background: transparent !important;
+  border-radius: 0 !important;
+  
+  &:hover {
+    background: transparent !important;
+  }
+}
+
+.login-card .form-check-input {
+  margin-top: 0;
+  margin-right: 0;
+  margin-left: 0;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
 }
 
 .login-card .form-check-label {
   color: #ffffff;
   font-size: 0.95rem;
+  margin-left: 0;
+  cursor: pointer;
 }
 
 .login-card .form-check-input:checked {
@@ -506,6 +519,34 @@ input[type="file"]::file-selector-button + * {
 .login-card .devise-links .btn-link:hover {
   color: #6BB6D6;
   text-decoration: underline;
+}
+
+// Error messages on login/sign up pages
+.login-card #error_explanation {
+  background-color: rgba(220, 53, 69, 0.2);
+  border: 1px solid #dc3545;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: #ff6b6b;
+  
+  h2 {
+    color: #ff6b6b;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style-type: disc;
+    
+    li {
+      color: #ff6b6b;
+      margin-bottom: 0.25rem;
+    }
+  }
 }
 
 @media (max-width: 768px) {

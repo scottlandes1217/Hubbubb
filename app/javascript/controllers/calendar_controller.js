@@ -94,12 +94,22 @@ export default class extends Controller {
     
     // Create a simple toast notification
     const toast = document.createElement('div')
-    toast.className = 'alert alert-warning alert-dismissible fade show position-fixed'
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;'
+    toast.className = 'global-toast alert alert-warning alert-dismissible fade show'
+    toast.setAttribute('role', 'alert')
     toast.innerHTML = `
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <div>${message}</div>
+      <button type="button" class="btn-close" aria-label="Close"></button>
     `
+    
+    // Add close button handler
+    toast.querySelector('.btn-close').addEventListener('click', () => {
+      toast.classList.remove('show')
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast)
+        }
+      }, 250)
+    })
     
     document.body.appendChild(toast)
     
@@ -374,22 +384,26 @@ export default class extends Controller {
 
     // Create global alert div
     const alertDiv = document.createElement('div');
-    alertDiv.className = 'global-top-alert alert alert-danger d-flex align-items-center justify-content-center position-fixed top-0 start-50 translate-middle-x';
-    alertDiv.style.zIndex = '2000';
-    alertDiv.role = 'alert';
+    alertDiv.className = 'global-top-alert alert alert-danger alert-dismissible fade show';
+    alertDiv.setAttribute('role', 'alert');
     alertDiv.innerHTML = `
       <div>
-        <h6 class="mb-2">Error</h6>
-        <ul class="mb-0">
-          <li><strong>${message}</strong></li>
+        <strong>Please fix the following errors:</strong>
+        <ul class="mb-0 ps-3" style="font-weight: 500;">
+          ${Array.isArray(message) ? message.map(error => `<li>${error}</li>`).join('') : `<li>${message}</li>`}
         </ul>
       </div>
-      <button type="button" class="btn-close ms-3" aria-label="Close"></button>
+      <button type="button" class="btn-close" aria-label="Close"></button>
     `;
 
     // Add close button handler
     alertDiv.querySelector('.btn-close').addEventListener('click', () => {
-      alertDiv.remove();
+      alertDiv.classList.remove('show');
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.parentNode.removeChild(alertDiv);
+        }
+      }, 250);
     });
 
     // Insert at the top of the body
@@ -407,29 +421,39 @@ export default class extends Controller {
 
     // Create global alert div
     const alertDiv = document.createElement('div');
-    alertDiv.className = 'global-top-alert alert alert-success d-flex align-items-center justify-content-center position-fixed top-0 start-50 translate-middle-x';
-    alertDiv.style.zIndex = '2000';
-    alertDiv.role = 'alert';
+    alertDiv.className = 'global-top-alert alert alert-success alert-dismissible fade show';
+    alertDiv.setAttribute('role', 'alert');
     alertDiv.innerHTML = `
       <div>
-        <h6 class="mb-2">Success</h6>
-        <ul class="mb-0">
-          <li><strong>${message}</strong></li>
-        </ul>
+        <strong>${message}</strong>
       </div>
-      <button type="button" class="btn-close ms-3" aria-label="Close"></button>
+      <button type="button" class="btn-close" aria-label="Close"></button>
     `;
 
     // Add close button handler
     alertDiv.querySelector('.btn-close').addEventListener('click', () => {
-      alertDiv.remove();
+      alertDiv.classList.remove('show');
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.parentNode.removeChild(alertDiv);
+        }
+      }, 250);
     });
 
     // Insert at the top of the body
     document.body.appendChild(alertDiv);
 
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (alertDiv.parentNode) {
+        alertDiv.classList.remove('show');
+        setTimeout(() => {
+          if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+          }
+        }, 250);
+      }
+    }, 5000);
   }
 
   // Delete calendar with confirmation
@@ -556,21 +580,33 @@ function showGlobalSuccess(message) {
   const existingGlobalAlert = document.querySelector('.global-top-alert');
   if (existingGlobalAlert) existingGlobalAlert.remove();
   const alertDiv = document.createElement('div');
-  alertDiv.className = 'global-top-alert alert alert-success d-flex align-items-center justify-content-center position-fixed top-0 start-50 translate-middle-x';
-  alertDiv.style.zIndex = '2000';
-  alertDiv.role = 'alert';
+  alertDiv.className = 'global-top-alert alert alert-success alert-dismissible fade show';
+  alertDiv.setAttribute('role', 'alert');
   alertDiv.innerHTML = `
     <div>
-      <h6 class="mb-2">Success</h6>
-      <ul class="mb-0">
-        <li><strong>${message}</strong></li>
-      </ul>
+      <strong>${message}</strong>
     </div>
-    <button type="button" class="btn-close ms-3" aria-label="Close"></button>
+    <button type="button" class="btn-close" aria-label="Close"></button>
   `;
   alertDiv.querySelector('.btn-close').addEventListener('click', () => {
-    alertDiv.remove();
+    alertDiv.classList.remove('show');
+    setTimeout(() => {
+      if (alertDiv.parentNode) {
+        alertDiv.parentNode.removeChild(alertDiv);
+      }
+    }, 250);
   });
   document.body.appendChild(alertDiv);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.classList.remove('show');
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.parentNode.removeChild(alertDiv);
+        }
+      }, 250);
+    }
+  }, 5000);
 } 

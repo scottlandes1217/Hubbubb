@@ -325,9 +325,11 @@ export class NativeRecordBuilder {
     
     // Use event delegation for tab sections and section columns
     // This ensures drops work even after re-rendering
+    // CRITICAL: Check section columns FIRST (more specific) before tab sections
     this.canvas.addEventListener('dragover', (e) => {
-      const tabSection = e.target.closest('[data-role="pf-tab-section"]');
+      // Check section column first (most specific - it's inside tab sections)
       const sectionColumn = e.target.closest('[data-role="section-column"]');
+      const tabSection = sectionColumn ? null : e.target.closest('[data-role="pf-tab-section"]');
       
       if (tabSection || sectionColumn) {
         e.preventDefault();
@@ -335,12 +337,16 @@ export class NativeRecordBuilder {
         // Allow both 'copy' (from sidebar) and 'move' (reordering)
         e.dataTransfer.dropEffect = this.dragPayload?.type === 'move' ? 'move' : 'copy';
         
-        // Add visual feedback
-        if (tabSection) {
-          tabSection.classList.add('dragover');
-        }
+        // Add visual feedback - prioritize section column highlighting
         if (sectionColumn) {
           sectionColumn.classList.add('dragover');
+          // Remove dragover from parent tab section if present
+          const parentTabSection = sectionColumn.closest('[data-role="pf-tab-section"]');
+          if (parentTabSection) {
+            parentTabSection.classList.remove('dragover');
+          }
+        } else if (tabSection) {
+          tabSection.classList.add('dragover');
         }
       }
     }, true);
@@ -358,8 +364,9 @@ export class NativeRecordBuilder {
     }, true);
     
     this.canvas.addEventListener('drop', (e) => {
-      const tabSection = e.target.closest('[data-role="pf-tab-section"]');
+      // CRITICAL: Check section column FIRST (more specific) before tab section
       const sectionColumn = e.target.closest('[data-role="section-column"]');
+      const tabSection = sectionColumn ? null : e.target.closest('[data-role="pf-tab-section"]');
       
       if (tabSection) {
         tabSection.classList.remove('dragover');
@@ -369,6 +376,7 @@ export class NativeRecordBuilder {
       }
       
       // Handle drop on tab section or section column
+      // CRITICAL: Prioritize section column over tab section
       if (tabSection || sectionColumn) {
         e.preventDefault();
         e.stopPropagation();
@@ -410,6 +418,36 @@ export class NativeRecordBuilder {
       ? document.querySelector(`[data-component-id="${this.dragPayload.componentId}"]`)
       : null;
     
+    // CRITICAL: If moving a component, find its current parent to exclude it as a drop target
+    // This prevents moving a section out of a tab from being detected as dropping into the tab
+    let currentParentTabSection = null;
+    let currentParentSectionColumn = null;
+    if (this.dragPayload?.type === 'move' && this.dragPayload?.componentId) {
+      const component = this.findComponentById(this.dragPayload.componentId);
+      if (component) {
+        // Find the current parent tab section or section column
+        const parent = this.findParentComponent(this.dragPayload.componentId);
+        if (parent) {
+          // Check if parent is a tabs component (section is inside a tab)
+          if (parent.type === 'tabs' && component.tabId) {
+            // Find the tab section element
+            const tabsElement = document.querySelector(`[data-component-id="${parent.id}"]`);
+            if (tabsElement) {
+              currentParentTabSection = tabsElement.querySelector(`[data-role="pf-tab-section"][data-tab-id="${component.tabId}"]`);
+            }
+          }
+          // Check if parent is a section component (component is inside a section column)
+          if (parent.type === 'section' && component.columnId) {
+            // Find the section column element
+            const sectionElement = document.querySelector(`[data-component-id="${parent.id}"]`);
+            if (sectionElement) {
+              currentParentSectionColumn = sectionElement.querySelector(`[data-role="section-column"][data-column-id="${component.columnId}"]`);
+            }
+          }
+        }
+      }
+    }
+    
     // Use elementFromPoint to find what's actually under the cursor
     // This avoids issues with the dragged element being the target
     const pointElement = x !== undefined && y !== undefined 
@@ -426,20 +464,15 @@ export class NativeRecordBuilder {
         continue;
       }
       
-      // Check for tab section (most specific)
-      if (current.hasAttribute && current.hasAttribute('data-role') && 
-          current.getAttribute('data-role') === 'pf-tab-section') {
-        const componentId = current.dataset.componentId;
-        const tabId = current.dataset.tabId;
-        if (componentId && tabId) {
-          // Make sure we're not trying to drop into the dragged component itself
-          if (this.dragPayload?.componentId !== componentId) {
-            return { type: 'tab-section', element: current, componentId, tabId };
-          }
-        }
+      // CRITICAL: Skip current parent tab section/column when moving components
+      // This allows moving sections out of tabs to root level
+      if (current === currentParentTabSection || current === currentParentSectionColumn) {
+        current = current.parentElement;
+        continue;
       }
       
-      // Check for section column
+      // CRITICAL: Check for section column FIRST (most specific)
+      // Section columns are inside tab sections, so we need to check them before tab sections
       if (current.hasAttribute && current.hasAttribute('data-role') && 
           current.getAttribute('data-role') === 'section-column') {
         const componentId = current.dataset.componentId;
@@ -454,6 +487,19 @@ export class NativeRecordBuilder {
             return { type: 'section-column', element: current, componentId, columnId };
           } else {
             console.warn('[Native Builder] Skipping section column - same as dragged component', componentId);
+          }
+        }
+      }
+      
+      // Check for tab section (less specific - only if no section column found)
+      if (current.hasAttribute && current.hasAttribute('data-role') && 
+          current.getAttribute('data-role') === 'pf-tab-section') {
+        const componentId = current.dataset.componentId;
+        const tabId = current.dataset.tabId;
+        if (componentId && tabId) {
+          // Make sure we're not trying to drop into the dragged component itself
+          if (this.dragPayload?.componentId !== componentId) {
+            return { type: 'tab-section', element: current, componentId, tabId };
           }
         }
       }
@@ -894,7 +940,9 @@ export class NativeRecordBuilder {
     const div = document.createElement('div');
     div.className = 'record-field-placeholder pf-interactive rounded p-2 mb-2 bg-white';
     div.dataset.componentId = component.id;
+    div.dataset.componentType = 'field'; // CRITICAL: Set component type so parent handlers can detect it
     div.setAttribute('data-component-id', component.id); // Also set as attribute for easier querying
+    div.setAttribute('data-component-type', 'field'); // Also set as attribute
     div.draggable = true;
     div.innerHTML = `
       <span class="rb-del" title="Delete">×</span>
@@ -904,10 +952,8 @@ export class NativeRecordBuilder {
     div.querySelector('.rb-del').onclick = () => this.deleteComponent(component.id);
     this.setupComponentDrag(div, component);
     
-    // Make sure field drags don't bubble to parent sections
-    div.addEventListener('dragstart', (e) => {
-      e.stopPropagation(); // Prevent bubbling to section container
-    });
+    // NOTE: setupComponentDrag now uses capture phase for fields, so it handles everything
+    // No separate handler needed - setupComponentDrag will set up the drag and stop propagation
     
     return div;
   }
@@ -916,16 +962,16 @@ export class NativeRecordBuilder {
     const div = document.createElement('div');
     div.className = 'record-partial-placeholder pf-interactive rounded p-2 mb-2 bg-light';
     div.dataset.componentId = component.id;
+    div.dataset.componentType = 'partial'; // CRITICAL: Set component type so parent handlers can detect it
     div.setAttribute('data-component-id', component.id); // Also set as attribute for easier querying
+    div.setAttribute('data-component-type', 'partial'); // Also set as attribute
     div.dataset.partialName = component.partialName;
     // Set partial-name attribute for runtime rendering
     div.setAttribute('partial-name', component.partialName || '');
     div.draggable = true;
     
-    // Make sure partial drags don't bubble to parent sections
-    div.addEventListener('dragstart', (e) => {
-      e.stopPropagation(); // Prevent bubbling to section container
-    });
+    // NOTE: setupComponentDrag now uses capture phase for partials, so it handles everything
+    // No separate handler needed - setupComponentDrag will set up the drag and stop propagation
     
     // Try to get preview HTML from metadata
     let previewHtml = '';
@@ -1007,7 +1053,16 @@ export class NativeRecordBuilder {
         component.children
           .filter(child => child.tabId === tab.id)
           .forEach(child => {
-            section.appendChild(this.renderComponent(child));
+            const rendered = this.renderComponent(child);
+            if (rendered) {
+              // CRITICAL: Ensure sections inside tabs are draggable
+              if (child.type === 'section' && rendered) {
+                rendered.draggable = true;
+                rendered.style.cursor = 'move';
+                rendered.style.userSelect = 'none';
+              }
+              section.appendChild(rendered);
+            }
           });
       }
       
@@ -1135,38 +1190,141 @@ export class NativeRecordBuilder {
   }
 
   setupComponentDrag(element, component) {
+    // CRITICAL: Ensure element is draggable, especially for sections inside tabs
+    element.draggable = true;
+    element.style.cursor = 'move';
+    element.style.userSelect = 'none';
+    
+    // CRITICAL: For sections, use capture phase with higher priority to handle before parent tabs
+    // For tabs, use bubble phase so sections can handle first
+    // For fields/partials, use capture phase so they handle before parent sections
+    const useCapture = component.type === 'section' || component.type === 'field' || component.type === 'partial';
+    
     element.addEventListener('dragstart', (e) => {
       // Check if the drag actually started on this element or a child
       // If a child field/partial started the drag, don't handle it here
       const actualTarget = e.target;
       const actualComponentId = actualTarget.closest('[data-component-id]')?.dataset?.componentId;
       
-      // Only handle if the drag started on this element or a direct child that doesn't have its own componentId
-      // If actualComponentId exists and doesn't match this component's ID, it means a child component started the drag
+      // CRITICAL: For fields/partials, always handle the drag if it started on this element or a child
+      // Don't check for nested components - fields/partials don't have children that can be dragged
+      if (component.type === 'field' || component.type === 'partial') {
+        // For fields/partials, proceed if the drag started on this element or a non-component child
+        // The actualComponentId should match this component's ID, or be undefined (child element without componentId)
+        const shouldHandle = !actualComponentId || actualComponentId === component.id;
+        
+        if (shouldHandle) {
+          // This is a field/partial drag - handle it
+          console.log('[Native Builder] Field/partial drag starting', {
+            componentId: component.id,
+            componentType: component.type,
+            actualTarget,
+            actualComponentId
+          });
+          
+          // Stop propagation IMMEDIATELY to prevent parent handlers from interfering
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          
+          // Set up the drag
+          this.isDragging = true;
+          this.dragPayload = { type: 'move', componentId: component.id, componentType: component.type };
+          e.dataTransfer.effectAllowed = 'move';
+          element.style.opacity = '0.5';
+          console.log('[Native Builder] Drag started', { componentId: component.id, componentType: component.type, element, actualTarget });
+          return; // Done handling field/partial drag
+        } else {
+          // This shouldn't happen for fields/partials, but if it does, let the nested component handle it
+          console.log('[Native Builder] Field/partial drag on nested component, letting it handle', {
+            componentId: component.id,
+            nestedId: actualComponentId
+          });
+          return; // Let nested component handle it
+        }
+      }
+      
+      // CRITICAL: For sections and tabs, allow dragging even if there's a child component ID
+      // This is needed because sections inside tabs need to be draggable
+      // Only prevent if it's a field/partial that started the drag (they have their own handlers)
+      const isSectionOrTabs = component.type === 'section' || component.type === 'tabs';
+      
+      // Check if the actual target is a nested section/tabs component
+      let isNestedSectionOrTabs = false;
       if (actualComponentId && actualComponentId !== component.id) {
-        console.log('[Native Builder] Drag started on child component, ignoring parent drag handler', {
+        const nestedComponent = this.findComponentById(actualComponentId);
+        if (nestedComponent && (nestedComponent.type === 'section' || nestedComponent.type === 'tabs')) {
+          isNestedSectionOrTabs = true;
+        }
+      }
+      
+      // CRITICAL: If dragging a nested section/tabs, let it handle its own drag
+      // Don't interfere - stop propagation so this handler doesn't fire
+      if (isNestedSectionOrTabs) {
+        console.log('[Native Builder] Drag started on nested section/tabs, letting it handle drag', {
+          parentId: component.id,
+          parentType: component.type,
+          nestedId: actualComponentId
+        });
+        // Stop propagation IMMEDIATELY so this parent handler doesn't interfere
+        // The nested component's handler will handle the drag
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // Also stop other handlers on the same element
+        return;
+      }
+      
+      // Check if it's a field/partial child
+      const isFieldOrPartial = actualComponentId && actualComponentId !== component.id && !isNestedSectionOrTabs &&
+                               (actualTarget.closest('[data-component-id]')?.dataset?.componentType === 'field' ||
+                                actualTarget.closest('[data-component-id]')?.dataset?.componentType === 'partial');
+      
+      // CRITICAL: If a field/partial child started the drag, let it handle its own drag
+      // Don't prevent default - just return early without stopping propagation
+      // This allows the field's own handler (which is also in capture phase) to handle it
+      if (isFieldOrPartial) {
+        console.log('[Native Builder] Drag started on child field/partial, letting it handle drag', {
           parentId: component.id,
           parentType: component.type,
           childId: actualComponentId,
           actualTarget
         });
-        e.stopPropagation();
-        e.preventDefault();
-        return;
+        // DON'T stop propagation - let the field's handler (also in capture phase) handle it
+        // Just return early so this handler doesn't interfere
+        return; // Don't stop propagation or prevent default - let field drag proceed
       }
       
+      // CRITICAL: Stop propagation IMMEDIATELY to prevent parent handlers (like tab container) from interfering
+      // This is especially important for sections inside tabs, and for fields/partials inside sections
+      // Stop propagation BEFORE setting up the drag payload so parent handlers don't fire
+      e.stopPropagation();
+      e.stopImmediatePropagation(); // Also stop other handlers on the same element
+      
+      // CRITICAL: Allow drag even if component is inside a tab or section
+      // Don't prevent default - let the drag proceed
       this.isDragging = true;
       this.dragPayload = { type: 'move', componentId: component.id, componentType: component.type };
       e.dataTransfer.effectAllowed = 'move';
       element.style.opacity = '0.5';
-      console.log('[Native Builder] Drag started', { componentId: component.id, componentType: component.type, element, actualTarget });
-    });
+      console.log('[Native Builder] Drag started', { componentId: component.id, componentType: component.type, element, actualTarget, isInsideTab: component.tabId ? true : false });
+    }, useCapture); // Sections and fields/partials use capture phase, tabs use bubble phase
     
     element.addEventListener('dragend', () => {
       this.isDragging = false;
       this.dragPayload = null;
       element.style.opacity = '1';
     });
+    
+    // CRITICAL: Also ensure inner elements don't block dragging
+    // When clicking on section body or columns, the drag should still work
+    element.addEventListener('mousedown', (e) => {
+      // If clicking on inner elements (section body, columns), ensure parent can be dragged
+      if (e.target !== element && (e.target.closest('.pf-section-body') || e.target.closest('.pf-section-column'))) {
+        // Don't prevent default - let drag handler work
+        // But ensure the element is draggable
+        if (!element.draggable) {
+          element.draggable = true;
+        }
+      }
+    }, true);
   }
 
   switchTab(componentId, tabId) {

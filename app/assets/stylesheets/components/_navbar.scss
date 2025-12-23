@@ -133,13 +133,17 @@
   z-index: 1001; // Keep link above dropdown
 }
 
+.org-header-navrow .dropdown {
+    margin-right: 10px !important;
+}
+
 // Dropdown Menu - Enhanced with modern, integrated styling
 // All dropdown menus share consistent styling
 .main-nav-dropdown,
 .dropdown-menu {
   background: linear-gradient(135deg, #252525 0%, #1f1f1f 50%, #252525 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 8px !important;
+  padding-top: 0px !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
               0 2px 8px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -148,7 +152,6 @@
   backdrop-filter: blur(12px);
   overflow: hidden;
   z-index: 1000; // Ensure dropdown is below button but above other content
-  margin-top: 0.25rem !important;
   
   // Subtle top highlight for depth
   &::before {

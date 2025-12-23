@@ -588,16 +588,54 @@ export class ContentLoader {
               allTabSections.forEach(section => {
                 section.components().forEach(child => {
                   const attrs = child.getAttributes ? child.getAttributes() : {};
+                  const childType = child.get('type');
+                  
                   if (attrs['field-api-name'] || attrs['partial-name'] || 
-                      child.get('type') === 'record-field' || child.get('type') === 'record-partial' ||
-                      child.get('type') === 'record-tabs' || child.get('type') === 'record-section') {
-                    child.set({
-                      selectable: true,
-                      hoverable: true,
-                      draggable: true,
-                      highlightable: true,
-                      droppable: false // Can't drop components into fields/partials
-                    });
+                      childType === 'record-field' || childType === 'record-partial' ||
+                      childType === 'record-tabs' || childType === 'record-section') {
+                    // CRITICAL: Ensure sections inside tabs are always draggable
+                    if (childType === 'record-section') {
+                      child.set({
+                        selectable: true,
+                        hoverable: true,
+                        draggable: true,  // Always draggable, even inside tabs
+                        highlightable: true,
+                        droppable: false  // Sections themselves are not droppable, only their columns
+                      });
+                      
+                      // CRITICAL: Ensure section columns inside tabs are droppable
+                      // This fixes the issue where fields can't be added to sections inside tabs
+                      const childEl = child.getEl();
+                      if (childEl) {
+                        setTimeout(() => {
+                          const sectionColumns = childEl.querySelectorAll('[data-role="pf-section-column"]');
+                          sectionColumns.forEach(col => {
+                            const columns = root.find('[data-role="pf-section-column"]');
+                            const columnComp = columns.find(c => c.getEl() === col);
+                            if (columnComp) {
+                              columnComp.set({
+                                droppable: true,
+                                accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+                                selectable: false,
+                                hoverable: false,
+                                highlightable: false,
+                                draggable: false
+                              });
+                            }
+                          });
+                        }, 100);
+                      }
+                    } else {
+                      // For fields, partials, and tabs inside tab sections
+                      child.set({
+                        selectable: true,
+                        hoverable: true,
+                        draggable: true,
+                        highlightable: true,
+                        droppable: false // Can't drop components into fields/partials
+                      });
+                    }
+                    
                     // Ensure pointer events work correctly
                     const childEl = child.getEl();
                     if (childEl) {

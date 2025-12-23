@@ -46,14 +46,43 @@ export class ComponentLocking {
       } else if (attrs['data-comp-kind'] === 'record-section' || component.get('type') === 'record-section') {
         // Lock section inner components
         setTimeout(() => {
+          // CRITICAL: Check if section is inside a tab
+          const isInsideTab = this.builder.modules?.componentRegistry?.isInsideSectionOrTab(component) || false;
+          
           // Ensure section container is draggable and not droppable (only columns should accept drops)
           component.set({ 
-            draggable: true,
+            draggable: true,  // Always draggable, even inside tabs
             selectable: true,
             hoverable: true,
             highlightable: true,
             droppable: false 
           });
+          
+          // If inside a tab, ensure columns are droppable immediately
+          if (isInsideTab) {
+            const el = component.getEl();
+            if (el) {
+              setTimeout(() => {
+                const sectionColumns = el.querySelectorAll('[data-role="pf-section-column"]');
+                sectionColumns.forEach(col => {
+                  const root = this.editor.DomComponents.getWrapper();
+                  const columns = root.find('[data-role="pf-section-column"]');
+                  const columnComp = columns.find(c => c.getEl() === col);
+                  if (columnComp) {
+                    columnComp.set({
+                      droppable: true,
+                      accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+                      selectable: false,
+                      hoverable: false,
+                      highlightable: false,
+                      draggable: false
+                    });
+                  }
+                });
+              }, 150); // Wait for section structure to be built
+            }
+          }
+          
           // Ensure buildWorkingSection is called to add buttons
           if (window.SectionComponent && window.SectionComponent.buildWorkingSection) {
             try {
@@ -181,14 +210,40 @@ export class ComponentLocking {
             return; // Don't process if we're in a recursion loop
           }
           
-          // DON'T call component.set() here - it triggers updates during drags which cause recursion!
-          // These properties should be set in component definition or on initial creation only
+          // CRITICAL: Ensure section is always draggable, even when inside tabs
+          // Force set these properties to ensure they're always correct, especially for sections inside tabs
+          component.set({
+            draggable: true,  // CRITICAL: Always draggable, even inside tabs
+            selectable: true,
+            hoverable: true,
+            highlightable: true,
+            droppable: false  // Sections themselves are not droppable, only their columns
+          });
+          
+          // Also force update the component's internal state
+          if (component.view && component.view.model) {
+            component.view.model.set({
+              draggable: true,
+              selectable: true,
+              hoverable: true,
+              highlightable: true,
+              droppable: false
+            }, { silent: true }); // Use silent to avoid triggering updates
+          }
+          
           // Also ensure the DOM element has the right attributes
           const el = component.getEl();
           if (el) {
             el.setAttribute('draggable', 'true');
             el.style.cursor = 'move';
             el.style.pointerEvents = 'auto';
+            el.style.userSelect = 'none'; // Prevent text selection during drag
+            
+            // CRITICAL: Force GrapesJS to recognize this component as draggable
+            // This is especially important for sections inside tabs
+            if (component.view && component.view.model) {
+              component.view.model.set('draggable', true, { silent: true });
+            }
             
             // CRITICAL: Make ALL inner containers allow events to bubble AND ensure they don't block parent drag
             // This is essential - when you click on inner elements, GrapesJS should still drag the parent
@@ -198,6 +253,42 @@ export class ComponentLocking {
               // Remove any draggable attribute that might block parent drag
               inner.removeAttribute('draggable');
             });
+            
+            // CRITICAL: Ensure section columns inside tabs are droppable
+            // This fixes the issue where fields can't be added to sections inside tabs
+            const ensureColumnsDroppable = () => {
+              const sectionColumns = el.querySelectorAll('[data-role="pf-section-column"]');
+              sectionColumns.forEach(col => {
+                // Find the GrapesJS component for this column
+                const root = this.editor.DomComponents.getWrapper();
+                const columns = root.find('[data-role="pf-section-column"]');
+                const columnComp = columns.find(c => c.getEl() === col);
+                if (columnComp) {
+                  // Force column to be droppable - don't check, just set it
+                  columnComp.set({
+                    droppable: true,
+                    accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+                    selectable: false,
+                    hoverable: false,
+                    highlightable: false,
+                    draggable: false
+                  });
+                  
+                  // Also ensure DOM element allows drops
+                  const colEl = columnComp.getEl();
+                  if (colEl) {
+                    colEl.style.pointerEvents = 'auto';
+                  }
+                }
+              });
+            };
+            
+            // Configure columns immediately
+            ensureColumnsDroppable();
+            
+            // Also configure after a short delay in case structure isn't ready
+            setTimeout(ensureColumnsDroppable, 50);
+            setTimeout(ensureColumnsDroppable, 200);
             
             // Also ensure that clicks on inner elements trigger parent drag
             el.addEventListener('mousedown', (e) => {
@@ -245,6 +336,61 @@ export class ComponentLocking {
         }, 100);
       }
     });
+    
+    // CRITICAL: Add a periodic check to ensure sections inside tabs maintain their properties
+    // This fixes cases where properties get reset or aren't set initially
+    setInterval(() => {
+      if (window.__pf_isMovingComponent) return; // Skip during drags
+      
+      try {
+        const root = this.editor.DomComponents.getWrapper();
+        
+        // Find all sections inside tab sections
+        const tabSections = root.find('[data-role="pf-tab-section"]');
+        tabSections.forEach(tabSection => {
+          const tabSectionComps = tabSection.components();
+          if (tabSectionComps && tabSectionComps.models) {
+            tabSectionComps.models.forEach(child => {
+              const childType = child.get('type');
+              if (childType === 'record-section') {
+                // Force section to be draggable
+                if (child.get('draggable') !== true) {
+                  child.set({
+                    draggable: true,
+                    selectable: true,
+                    hoverable: true,
+                    highlightable: true,
+                    droppable: false
+                  });
+                }
+                
+                // Force columns to be droppable
+                const childEl = child.getEl();
+                if (childEl) {
+                  const sectionColumns = childEl.querySelectorAll('[data-role="pf-section-column"]');
+                  sectionColumns.forEach(col => {
+                    const columns = root.find('[data-role="pf-section-column"]');
+                    const columnComp = columns.find(c => c.getEl() === col);
+                    if (columnComp && columnComp.get('droppable') !== true) {
+                      columnComp.set({
+                        droppable: true,
+                        accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+                        selectable: false,
+                        hoverable: false,
+                        highlightable: false,
+                        draggable: false
+                      });
+                    }
+                  });
+                }
+              }
+            });
+          }
+        });
+      } catch(err) {
+        // Silently ignore errors in periodic check
+      }
+    }, 2000); // Check every 2 seconds
   }
 
   lockInnerComponents(comp) {
@@ -663,7 +809,7 @@ export class ComponentLocking {
           const isTabSection = chAttrs.class && chAttrs.class.includes('pf-tab-section');
           
           if (isTabSection) {
-            // Tab sections should not be draggable/selectable
+            // Tab sections should not be draggable/selectable, but components inside them should be
             ch.set({
               selectable: false,
               hoverable: false,
@@ -673,6 +819,51 @@ export class ComponentLocking {
               copyable: false,
               highlightable: false
             });
+            
+            // CRITICAL: Ensure all child components (sections, fields, etc.) inside tab sections are draggable
+            setTimeout(() => {
+              const tabSectionComps = ch.components();
+              if (tabSectionComps && tabSectionComps.models) {
+                tabSectionComps.models.forEach(child => {
+                  const childType = child.get('type');
+                  const childAttrs = child.getAttributes ? child.getAttributes() : {};
+                  
+                  // If it's a section, ensure it's draggable
+                  if (childType === 'record-section' || childAttrs['data-comp-kind'] === 'record-section') {
+                    child.set({
+                      draggable: true,
+                      selectable: true,
+                      hoverable: true,
+                      highlightable: true,
+                      droppable: false
+                    });
+                    
+                    // Also ensure its columns are droppable
+                    const childEl = child.getEl();
+                    if (childEl) {
+                      setTimeout(() => {
+                        const sectionColumns = childEl.querySelectorAll('[data-role="pf-section-column"]');
+                        sectionColumns.forEach(col => {
+                          const root = this.editor.DomComponents.getWrapper();
+                          const columns = root.find('[data-role="pf-section-column"]');
+                          const columnComp = columns.find(c => c.getEl() === col);
+                          if (columnComp) {
+                            columnComp.set({
+                              droppable: true,
+                              accept: ['record-field', 'record-partial', 'record-section', 'record-tabs'],
+                              selectable: false,
+                              hoverable: false,
+                              highlightable: false,
+                              draggable: false
+                            });
+                          }
+                        });
+                      }, 100);
+                    }
+                  }
+                });
+              }
+            }, 100);
           }
         });
       }

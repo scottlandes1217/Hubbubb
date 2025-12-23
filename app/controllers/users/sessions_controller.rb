@@ -1,4 +1,6 @@
 class Users::SessionsController < Devise::SessionsController
+  layout 'devise'
+  
   def create
     Rails.logger.debug "=== Authentication Attempt ==="
     Rails.logger.debug "Email: #{params[:user][:email]}"
