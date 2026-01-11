@@ -1,9 +1,8 @@
 <%= form_with(model: organization) do |form| %>
   <% if organization.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(organization.errors.count, "error") %> prohibited this organization from being saved:</h2>
-
-      <ul>
+    <div class="alert alert-danger">
+      <h5><%= pluralize(organization.errors.count, "error") %> prohibited this organization from being saved:</h5>
+      <ul class="mb-0">
         <% organization.errors.each do |error| %>
           <li><%= error.full_message %></li>
         <% end %>
@@ -11,47 +10,62 @@
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :name, style: "display: block" %>
-    <%= form.text_field :name %>
+  <div class="mb-3">
+    <%= form.label :name, class: "form-label" %>
+    <%= form.text_field :name, class: "form-control", placeholder: "Enter organization name" %>
   </div>
 
-  <div>
-    <%= form.label :street_address, style: "display: block" %>
-    <%= form.text_field :street_address %>
+  <div class="mb-3">
+    <%= form.label :street_address, class: "form-label" %>
+    <%= form.text_field :street_address, class: "form-control", placeholder: "Enter street address" %>
   </div>
 
-  <div>
-    <%= form.label :city, style: "display: block" %>
-    <%= form.text_field :city %>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :city, class: "form-label" %>
+        <%= form.text_field :city, class: "form-control", placeholder: "Enter city" %>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="mb-3">
+        <%= form.label :state, class: "form-label" %>
+        <%= form.text_field :state, class: "form-control", placeholder: "State" %>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="mb-3">
+        <%= form.label :zip, class: "form-label" %>
+        <%= form.text_field :zip, class: "form-control", placeholder: "ZIP" %>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :state, style: "display: block" %>
-    <%= form.text_field :state %>
+  <div class="mb-3">
+    <%= form.label :country, class: "form-label" %>
+    <%= form.text_field :country, class: "form-control", placeholder: "Enter country" %>
   </div>
 
-  <div>
-    <%= form.label :zip, style: "display: block" %>
-    <%= form.text_field :zip %>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :phone, class: "form-label" %>
+        <%= form.text_field :phone, class: "form-control", placeholder: "Enter phone number" %>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <%= form.label :email, class: "form-label" %>
+        <%= form.email_field :email, class: "form-control", placeholder: "Enter email address" %>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <%= form.label :country, style: "display: block" %>
-    <%= form.text_field :country %>
-  </div>
-
-  <div>
-    <%= form.label :phone, style: "display: block" %>
-    <%= form.text_field :phone %>
-  </div>
-
-  <div>
-    <%= form.label :email, style: "display: block" %>
-    <%= form.text_field :email %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+  <div class="d-flex justify-content-between">
+    <%= link_to "Back to organizations", organizations_path, class: "btn btn-secondary" %>
+    <%= form.submit class: "btn btn-primary" %>
   </div>
 <% end %>
